@@ -631,93 +631,243 @@ for k in sorted(extra_in_final):
 OUT = "/home/user/previfuego-facturacion/BASE_DATOS_KFC.xlsx"
 wb = openpyxl.Workbook()
 
-H_FILL  = PatternFill("solid", fgColor="1F4E79")
-H2_FILL = PatternFill("solid", fgColor="375623")
-H3_FILL = PatternFill("solid", fgColor="7B0000")
-ALT1    = PatternFill("solid", fgColor="D6E4F0")
-ALT2    = PatternFill("solid", fgColor="E2EFDA")
-H_FONT  = Font(color="FFFFFF", bold=True)
-CENTER  = Alignment(horizontal="center")
+from openpyxl.styles import Border, Side, numbers
+from openpyxl.utils import get_column_letter
 
-def style_header(ws, fill):
-    for cell in ws[1]:
-        cell.fill = fill; cell.font = H_FONT; cell.alignment = CENTER
+# ── Styles ──
+COL_HDR_FILL  = PatternFill("solid", fgColor="1F4E79")   # dark blue – column headers
+LOCAL_FILL    = PatternFill("solid", fgColor="D9E1F2")   # light blue – each local's rows
+TOTALS_FILL   = PatternFill("solid", fgColor="E2EFDA")   # light green – TOTALES row
+RESUMEN_FILL  = PatternFill("solid", fgColor="375623")   # dark green – resumen header
+AUD_FILL      = PatternFill("solid", fgColor="7B0000")   # dark red – audit header
+WHITE_FILL    = PatternFill("solid", fgColor="FFFFFF")
 
-def auto_width(ws):
-    for col in ws.columns:
-        mx = max((len(str(c.value)) if c.value is not None else 0) for c in col)
-        ws.column_dimensions[col[0].column_letter].width = min(mx + 2, 55)
+HDR_FONT      = Font(name="Calibri", color="FFFFFF", bold=True, size=11)
+BOLD_FONT     = Font(name="Calibri", bold=True, size=11)
+NORMAL_FONT   = Font(name="Calibri", size=11)
+TOTALS_FONT   = Font(name="Calibri", bold=True, size=11, color="375623")
+
+CENTER  = Alignment(horizontal="center", vertical="center", wrap_text=False)
+LEFT    = Alignment(horizontal="left",   vertical="center", wrap_text=False)
+RIGHT   = Alignment(horizontal="right",  vertical="center")
+
+CURRENCY_FMT = '$#,##0.00'
+THIN = Side(style="thin", color="BFBFBF")
+THIN_BORDER = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
 
 month_sort = {m: i for i, m in enumerate(MONTHS)}
 
+# Group extintores by (mes, codigo) in sorted order
+from collections import OrderedDict
 
-# Sheet 1: DETALLE
+sorted_rows = sorted(
+    final_rows,
+    key=lambda x: (month_sort.get(x["MES_SERVICIO"], 99), x["CÓDIGO"])
+)
+
+# Build ordered list of locals preserving sort
+local_order = list(OrderedDict.fromkeys(r["CÓDIGO"] for r in sorted_rows))
+
+# Map código → list of its rows (in order)
+rows_by_local = OrderedDict()
+for code in local_order:
+    rows_by_local[code] = [r for r in sorted_rows if r["CÓDIGO"] == code]
+
+
+# ── Sheet 1: DETALLE ─────────────────────────────────────────────────────────
 ws_det = wb.active
 ws_det.title = "DETALLE"
+ws_det.sheet_view.showGridLines = False
+ws_det.row_dimensions[1].height = 22
+
 COLS_DET = [
-    "CÓDIGO","CC_ORIGINAL","MARCA","NOMBRE_LOCAL","MES_SERVICIO","UBICACIÓN",
-    "TIPO","CAPACIDAD","COSTO_MANTT","PRECIO_RECARGA","COBRO_ANUAL_EXT",
-    "TIPO_COBRO","AÑO_RECARGA","AÑO_ULT_RECARGA","NOTAS"
+    "MARCA", "NOMBRE_LOCAL", "MES_SERVICIO", "UBICACIÓN",
+    "TIPO", "CAPACIDAD", "COSTO_MANTT", "PRECIO_RECARGA",
+    "AÑO_ULT_RECARGA", "AÑO_RECARGA"
 ]
-ws_det.append(COLS_DET)
-style_header(ws_det, H_FILL)
 
-for idx, r in enumerate(
-    sorted(final_rows, key=lambda x: (month_sort.get(x["MES_SERVICIO"], 99), x["CÓDIGO"])),
-    2
-):
-    ws_det.append([r.get(c) for c in COLS_DET])
-    if idx % 2 == 0:
-        for cell in ws_det[idx]: cell.fill = ALT1
+# Fixed column widths (chars) for readability
+COL_WIDTHS = [28, 38, 15, 30, 10, 12, 16, 18, 18, 14]
 
-auto_width(ws_det)
+# Write header row
+for ci, (col_name, width) in enumerate(zip(COLS_DET, COL_WIDTHS), 1):
+    cell = ws_det.cell(row=1, column=ci, value=col_name)
+    cell.fill = COL_HDR_FILL
+    cell.font = HDR_FONT
+    cell.alignment = CENTER
+    cell.border = THIN_BORDER
+    ws_det.column_dimensions[get_column_letter(ci)].width = width
+
+cur_row = 2
+price_cols = {COLS_DET.index("COSTO_MANTT") + 1, COLS_DET.index("PRECIO_RECARGA") + 1}
+
+for code in local_order:
+    group = rows_by_local[code]
+    first = group[0]
+
+    # Write each extintor row
+    for r in group:
+        ws_det.row_dimensions[cur_row].height = 18
+        values = [
+            r["MARCA"], r["NOMBRE_LOCAL"], r["MES_SERVICIO"], r["UBICACIÓN"],
+            r["TIPO"], r["CAPACIDAD"],
+            r["COSTO_MANTT"], r["PRECIO_RECARGA"],
+            r["AÑO_ULT_RECARGA"], r["AÑO_RECARGA"],
+        ]
+        for ci, val in enumerate(values, 1):
+            cell = ws_det.cell(row=cur_row, column=ci, value=val)
+            cell.fill = LOCAL_FILL
+            cell.font = NORMAL_FONT
+            cell.border = THIN_BORDER
+            if ci in price_cols:
+                cell.number_format = CURRENCY_FMT
+                cell.alignment = RIGHT
+            else:
+                cell.alignment = LEFT
+        cur_row += 1
+
+    # TOTALES row
+    total_mantt   = round(sum(r["_cm"] for r in group), 2)
+    total_recarga = round(sum(r["_cr"] for r in group), 2)
+    ws_det.row_dimensions[cur_row].height = 20
+    totals_values = [
+        f"TOTALES  {first['MARCA']} – {first['NOMBRE_LOCAL']}",
+        "", "", "",
+        "", f"{len(group)} ext.",
+        total_mantt, total_recarga,
+        "", "",
+    ]
+    for ci, val in enumerate(totals_values, 1):
+        cell = ws_det.cell(row=cur_row, column=ci, value=val)
+        cell.fill = TOTALS_FILL
+        cell.font = TOTALS_FONT
+        cell.border = THIN_BORDER
+        if ci in price_cols:
+            cell.number_format = CURRENCY_FMT
+            cell.alignment = RIGHT
+        else:
+            cell.alignment = LEFT
+    # Merge first 4 cells of TOTALES label
+    ws_det.merge_cells(
+        start_row=cur_row, start_column=1,
+        end_row=cur_row, end_column=4
+    )
+    cur_row += 1
+
+    # Blank separator row
+    ws_det.row_dimensions[cur_row].height = 8
+    cur_row += 1
 
 
-# Sheet 2: RESUMEN_LOCALES
+# ── Sheet 2: RESUMEN_LOCALES ─────────────────────────────────────────────────
 ws_res = wb.create_sheet("RESUMEN_LOCALES")
+ws_res.sheet_view.showGridLines = False
+ws_res.row_dimensions[1].height = 22
+
 COLS_RES = [
-    "CÓDIGO","CC_ORIGINAL","MARCA","NOMBRE_LOCAL","MES_SERVICIO",
-    "N_EXTINTORES","TOTAL_MANTT","TOTAL_RECARGA","COBRO_ANUAL",
-    "AÑO_RECARGA","AÑO_ULT_RECARGA","DESGLOSE"
+    "CÓDIGO", "MARCA", "NOMBRE_LOCAL", "MES_SERVICIO",
+    "N_EXTINTORES", "TOTAL_MANTT ($)", "TOTAL_RECARGA ($)",
+    "COBRO_ANUAL ($)", "AÑO_ULT_RECARGA", "AÑO_RECARGA"
 ]
-ws_res.append(COLS_RES)
-style_header(ws_res, H2_FILL)
+RES_WIDTHS = [10, 28, 38, 15, 14, 18, 18, 18, 18, 14]
+RES_PRICE_COLS = {6, 7, 8}  # 1-indexed columns for currency
 
-for idx, s in enumerate(
-    sorted(local_sum.values(), key=lambda x: (month_sort.get(x["MES_SERVICIO"], 99), x["CÓDIGO"])),
-    2
-):
-    ws_res.append([s.get(c) for c in COLS_RES])
-    if idx % 2 == 0:
-        for cell in ws_res[idx]: cell.fill = ALT2
+for ci, (col_name, width) in enumerate(zip(COLS_RES, RES_WIDTHS), 1):
+    cell = ws_res.cell(row=1, column=ci, value=col_name)
+    cell.fill = RESUMEN_FILL
+    cell.font = HDR_FONT
+    cell.alignment = CENTER
+    cell.border = THIN_BORDER
+    ws_res.column_dimensions[get_column_letter(ci)].width = width
 
-auto_width(ws_res)
+ALT_FILLS = [
+    PatternFill("solid", fgColor="EBF3FB"),
+    PatternFill("solid", fgColor="FFFFFF"),
+]
+
+for ridx, code in enumerate(local_order, 2):
+    s = local_sum[code]
+    ws_res.row_dimensions[ridx].height = 18
+    values = [
+        s["CÓDIGO"], s["MARCA"], s["NOMBRE_LOCAL"], s["MES_SERVICIO"],
+        s["N_EXTINTORES"],
+        s["TOTAL_MANTT"], s["TOTAL_RECARGA"], s["COBRO_ANUAL"],
+        s["AÑO_ULT_RECARGA"], s["AÑO_RECARGA"],
+    ]
+    row_fill = ALT_FILLS[(ridx) % 2]
+    for ci, val in enumerate(values, 1):
+        cell = ws_res.cell(row=ridx, column=ci, value=val)
+        cell.fill = row_fill
+        cell.font = NORMAL_FONT
+        cell.border = THIN_BORDER
+        if ci in RES_PRICE_COLS:
+            cell.number_format = CURRENCY_FMT
+            cell.alignment = RIGHT
+        else:
+            cell.alignment = LEFT
+
+# Grand total row
+grand_row = len(local_order) + 2
+ws_res.row_dimensions[grand_row].height = 22
+grand_mantt   = round(sum(local_sum[c]["TOTAL_MANTT"]   for c in local_order), 2)
+grand_recarga = round(sum(local_sum[c]["TOTAL_RECARGA"] for c in local_order), 2)
+grand_cobro   = round(sum(local_sum[c]["COBRO_ANUAL"]   for c in local_order), 2)
+grand_vals = [
+    "GRAN TOTAL", "", f"{len(local_order)} LOCALES", "",
+    sum(local_sum[c]["N_EXTINTORES"] for c in local_order),
+    grand_mantt, grand_recarga, grand_cobro, "", "",
+]
+for ci, val in enumerate(grand_vals, 1):
+    cell = ws_res.cell(row=grand_row, column=ci, value=val)
+    cell.fill = COL_HDR_FILL
+    cell.font = HDR_FONT
+    cell.border = THIN_BORDER
+    if ci in RES_PRICE_COLS:
+        cell.number_format = CURRENCY_FMT
+        cell.alignment = RIGHT
+    else:
+        cell.alignment = CENTER
 
 
-# Sheet 3: AUDITORÍA
+# ── Sheet 3: AUDITORÍA ───────────────────────────────────────────────────────
 ws_aud = wb.create_sheet("AUDITORÍA")
-ws_aud.append(["TIPO", "CÓDIGO", "DETALLE"])
-style_header(ws_aud, H3_FILL)
+ws_aud.sheet_view.showGridLines = False
+ws_aud.row_dimensions[1].height = 22
 
+AUD_COLS = ["TIPO", "CÓDIGO", "DETALLE"]
+AUD_WIDTHS = [28, 12, 80]
+for ci, (col_name, width) in enumerate(zip(AUD_COLS, AUD_WIDTHS), 1):
+    cell = ws_aud.cell(row=1, column=ci, value=col_name)
+    cell.fill = AUD_FILL
+    cell.font = HDR_FONT
+    cell.alignment = CENTER
+    cell.border = THIN_BORDER
+    ws_aud.column_dimensions[get_column_letter(ci)].width = width
+
+aud_rows = []
 for k in sorted(missing_from_final):
     info = presupuesto_map[k]
-    ws_aud.append(["EN_PRESUP_SIN_EXTINTOR", fmt_code(*k),
-                   f"{info['cc_pres']} – {info['marca']} – {info['nombre']}"])
-
+    aud_rows.append(["EN_PRESUP_SIN_EXTINTOR", fmt_code(*k),
+                     f"{info['cc_pres']} – {info['marca']} – {info['nombre']}"])
 for k in sorted(extra_in_final):
-    ws_aud.append(["EN_MATRIZ_SIN_PRESUP", fmt_code(*k), "Nuevo local no en PRESUPUESTO 2026"])
-
+    aud_rows.append(["EN_MATRIZ_SIN_PRESUP", fmt_code(*k), "Nuevo local no en PRESUPUESTO 2026"])
 for r in final_rows:
     if r["NOTAS"]:
-        ws_aud.append(["PRECIO_NO_HALLADO", r["CÓDIGO"],
-                       f"{r['TIPO']} {r['CAPACIDAD']} – {r['NOTAS']}"])
+        aud_rows.append(["PRECIO_NO_HALLADO", r["CÓDIGO"],
+                         f"{r['TIPO']} {r['CAPACIDAD']} – {r['NOTAS']}"])
+aud_rows.append(["FUSIONADO", "H068",
+                 "Heladerías Mall del Norte fusionado en K172 (extintor 'heladería' incluido en K172)"])
+aud_rows.append(["ELIMINADO", "G042",
+                 "GUS Quito Aguirre – local cerrado, excluido de la base"])
 
-ws_aud.append(["FUSIONADO", "H068",
-               "Heladerías Mall del Norte fusionado en K172 (extintor 'heladería' incluido en K172)"])
-ws_aud.append(["ELIMINADO", "G042",
-               "GUS Quito Aguirre – local cerrado, excluido de la base"])
-
-auto_width(ws_aud)
+for ridx, row_data in enumerate(aud_rows, 2):
+    fill = ALT_FILLS[ridx % 2]
+    for ci, val in enumerate(row_data, 1):
+        cell = ws_aud.cell(row=ridx, column=ci, value=val)
+        cell.fill = fill
+        cell.font = NORMAL_FONT
+        cell.border = THIN_BORDER
+        cell.alignment = LEFT
 
 
 wb.save(OUT)
