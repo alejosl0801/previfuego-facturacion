@@ -325,15 +325,29 @@ def main():
             if subtotal is None:
                 estado = "SIN_SUBTOTAL"
                 diff_pct = None
+                notas = note or ""
             elif valor_db is None or valor_db == 0:
                 estado = "SIN_VALOR_DB"
                 diff_pct = None
+                notas = note or ""
             else:
                 diff_pct = abs(subtotal - valor_db) / valor_db * 100
                 if diff_pct <= 1.0:
                     estado = "OK"
+                    notas = note or ""
                 else:
-                    estado = "INCONSISTENCIA"
+                    # For RECARGA months: check if cotizacion matches MANTT instead
+                    notas_extra = ""
+                    if tipo == "RECARGA" and db_entry["mantt"] is not None:
+                        diff_vs_mantt = abs(subtotal - db_entry["mantt"]) / db_entry["mantt"] * 100 if db_entry["mantt"] else 999
+                        if diff_vs_mantt <= 1.0:
+                            estado = "COT_DEBE_RECARGA"
+                            notas_extra = f"Cotización emitida como MANTENIMIENTO (${subtotal}={db_entry['mantt']}), debe ser RECARGA (${valor_db})"
+                        else:
+                            estado = "INCONSISTENCIA"
+                    else:
+                        estado = "INCONSISTENCIA"
+                    notas = (notas_extra or note or "")
 
             if diff_pct is not None:
                 print(f" → {estado} subtotal={subtotal} db={valor_db} diff={diff_pct:.1f}%")
@@ -350,7 +364,7 @@ def main():
                 "TIPO": tipo,
                 "DIFERENCIA%": round(diff_pct, 2) if diff_pct is not None else None,
                 "ESTADO": estado,
-                "NOTAS": note if note else "",
+                "NOTAS": notas,
             })
 
     # ─── GENERATE EXCEL REPORT ────────────────────────────────────────────────
@@ -385,6 +399,7 @@ def main():
     fill_inconsistency = PatternFill("solid", fgColor="FFC7CE")
     fill_warn = PatternFill("solid", fgColor="FFEB9C")
     fill_error = PatternFill("solid", fgColor="D9D9D9")
+    fill_debe_recarga = PatternFill("solid", fgColor="F4B942")  # naranja: cotizacion incorrecta
 
     for r_dict in rows:
         row_data = [r_dict[h] for h in headers]
@@ -395,6 +410,8 @@ def main():
             fill = fill_ok
         elif estado == "INCONSISTENCIA":
             fill = fill_inconsistency
+        elif estado == "COT_DEBE_RECARGA":
+            fill = fill_debe_recarga
         elif estado in ("SIN_SUBTOTAL", "SIN_MATCH_DB", "SIN_VALOR_DB"):
             fill = fill_warn
         else:
@@ -416,6 +433,7 @@ def main():
     total = len(rows)
     ok = sum(1 for r in rows if r["ESTADO"] == "OK")
     inconsistencias = sum(1 for r in rows if r["ESTADO"] == "INCONSISTENCIA")
+    cot_debe_recarga = sum(1 for r in rows if r["ESTADO"] == "COT_DEBE_RECARGA")
     sin_subtotal = sum(1 for r in rows if r["ESTADO"] == "SIN_SUBTOTAL")
     sin_match = sum(1 for r in rows if r["ESTADO"] == "SIN_MATCH_DB")
     sin_valor_db = sum(1 for r in rows if r["ESTADO"] == "SIN_VALOR_DB")
@@ -426,9 +444,10 @@ def main():
         ["", ""],
         ["TOTAL archivos revisados", total],
         ["OK (diferencia <= 1%)", ok],
-        ["INCONSISTENCIAS (diferencia > 1%)", inconsistencias],
+        ["INCONSISTENCIAS DE PRECIO (diferencia > 1%)", inconsistencias],
+        ["COT_DEBE_RECARGA (emitida como MANT, debe ser RECARGA)", cot_debe_recarga],
         ["SIN SUBTOTAL en cotizacion", sin_subtotal],
-        ["SIN MATCH en base de datos", sin_match],
+        ["SIN MATCH en base de datos (otras marcas)", sin_match],
         ["SIN VALOR en base de datos", sin_valor_db],
         ["ERRORES (descarga/parseo)", errors],
     ]
@@ -440,7 +459,7 @@ def main():
 
     ws_sum.append(["", ""])
     ws_sum.append(["DETALLE POR MES", ""])
-    ws_sum.append(["MES", "TOTAL", "OK", "INCONSISTENCIA", "OTROS"])
+    ws_sum.append(["MES", "TOTAL", "OK", "INCONSISTENCIA", "COT_DEBE_RECARGA", "OTROS"])
 
     by_month = defaultdict(list)
     for r in rows:
@@ -453,8 +472,9 @@ def main():
         m_total = len(month_rows)
         m_ok = sum(1 for r in month_rows if r["ESTADO"] == "OK")
         m_inc = sum(1 for r in month_rows if r["ESTADO"] == "INCONSISTENCIA")
-        m_other = m_total - m_ok - m_inc
-        ws_sum.append([mes_name, m_total, m_ok, m_inc, m_other])
+        m_rec = sum(1 for r in month_rows if r["ESTADO"] == "COT_DEBE_RECARGA")
+        m_other = m_total - m_ok - m_inc - m_rec
+        ws_sum.append([mes_name, m_total, m_ok, m_inc, m_rec, m_other])
 
     wb_out.save(OUTPUT_PATH)
     print(f"Saved: {OUTPUT_PATH}")
@@ -465,11 +485,20 @@ def main():
     print(f"  Total files reviewed : {total}")
     print(f"  OK                   : {ok}")
     print(f"  INCONSISTENCIAS      : {inconsistencias}")
+    print(f"  COT_DEBE_RECARGA     : {cot_debe_recarga}")
     print(f"  SIN SUBTOTAL         : {sin_subtotal}")
     print(f"  SIN MATCH DB         : {sin_match}")
     print(f"  SIN VALOR DB         : {sin_valor_db}")
     print(f"  ERRORES              : {errors}")
     print()
+
+    if cot_debe_recarga > 0:
+        print("COT_DEBE_RECARGA (emitidas como MANTENIMIENTO, deben rehacerse como RECARGA):")
+        for r in rows:
+            if r["ESTADO"] == "COT_DEBE_RECARGA":
+                print(f"  {r['MES']:12} {r['LOCAL_CODE']:8} {str(r['LOCAL_NOMBRE'])[:35]:35} "
+                      f"COT={r['SUBTOTAL_COT']:8.2f} RECARGA_CORRECTA={r['VALOR_DB']:8.2f}")
+        print()
 
     if inconsistencias > 0:
         print("INCONSISTENCIAS DETAIL:")
