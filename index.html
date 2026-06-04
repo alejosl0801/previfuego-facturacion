@@ -218,6 +218,57 @@
     <div class="step" id="step4"><span class="num">4</span>Generar</div>
   </div>
 
+  <!-- DESCARGAS -->
+  <div class="card">
+    <div class="card-header" onclick="toggleCard('descargas')">
+      <h2>📥 Archivos y Base de Datos</h2>
+      <span class="toggle" id="descargas-toggle">▼</span>
+    </div>
+    <div class="card-body" id="descargas-body">
+      <p style="font-size:13px;color:#555;margin-bottom:16px;">
+        Descarga la base de datos consolidada de extintores del Grupo KFC con costos de mantenimiento y recarga, fórmulas detalladas e inconsistencias detectadas.
+      </p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+
+        <div style="background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px;padding:20px;flex:1;min-width:240px;text-align:center;">
+          <div style="font-size:36px;margin-bottom:8px;">📊</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS KFC</div>
+          <div style="font-size:12px;color:#666;margin-bottom:14px;">
+            195 locales · 1,070 extintores<br>
+            3 hojas: Detalle, Resumen, Inconsistencias<br>
+            Precios MANTT y RECARGA por extintor
+          </div>
+          <a href="BASE_DATOS_KFC.xlsx" download="BASE_DATOS_KFC.xlsx"
+             style="display:inline-block;background:#1F4E79;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
+            ⬇️ Descargar Excel
+          </a>
+        </div>
+
+        <div style="background:#f0fff4;border:1px solid #b0e0c0;border-radius:8px;padding:20px;flex:1;min-width:240px;text-align:center;">
+          <div style="font-size:36px;margin-bottom:8px;">🔄</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">REGENERAR BASE DE DATOS</div>
+          <div style="font-size:12px;color:#666;margin-bottom:14px;">
+            Reconstruye la base desde Dropbox<br>
+            con los datos más recientes del<br>
+            MATRIZ EXTINTORES GRUPO KFC
+          </div>
+          <button onclick="regenerarBaseDatos()"
+             style="background:#375623;color:white;padding:9px 20px;border-radius:6px;border:none;font-size:13px;font-weight:600;cursor:pointer;">
+            🔄 Actualizar desde Dropbox
+          </button>
+          <div id="regen-status" style="margin-top:10px;font-size:12px;color:#555;min-height:20px;"></div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:16px;padding:12px 16px;background:#fffbe6;border:1px solid #f0d060;border-radius:6px;font-size:12px;color:#7a5c00;">
+        <strong>ℹ️ Nota:</strong> La base de datos usa el ciclo <strong>OCT 2026 → SEP 2027</strong> por defecto.
+        Locales con otro ciclo de recarga deben confirmarse y actualizarse manualmente.
+        El campo <em>RECARGA_2026</em> indica si al local le corresponde recarga en ese período.
+      </div>
+    </div>
+  </div>
+
   <!-- CONFIG -->
   <div class="card">
     <div class="card-header" onclick="toggleCard('cfg')">
@@ -1118,6 +1169,179 @@ function enableGenerarBtns() {
 
 function markOutput(id) {
   document.getElementById(id).classList.add('ready');
+}
+
+// ─── REGENERAR BASE DE DATOS ──────────────────────────────────────────────────
+async function regenerarBaseDatos() {
+  const status = document.getElementById('regen-status');
+  const token = document.getElementById('dropboxToken')?.value?.trim() || localStorage.getItem('dropboxToken') || '';
+  if (!token) {
+    status.innerHTML = '<span style="color:red">⚠️ Configura tu token de Dropbox primero (sección Configuración)</span>';
+    return;
+  }
+  status.textContent = '⏳ Descargando MATRIZ desde Dropbox...';
+
+  const MANTT = {
+    'PQS|5':2,'PQS|10':4,'PQS|20':8,
+    'CO2|5':2,'CO2|10':4,'CO2|20':8,'CO2|50':20,'CO2|75':30,
+    'TIPO K|2.5':8
+  };
+  const RECARGA = {
+    'PQS|5':4.90,'PQS|10':9.80,'PQS|20':19.60,
+    'CO2|5':4.50,'CO2|10':9.00,'CO2|20':18.00,'CO2|50':45,'CO2|75':67.50,
+    'TIPO K|2.5':98.80
+  };
+  const COMPANY = {
+    'K':['INT FOOD SERVICES CORP SA','KFC'],
+    'G':['INT FOOD SERVICES CORP SA','KFC'],
+    'M':['SHEMLON SA','MENESTRAS'],
+    'T':['DELI-INTERNACIONAL SA','TROPI'],
+    'I':['','IL CAPPO'],
+    'V':['PROMOTORA ECUATORIANA DE CAFÉ DE COLOMBIA SA','JUAN VALDEZ'],
+    'BS':['SHEMLON SA','BAGUETERIE'],
+    'CN':['SHEMLON SA','CAJUN'],
+    'E':['','ESPAÑOL'],
+  };
+  const MONTHS = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+  const SKIP_RE = /^(LOCALES|TOTAL|TROPI$|ESPAÑOL$|MENESTRAS$|IL CAPPO$|JUAN VALDEZ$|DELI$|KFC$|IVORY$|BAGUET|CAJUN$|OFICINAS|CC$|SUBTOTAL)/i;
+
+  function normTipo(v) {
+    if (!v) return '';
+    const s = String(v).trim().toUpperCase();
+    if (['K','TIPO K','TIPO  K','TYPE K'].includes(s)) return 'TIPO K';
+    if (s.startsWith('CO2')) return 'CO2';
+    if (s.startsWith('PQS')) return 'PQS';
+    return s;
+  }
+  function normCap(v) {
+    if (v == null) return '';
+    if (typeof v === 'number') {
+      return Number.isInteger(v) ? String(v) : String(Math.round(v*10)/10);
+    }
+    const s = String(v).replace(/[a-zA-Z\s]/g,'').replace(',','.').replace('..','.');
+    const m = s.match(/(\d+(?:\.\d+)?)/);
+    if (m) {
+      const f = parseFloat(m[1]);
+      return Number.isInteger(f) ? String(f) : String(Math.round(f*10)/10);
+    }
+    return s;
+  }
+  function normCC(raw) {
+    if (!raw) return [null,null];
+    const s = String(raw).trim(), su = s.toUpperCase();
+    if (SKIP_RE.test(su)) return [null,null];
+    let m;
+    if ((m=su.match(/^KFC\s+(\d+)/))) return [`K${String(parseInt(m[1])).padStart(3,'0')}`,'K'];
+    if ((m=su.match(/^KFCK(\d+)/))) return [`K${String(parseInt(m[1])).padStart(3,'0')}`,'K'];
+    if ((m=su.match(/^GUS\s*(\d+)/))) return [`G${String(parseInt(m[1])).padStart(3,'0')}`,'G'];
+    if ((m=su.match(/^JV\s*(\d+)/))) return [`V${String(parseInt(m[1])).padStart(3,'0')}`,'V'];
+    if ((m=su.match(/^BS\s*(\d+)/))) return [`BS${String(parseInt(m[1])).padStart(3,'0')}`,'BS'];
+    if ((m=su.match(/^(?:CN|CJNC)\s*(\d+)/))) return [`CN${String(parseInt(m[1])).padStart(3,'0')}`,'CN'];
+    if ((m=su.match(/^([A-Z]+)(\d+)EC$/))) {
+      let pr = m[1].replace('KFC','K').replace('GUS','G');
+      return [`${pr}${String(parseInt(m[2])).padStart(3,'0')}`, pr];
+    }
+    for (const [pr,pn] of [['V','V'],['M','M'],['T','T'],['I','I'],['J','V'],['K','K'],['G','G'],['E','E'],['A','A']]) {
+      if ((m=su.match(new RegExp(`^${pr}\\s+(\\d+)`)))) return [`${pn}${String(parseInt(m[1])).padStart(3,'0')}`,pn];
+      if ((m=su.match(new RegExp(`^${pr}(\\d+)\\b`)))) return [`${pn}${String(parseInt(m[1])).padStart(3,'0')}`,pn];
+    }
+    if ((m=su.match(/^([A-Z]{1,4})\s*(\d+)/))) return [`${m[1]}${String(parseInt(m[2])).padStart(3,'0')}`, m[1]];
+    return [null,null];
+  }
+
+  try {
+    const resp = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method:'POST',
+      headers:{
+        'Authorization':`Bearer ${token}`,
+        'Dropbox-API-Arg': JSON.stringify({path:'/Previfuego/MATRIZ LOCALES/MATRIZ EXTINTORES GRUPO KFC.xlsx'})
+      }
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    status.textContent = '⏳ Procesando datos...';
+    const buf = await resp.arrayBuffer();
+    const wbSrc = XLSX.read(buf, {type:'array'});
+
+    const rows = [];
+    for (const sname of wbSrc.SheetNames) {
+      if (!MONTHS.includes(sname.trim().toUpperCase())) continue;
+      const mes = sname.trim().toUpperCase();
+      const ws = wbSrc.Sheets[sname];
+      const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+
+      let hdr = 0;
+      for (let i=0;i<Math.min(5,data.length);i++) {
+        if (data[i] && String(data[i][0]||'').trim().toUpperCase()==='CC') {hdr=i;break;}
+      }
+
+      let curCode=null, curPfx=null, curOrig=null;
+      for (let ri=hdr+1;ri<data.length;ri++) {
+        const row = data[ri]; if (!row) continue;
+        const gc = i => (row[i]!=null ? String(row[i]).trim() : '');
+        const ccRaw = row[0]; const ubi=gc(1); const tipoR=row[2]; const capR=row[3];
+        const añoUlt = row[9]!=null ? String(parseInt(row[9]))||'' : '';
+        const añoProx = row[10]!=null ? String(parseInt(row[10]))||'' : '';
+
+        if (ccRaw!=null && String(ccRaw).trim()) {
+          const [code,pfx] = normCC(ccRaw);
+          if (code) {curCode=code; curPfx=pfx; curOrig=String(ccRaw).trim();}
+        }
+        if (!ubi && tipoR==null && capR==null) continue;
+        if (!ubi && !tipoR) continue;
+        if (ubi && SKIP_RE.test(ubi)) continue;
+
+        const tipo=normTipo(tipoR), cap=normCap(capR), key=`${tipo}|${cap}`;
+        const cm=MANTT[key]||0, cr=RECARGA[key]||0;
+        const capDisp = tipo==='TIPO K' ? `${cap} GLS` : (tipo ? `${cap} LBS` : cap);
+        const [emp,marca] = COMPANY[curPfx]||COMPANY[(curPfx||'')[0]]||['','DESCONOCIDO'];
+        const recarga = (añoProx===''||añoProx==='2026') ? 'SI' : 'NO';
+        const crU = recarga==='SI' ? cr : 0;
+        const cobro = cm+crU;
+        const formula = recarga==='SI' && crU>0 ? `MANTT $${cm.toFixed(2)} + RECARGA $${crU.toFixed(2)} = $${cobro.toFixed(2)}` : `MANTT $${cm.toFixed(2)}`;
+
+        rows.push({CÓDIGO:curCode||'?',CC_ORIGINAL:curOrig||'',MARCA:marca,EMPRESA:emp,MES:mes,
+          UBICACIÓN:ubi,TIPO:tipo,CAPACIDAD:capDisp,COSTO_MANTT:cm,RECARGA_2026:recarga,
+          COSTO_RECARGA:crU,COBRO_ANUAL:cobro,'FÓRMULA COBRO':formula,
+          AÑO_ULT_REC:añoUlt,AÑO_PROX_REC:añoProx,
+          NOTAS: cm===0&&tipo ? 'precio no hallado' : ''});
+      }
+    }
+
+    // Resumen por local
+    const locMap = {};
+    for (const r of rows) {
+      const k = `${r.CÓDIGO}|${r.MES}`;
+      if (!locMap[k]) locMap[k]={CÓDIGO:r.CÓDIGO,CC_ORIGINAL:r.CC_ORIGINAL,MARCA:r.MARCA,EMPRESA:r.EMPRESA,MES:r.MES,
+        N_EXTINTORES:0,TOTAL_MANTT:0,TOTAL_RECARGA:0,TOTAL_COBRO:0,ext:[],RECARGA_2026:r.RECARGA_2026,AÑO_PROX_REC:r.AÑO_PROX_REC};
+      const li=locMap[k];
+      li.N_EXTINTORES++;li.TOTAL_MANTT+=r.COSTO_MANTT;li.TOTAL_RECARGA+=r.COSTO_RECARGA;li.TOTAL_COBRO+=r.COBRO_ANUAL;
+      li.ext.push(`${r.TIPO} ${r.CAPACIDAD}`);
+    }
+    const resumen = Object.values(locMap).map(li=>{
+      const cnt={};li.ext.forEach(e=>cnt[e]=(cnt[e]||0)+1);
+      const desglose=Object.entries(cnt).map(([e,n])=>`${n}x ${e}`).join(', ');
+      const m=Math.round(li.TOTAL_MANTT*100)/100, rc=Math.round(li.TOTAL_RECARGA*100)/100;
+      return {...li,DESGLOSE_EXTINTORES:desglose,TOTAL_MANTT:m,TOTAL_RECARGA:rc,
+        TOTAL_COBRO_ANUAL:Math.round(li.TOTAL_COBRO*100)/100,
+        FÓRMULA_TOTAL: rc>0 ? `MANTT $${m.toFixed(2)} + RECARGA $${rc.toFixed(2)} = $${(m+rc).toFixed(2)}` : `MANTT $${m.toFixed(2)}`};
+    });
+
+    // Generar Excel
+    const wbOut = XLSX.utils.book_new();
+    const ws1 = XLSX.utils.json_to_sheet(rows);
+    const ws2 = XLSX.utils.json_to_sheet(resumen.map(r=>({
+      CÓDIGO:r.CÓDIGO,CC_ORIGINAL:r.CC_ORIGINAL,MARCA:r.MARCA,EMPRESA:r.EMPRESA,MES:r.MES,
+      N_EXTINTORES:r.N_EXTINTORES,DESGLOSE_EXTINTORES:r.DESGLOSE_EXTINTORES,
+      TOTAL_MANTT:r.TOTAL_MANTT,TOTAL_RECARGA:r.TOTAL_RECARGA,TOTAL_COBRO_ANUAL:r.TOTAL_COBRO_ANUAL,
+      FÓRMULA_TOTAL:r.FÓRMULA_TOTAL,RECARGA_2026:r.RECARGA_2026,AÑO_PROX_REC:r.AÑO_PROX_REC
+    })));
+    XLSX.utils.book_append_sheet(wbOut, ws1, 'DETALLE');
+    XLSX.utils.book_append_sheet(wbOut, ws2, 'RESUMEN_LOCALES');
+    XLSX.writeFile(wbOut, 'BASE_DATOS_KFC.xlsx');
+    status.innerHTML = `<span style="color:green">✅ Descargado: ${rows.length} extintores, ${Object.keys(locMap).length} locales</span>`;
+  } catch(e) {
+    status.innerHTML = `<span style="color:red">❌ Error: ${e.message}</span>`;
+  }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
