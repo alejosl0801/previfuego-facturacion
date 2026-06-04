@@ -5,15 +5,24 @@ build_database.py  –  Builds BASE_DATOS_KFC.xlsx (198 locales)
 Sources (Dropbox):
   1. PRESUPUESTO PROVEEDORES 2026  → brand names (source of truth)
   2. MATRIZ EXTINTORES GRUPO KFC   → extintor data (primary)
-  3. PROYECCIÓN INGRESOS MENSUAL 2026 → dates + data for K079/K192/K194
+  3. PROYECCIÓN INGRESOS MENSUAL 2026 → dates + data for missing locals
+
+Logic:
+  - 200 PRESUPUESTO PREVIFUEGO rows
+  - Remove G042 (closed) → 199
+  - H068 merges into K172 (not a separate local) → 198 unique locals
+  - V091 not yet in PRESUPUESTO but IS in PROYECCIÓN → counted as the 198th
+  - ALL locals are in OCT2026-SEP2027 recarga cycle
+  - COBRO = RECARGA price (which already includes mantt)
+  - Cycle sheet months: OCT/NOV/DEC → recarga 2026; JAN-SEP → recarga 2027
 """
 
-import requests, io, re, time, openpyxl
+import requests, io, re, time, json, openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 TOKEN = (
-    "sl.u.AGgF5XKR5BwOCmo95YjLwdRE-buSMDIWiOPYXcWcE7SUTTaHr9AIpXz-9MVh42IhLVZsHJCrKnkxOwzu8i5hgLrIuJC8XlRGaCprnDHwr1Czw7hxc92BXwjNMEAMvR0iXS88gLeyV_v4Wbj4KCTCMX7qlmtztJWZSS1oN0mfnHX2dj2SP2A_4Ari0pVrlMqbUbnWlRGYRNgHrMA7K6bbUCfeBq-3IO8VaTTkZEnyYNMKPHUHu1CHyxypSrC44D5jlBEyPLguvyKppj_qwNQkfJSHHhLv-VvqohTPLRMewH0inx-UpIcq7ku28sGrd04g2-R2YJUOcEbAWOgu5Uwm2VCXXwTxTlbBPV2NQe--n_ZT_uzACDQHLV0E9c0FIA9Z8_v56DGJch7mMmR7TbavjM9v2yFDzf8Jdw4ip3LCYS1yhkHwV-_CTZ8fFdTcJJ5gm4CbjCGhI-k9eGvmp4xFeId6Wra8yWLA_DZd-Q11gHbb-FY7vCD7hWvNi0B_3N86FG4S1ha_0loOmJkav9dk6L81RhIcAzLiMsN64rO0hTS4gugUGT8MuXm9UbAwNL_7untY5spa_8ecfefeC894o-Ae3TVeAji3dvcrUYsgClYgK1fkylqt1SaeOj1K0PZFcjmxin-K9BUvfGTjUclowh-HxEDl7n6-QofS1DqczB0loetZV27LHZFoBGl4FDRpSDhydxE9XkwyoIXg6LSfUUNCwi9fFlBnISrO5eZaGrCjpqpftgEug_jPjRLSILFra6uakJOVT8gS-aZoWBZv9YacSnrJ6iuRf0mRo6X7nV9SOm2cmdtyUZvdxBxtjTfaQfFWD8VkHHmTHLR-Fmt50on5DDaocHhfzkJt8wyafU4YH7NSbz2mhfFmxcb1s5WEQrgslgW5dKmmi6VGBIcPDMeIPxoRZe43aodjcWYzZmOT7czMjPpI5J6CNalK8HZMI43oRVwKAml3TXMEg0CLhtlMRdsafEo3rIdoB81ZK3RbnnGTCXkXuXKDdzd1qHRyE3Z2DCbcHFYvwzYcT6gr4VnIc4WmsTt7f4s4bGoaHoJxD8K1zOn85J_VLHJBOXdknyDSyHxhNPSKebKo3_pAFXJe4Q4HoaCrGyxHH09xGS_1TteDVPnHqRUFK5fIa1EezABLZfDKnvKOBxLeaTe9AEO89ddAiYvpJaGkpCKKG0GIOtivpsNRwi4tczW06bmZZAUPLQFjkWhTcxvh_7QHYG_Jm63xC1B7st_7Zkez4HnAzUsTCEucTpIpTWvwAcEuu-5cgRUdbe2XHjeSeeFUUmPB"
+    "sl.u.AGi_BG-2pjHUsNGNwXqO3-9F2zw0Ho_5by7OvUjvSERga-7WOZCiThedAHHGsQvRU9ngFrB_BDlbbft_eXoaGsNbI1OOmSXWBlCyYVWoF_F-ACSEh91E61VYOjtgKOc9f8FKYj2HyT4TLx4UTB-djpNthqbpCHLhQZMVUv_70laskwf2__wRkcRRPVgXifzMtv1-2Le00eVhlbiykP324HCcb73dMzvT4jQJucswMi2ZzZBiabYD_B-I1m0ugl6DXki56kdyza2YlMUnz6ihJuzPO66SRjnvq9Cf80q59zXWXcEhACPttZl3fmwA7TjliQh9bBkQ3qrjonaRiPRRRqxybaV_4v_5qZ6v431aSJRT2O3z_zPOCpl7eCyk0spR8fNV1ExXwvFKN1N3N4pMDcdAlWkZjg0g74WidzCQRf4fLvhJuf3-eFBBLnQeZHuxvfTQHJZbWrW3zGPu8fctyow14V4ejg37DELUHYXFU5KEOYS92dZzHXFq7WY0C-Drz563sVj1Mo2_kTQ68-HJheGLdWu_4Dsi1PNU4UCn0NePzsFWLKyWYN9o-byG8cpUNbCLbvKRXROecemUDPI1Hu1a2bT0lyR3JVFPtLtAuBUHHGiZIO2KKpmWKgUsaNkzYtOHM51_8EpFa_LYw59Cg3b_Q28GU3fYycG6fl0lDeLNzlcl8w7YamQtyMpXB_Miln3FGzIb6wsktmtkSsdAmswhQPrWTTYEkYEXjstzxdG7qvTIzNMhotEtn-RyzsJ6xAzDLEeLojvoufcaZx0JBz1i64Zv2D1o_BEKQcbFt5euKpa1V8JSdL_mcuFq8QNaDT1lJanha1BazKogV9KRDP1-SgmGsrFXbH0nH-PnOKQn3-Ntie2mYwbydRR45QvAIJBm2XhWEwJ6lWzg9TgOE_hixkDJGCrtJ7sQgHYd6mF4qmEPKNL-JBxEQbb0ZAFXaKl8S9r4lhjbeZys9J4FrGTuAn1hoyIePGNz7eqY4OUVYLcWeUTIitSgsoK0BbRbowY_KYybXLYZpNjauzEasRmFHWh3KnNfXvxHws-nVReHtj0Ofd-1E8I51ony8li6vOxcsMhF1CTyw4N7fuMJHge_QsVcEreUcMVjlXhBcmUKgmlnPqyzjs4ia44HYRsyAUs9XuI_un6EzYnZLEKTnHzP4-AYrlrn5y8PfIBEXFE9on9cAAiFz70uOjcPiWFd_XJhLuYHQG6QCy8ueG7Y09ErglEztMbZLxpkZk1QNbxOCpvBL_eUWDmRR1x1q-dFdeYg0U4fFuR_NlMM7fwNF1--"
 )
 
 FILES = {
@@ -22,32 +31,10 @@ FILES = {
     "PROYECCION":  "/Previfuego/PRESUPUESTOS/PROYECCION INGRESOS MENSUAL 2026.xlsx",
 }
 
-
-def dropbox_download(path, retries=4):
-    delay = 2
-    for attempt in range(retries + 1):
-        try:
-            r = requests.post(
-                "https://content.dropboxapi.com/2/files/download",
-                headers={
-                    "Authorization": f"Bearer {TOKEN}",
-                    "Dropbox-API-Arg": f'{{"path": "{path}"}}',
-                },
-                timeout=90,
-            )
-            if r.status_code in (503, 429) and attempt < retries:
-                print(f"  {r.status_code} – retry in {delay}s …")
-                time.sleep(delay); delay *= 2; continue
-            r.raise_for_status()
-            return r.content
-        except requests.RequestException as e:
-            if attempt < retries:
-                print(f"  Error: {e} – retry in {delay}s …")
-                time.sleep(delay); delay *= 2
-            else:
-                raise
-    return None
-
+MONTHS = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
+          "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"]
+MONTH_IDX = {m: i for i, m in enumerate(MONTHS)}
+OCT_TO_DEC = {"OCTUBRE", "NOVIEMBRE", "DICIEMBRE"}
 
 # ── Pricing ───────────────────────────────────────────────────────────────────
 
@@ -85,76 +72,122 @@ CAP_DISPLAY = {
     ("TIPO K", "2.5"): "2.5 GLS",
 }
 
-MONTHS = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
-          "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"]
-MONTH_IDX = {m: i for i, m in enumerate(MONTHS)}
+# Brand fallback when not in PRESUPUESTO (for new locals K192, K194, V091, etc.)
+BRAND_FALLBACK = {
+    "K":  "KFC",
+    "G":  "GUS",
+    "M":  "MENESTRAS DEL NEGRO",
+    "T":  "TROPIBURGER",
+    "V":  "JUAN VALDEZ",
+    "I":  "ILCAPPO",
+    "J":  "CAJUN",
+    "BS": "BASKIN ROBBINS",
+    "CN": "CINNABON",
+    "DI": "DOLCE INCONTRO",
+    "CA": "CAFA",
+    "A":  "AMERICAN DELI",
+    "B":  "AMERICAN DELI",
+    "F":  "AMERICAN DELI",
+    "E":  "ESPAÑOL",
+    "R":  "CASA RES",
+    "H":  "HELADERIAS",
+}
+
+# Normalise brand names from PRESUPUESTO to consistent forms
+MARCA_NORM = {
+    "BASKIN":             "BASKIN ROBBINS",
+    "DOLCE":              "DOLCE INCONTRO",
+    "CAFA":               "CAFA",
+    "GUS":                "GUS",
+    "ILCAPPO":            "IL CAPPO",
+    "HELADERIAS":         "HELADERIAS",
+    "CASA RES":           "CASA RES",
+    "MENESTRAS DEL NEGRO":"MENESTRAS DEL NEGRO",
+}
 
 
-# ── Canonical CC ──────────────────────────────────────────────────────────────
+def marca_norm(raw):
+    if not raw: return ""
+    s = str(raw).strip()
+    return MARCA_NORM.get(s, s)
+
+
+# ── Dropbox download ──────────────────────────────────────────────────────────
+
+def dropbox_download(path, retries=4):
+    delay = 2
+    for attempt in range(retries + 1):
+        try:
+            r = requests.post(
+                "https://content.dropboxapi.com/2/files/download",
+                headers={
+                    "Authorization": f"Bearer {TOKEN}",
+                    "Dropbox-API-Arg": json.dumps({"path": path}),
+                },
+                timeout=90,
+            )
+            if r.status_code in (503, 429) and attempt < retries:
+                print(f"  HTTP {r.status_code} – retry in {delay}s …")
+                time.sleep(delay); delay *= 2; continue
+            r.raise_for_status()
+            return r.content
+        except requests.RequestException as e:
+            if attempt < retries:
+                print(f"  Error: {e} – retry in {delay}s …")
+                time.sleep(delay); delay *= 2
+            else:
+                raise
+
+
+# ── Canonical CC key ──────────────────────────────────────────────────────────
 
 def canonical(raw):
-    """Return (prefix, number) canonical pair. prefix ∈ {K,G,V,M,T,I,J,BS,CN,DI,CA,F,…}"""
+    """Return (prefix, number) tuple, or None if not parseable.
+    Prefix is the canonical brand prefix (K, G, V, J, CN, BS, …).
+    """
     if not raw:
         return None
     s = str(raw).strip().upper()
     s = re.sub(r'EC$', '', s).strip()
 
-    patterns = [
-        (r'^KFC(?:K+)?\s*(\d+)',   'K'),
-        (r'^GUS\s*(\d+)',           'G'),
-        (r'^JV\s*(\d+)',            'V'),   # Juan Valdez
-        (r'^(?:CJNC)\s*(\d+)',     'J'),   # CJNC = CAJUN
-        (r'^CN\s*(\d+)',            'CN'),  # CINNABON
-        (r'^BS\s*(\d+)',            'BS'),  # BASKIN ROBBINS
-        (r'^DI\s*(\d+)',            'DI'),
-        (r'^CA\s*(\d+)',            'CA'),
-        (r'^[JB]{1,2}\s*(\d+)',     'J'),   # J, JB, B – but B/JB are Juan Valdez?
-    ]
-    # Actually:  B and JB = Juan Valdez per user; J = CAJUN
-    # So separate them:
     for pat, pfx in [
-        (r'^KFC(?:K+)?\s*(\d+)',   'K'),
-        (r'^GUS\s*(\d+)',           'G'),
-        (r'^JV\s*(\d+)',            'V'),
-        (r'^JB\s*(\d+)',            'V'),   # JB = Juan Valdez
-        (r'^CJNC\s*(\d+)',          'J'),   # CAJUN (wrong notation in MATRIZ)
-        (r'^CN\s*(\d+)',            'CN'),
-        (r'^BS\s*(\d+)',            'BS'),
-        (r'^DI\s*(\d+)',            'DI'),
-        (r'^CA\s*(\d+)',            'CA'),
-        (r'^F\s*(\d+)',             'F'),
+        (r'^KFC(?:K+)?\s*(\d+)',  'K'),   # KFC02, KFCK192
+        (r'^GUS\s*(\d+)',          'G'),   # GUS49
+        (r'^JV\s*(\d+)',           'V'),   # JV15 → Juan Valdez
+        (r'^JB\s*(\d+)',           'V'),   # JB = alternate Juan Valdez notation
+        (r'^CJNC\s*(\d+)',         'J'),   # CJNC31 = CAJUN in MATRIZ
+        (r'^CN\s*(\d+)',           'CN'),  # CN04 = CINNABON
+        (r'^BS\s*(\d+)',           'BS'),  # BS04 = BASKIN ROBBINS
+        (r'^DI\s*(\d+)',           'DI'),  # DI01 = DOLCE INCONTRO
+        (r'^CA\s*(\d+)',           'CA'),  # CA01 = CAFA
+        (r'^F\s*0*(\d+)',          'F'),   # F003 = AMERICAN DELI (Aeropuerto)
     ]:
         m = re.match(pat, s)
         if m:
             return (pfx, int(m.group(1)))
 
-    # Single-letter + optional space + number
-    m = re.match(r'^([A-Z])\s+(\d+)', s)
-    if m:
-        ltr, num = m.group(1), int(m.group(2))
-        if ltr == 'B':
-            ltr = 'V'   # B = Juan Valdez
-        return (ltr, num)
-
-    # Letter(s) + number (no space)
-    m = re.match(r'^([A-Z]{1,3})(\d+)', s)
+    # Single letter + optional space + digits
+    m = re.match(r'^([A-Z])\s*(\d+)', s)
     if m:
         pfx, num = m.group(1), int(m.group(2))
-        if pfx == 'B':
-            pfx = 'V'
+        # J alone (not JV/JB) = CAJUN per user
+        return (pfx, num)
+
+    # Multi-letter + digits (handles ILCI02, AMCA19, ESPE07, TROT54 etc.)
+    m = re.match(r'^([A-Z]{2,4})\s*(\d+)', s)
+    if m:
+        pfx, num = m.group(1), int(m.group(2))
         return (pfx, num)
 
     return None
 
 
 def fmt_code(pfx, num):
-    """Format canonical pair back to display code."""
-    if pfx in ('K','G','M','T','V','I','J','F'):
-        return f"{pfx}{num:03d}"
-    if pfx in ('BS','CN','DI','CA'):
-        return f"{pfx}{num:03d}"
+    """Display code from canonical pair."""
     return f"{pfx}{num:03d}"
 
+
+# ── Tipo / capacidad normalisation ────────────────────────────────────────────
 
 def norm_tipo(raw):
     if raw is None: return ""
@@ -166,16 +199,14 @@ def norm_tipo(raw):
 
 
 def norm_cap(raw):
-    """Return numeric string: '5','10','20','50','75','2.5'"""
     if raw is None: return ""
     if isinstance(raw, (int, float)):
         v = float(raw)
         return str(int(v)) if v == int(v) else str(round(v, 1))
     s = str(raw).strip().upper()
-    # Remove letter suffixes, fix double-comma/period
     s = re.sub(r'[A-Z\s]', '', s)
     s = s.replace(",,", ".").replace(",", ".")
-    s = re.sub(r'\.+', '.', s)
+    s = re.sub(r'\.{2,}', '.', s)
     m = re.match(r'(\d+(?:\.\d+)?)', s)
     if m:
         v = float(m.group(1))
@@ -184,13 +215,12 @@ def norm_cap(raw):
 
 
 def norm_tipo_cap(tipo_r, cap_r):
-    """Normalize tipo and cap, applying corrections."""
     tipo = norm_tipo(tipo_r)
     cap  = norm_cap(cap_r)
-    # PQS 2.5 doesn't exist → must be TIPO K 2.5 GLS
+    # PQS 2.5 doesn't exist → TIPO K 2.5 GLS
     if tipo == "PQS" and cap == "2.5":
         tipo = "TIPO K"
-    # If cap raw contains "G" and value is 2.5 → TIPO K
+    # Cap raw has 'G' (gallons) and value is 2.5 → TIPO K
     if cap == "2.5" and cap_r and re.search(r'G', str(cap_r).upper()):
         tipo = "TIPO K"
     return tipo, cap
@@ -202,7 +232,7 @@ def to_year(v):
     except: return str(v).strip()
 
 
-# ── Download files ────────────────────────────────────────────────────────────
+# ── Download ──────────────────────────────────────────────────────────────────
 
 print("Downloading PRESUPUESTO …")
 data_pres = dropbox_download(FILES["PRESUPUESTO"])
@@ -220,157 +250,65 @@ wb_pres = openpyxl.load_workbook(io.BytesIO(data_pres), data_only=True)
 wb_mat  = openpyxl.load_workbook(io.BytesIO(data_mat),  data_only=True)
 wb_proy = openpyxl.load_workbook(io.BytesIO(data_proy), data_only=True)
 
-print(f"\nPRESUPUESTO sheets: {wb_pres.sheetnames}")
-print(f"MATRIZ sheets:      {wb_mat.sheetnames}")
-print(f"PROYECCION sheets:  {wb_proy.sheetnames}")
 
-
-# ── 1. Parse PRESUPUESTO – build {canonical_key: {empresa, marca, nombre}} ────
-# The PRESUPUESTO has one row per local with columns including CC code, empresa, marca.
-# We'll scan for "PREVIFUEGO" in each row to keep only our locals.
+# ── 1. Parse PRESUPUESTO (sheet SSO) ──────────────────────────────────────────
+# Structure: header at row 4 (0-indexed)
+#   col 1=EMPRESA, col 2=LOCAL (CC), col 3=C.COSTO, col 4=MARCA,
+#   col 5=NOMBRE LOCAL, col 6=RESPONSABLE, col 7=Proveedor
 
 print("\n=== Parsing PRESUPUESTO ===")
-presupuesto_map = {}   # canonical_key -> {empresa, marca, nombre_local, cc_pres}
-presupuesto_raw = []   # for debugging
+presupuesto_map = {}  # canonical_key -> {marca, nombre, cc_pres}
 
-for sheet_name in wb_pres.sheetnames:
-    ws = wb_pres[sheet_name]
-    rows = list(ws.iter_rows(values_only=True))
-    print(f"  Sheet '{sheet_name}': {len(rows)} rows")
+ws_sso = wb_pres["SSO"]
+pres_rows = list(ws_sso.iter_rows(values_only=True))
 
-    # Find header row: look for row containing "CC" and "EMPRESA" or "MARCA"
-    header_idx = 0
-    col_cc = col_empresa = col_marca = col_nombre = col_proveedor = None
+for row in pres_rows[5:]:  # skip title + blank + header rows
+    if not row or len(row) < 8:
+        continue
+    proveedor = str(row[7]).strip() if row[7] else ""
+    if proveedor.upper() != "PREVIFUEGO":
+        continue
+    cc_raw = row[2]
+    marca  = str(row[4]).strip() if row[4] else ""
+    nombre = str(row[5]).strip() if row[5] else ""
+    ckey = canonical(cc_raw)
+    if not ckey:
+        continue
+    presupuesto_map[ckey] = {
+        "marca":   marca_norm(marca),
+        "nombre":  nombre,
+        "cc_pres": str(cc_raw).strip() if cc_raw else "",
+    }
 
-    for i, row in enumerate(rows[:10]):
-        cells = [str(c).strip().upper() if c else "" for c in row]
-        if any("CC" in c for c in cells):
-            # Try to identify columns
-            for j, c in enumerate(cells):
-                if c == "CC" or c == "CÓDIGO" or c == "CODIGO":
-                    col_cc = j
-                elif "EMPRESA" in c:
-                    col_empresa = j
-                elif "MARCA" in c:
-                    col_marca = j
-                elif "LOCAL" in c or "NOMBRE" in c:
-                    col_nombre = j
-                elif "PROVEEDOR" in c or "SERVICIO" in c:
-                    col_proveedor = j
-            if col_cc is not None:
-                header_idx = i
-                break
+print(f"PRESUPUESTO entries: {len(presupuesto_map)}")
 
-    print(f"    Header at row {header_idx}: cc={col_cc} empresa={col_empresa} marca={col_marca} nombre={col_nombre} proveedor={col_proveedor}")
-
-    for row in rows[header_idx + 1:]:
-        if not row or all(c is None for c in row):
-            continue
-        row_str = " ".join(str(c).upper() for c in row if c)
-
-        # Check if this is a PREVIFUEGO row
-        if "PREVIFUEGO" not in row_str:
-            continue
-
-        # Get CC value
-        cc_val = None
-        if col_cc is not None and col_cc < len(row):
-            cc_val = row[col_cc]
-        else:
-            # Try first non-None cell
-            for c in row:
-                if c and str(c).strip():
-                    cc_val = c
-                    break
-
-        if not cc_val:
-            continue
-
-        ckey = canonical(cc_val)
-        if not ckey:
-            continue
-
-        # Get empresa and marca
-        empresa = ""
-        marca   = ""
-        nombre  = str(cc_val).strip().upper()
-
-        if col_empresa is not None and col_empresa < len(row) and row[col_empresa]:
-            empresa = str(row[col_empresa]).strip()
-        if col_marca is not None and col_marca < len(row) and row[col_marca]:
-            marca = str(row[col_marca]).strip()
-        # Also try extracting from CC name (e.g. "KFC 05 ALBORADA" contains brand implicitly)
-        if not marca:
-            # Detect brand from prefix
-            pfx = ckey[0]
-            marca = pfx  # will be overridden below if found in presupuesto text
-
-        presupuesto_map[ckey] = {
-            "empresa":    empresa,
-            "marca":      marca,
-            "cc_pres":    str(cc_val).strip(),
-        }
-        presupuesto_raw.append((ckey, str(cc_val).strip(), empresa, marca))
-
-    print(f"    Found {sum(1 for k in presupuesto_map)} PREVIFUEGO entries so far")
-
-print(f"\nTotal PRESUPUESTO entries: {len(presupuesto_map)}")
-
-# Show a sample
-print("Sample entries:")
-for k, v in list(presupuesto_map.items())[:10]:
-    print(f"  {k} → {v}")
-
-# Show what brands appear
-from collections import Counter
-brand_counter = Counter(v['marca'] for v in presupuesto_map.values())
-print("\nBrands in PRESUPUESTO:")
-for b, c in sorted(brand_counter.items(), key=lambda x: -x[1]):
-    print(f"  {b!r}: {c}")
-
-empresa_counter = Counter(v['empresa'] for v in presupuesto_map.values())
-print("\nEmpresas in PRESUPUESTO:")
-for e, c in sorted(empresa_counter.items(), key=lambda x: -x[1]):
-    print(f"  {e!r}: {c}")
+# Confirm G042 and H068 are there
+G042_KEY = ('G', 42)
+H068_KEY = ('H', 68)
+K172_KEY = ('K', 172)
+print(f"  G042 in PRESUPUESTO: {G042_KEY in presupuesto_map}")
+print(f"  H068 in PRESUPUESTO: {H068_KEY in presupuesto_map}")
 
 
-# ── 2. Parse MATRIZ – main extintor rows ──────────────────────────────────────
-# Sheets are month names. Columns: CC | UBICACION | TIPO | CAPACIDAD | ... | AÑO_ULT | AÑO_PROX
+# ── 2. Parse MATRIZ and PROYECCIÓN ────────────────────────────────────────────
 
-print("\n=== Parsing MATRIZ ===")
+SKIP_TIPO = re.compile(r'^(MANTENIMIENTO|SIST|SISTEMA|TOTAL|SUBTOTAL)', re.I)
 
-SKIP_ROW = re.compile(
-    r'(^TOTAL|^SUBTOTAL|^LOCALES|OFICINA|GRUPO KFC)',
-    re.IGNORECASE
-)
-
-def is_skip_ubicacion(s):
-    if not s: return True
-    su = s.strip().upper()
-    if SKIP_ROW.search(su): return True
-    # rows with just numbers or very short
-    if re.match(r'^\d+$', su): return True
-    return False
-
-
-def parse_sheet_extintor_rows(ws, mes):
-    """Return list of extintor dicts from a MATRIZ sheet."""
+def parse_extintor_sheet(ws, mes):
+    """Return list of extintor dicts from a monthly sheet."""
     all_rows = list(ws.iter_rows(values_only=True))
-    # Find header row
+
+    # Find header row (first row with ≥2 header-like keywords)
     header_idx = 0
-    for i, row in enumerate(all_rows[:8]):
+    for i, row in enumerate(all_rows[:10]):
         cells = [str(c).strip().upper() if c else "" for c in row]
-        # Header usually has CC, TIPO, CAPACIDAD
-        if sum(1 for c in cells if c in ("CC","TIPO","CAPACIDAD","UBICACION","UBICACIÓN")) >= 2:
-            header_idx = i
-            break
-        # Also accept row where first cell looks like a header
-        if any("CC" == c for c in cells):
+        hits = sum(1 for c in cells if c in ("CC","TIPO","CAPACIDAD","UBICACION","UBICACIÓN","LOCAL","NOMBRE"))
+        if hits >= 2:
             header_idx = i
             break
 
-    # Detect column positions from header
     hrow = [str(c).strip().upper() if c else "" for c in all_rows[header_idx]]
+
     def find_col(*names):
         for name in names:
             for j, h in enumerate(hrow):
@@ -379,19 +317,15 @@ def parse_sheet_extintor_rows(ws, mes):
         return None
 
     c_cc   = find_col("CC") or 0
-    c_ubic = find_col("UBICACION","UBICACIÓN","NOMBRE","LOCAL") or 1
+    c_ubic = find_col("UBICACION", "UBICACIÓN", "NOMBRE", "LOCAL") or 1
     c_tipo = find_col("TIPO") or 2
-    c_cap  = find_col("CAPACIDAD","CAP") or 3
-    c_ult  = find_col("ULT","ÚLTIMA","ULTIMA","ANTERIOR")
-    c_prox = find_col("PRÓX","PROX","SIGUIENTE","NEXT")
-
-    # If not found by name, use fixed positions from known format
-    if c_ult is None:  c_ult  = 9
-    if c_prox is None: c_prox = 10
+    c_cap  = find_col("CAPACIDAD", "CAP") or 3
+    c_ult  = find_col("ULT", "ÚLTIMA", "ULTIMA", "ANTERIOR") or 9
+    c_prox = find_col("PRÓX", "PROX", "SIGUIENTE") or 10
 
     rows_out = []
-    current_cc_raw = None
-    current_ckey   = None
+    cur_ckey   = None
+    cur_cc_raw = None
 
     for row in all_rows[header_idx + 1:]:
         if not row or all(c is None for c in row):
@@ -409,489 +343,362 @@ def parse_sheet_extintor_rows(ws, mes):
         ult_r   = row[c_ult]  if c_ult  < len(row) else None
         prox_r  = row[c_prox] if c_prox < len(row) else None
 
-        # Forward-fill CC (merged cells)
+        # Forward-fill CC
         if cc_raw is not None and str(cc_raw).strip():
-            raw_str = str(cc_raw).strip()
-            ckey = canonical(raw_str)
+            ckey = canonical(str(cc_raw).strip())
             if ckey:
-                current_cc_raw = raw_str
-                current_ckey   = ckey
+                cur_ckey   = ckey
+                cur_cc_raw = str(cc_raw).strip()
 
-        if not current_ckey:
+        if not cur_ckey:
             continue
 
         tipo, cap = norm_tipo_cap(tipo_r, cap_r)
 
-        # Skip rows without valid extintor type
-        if not tipo:
+        if not tipo or tipo not in ("PQS", "CO2", "TIPO K"):
             continue
-        if tipo not in ("PQS", "CO2", "TIPO K"):
-            # Skip non-extintor rows (e.g. "MANTENIMIENTO SIST CO2")
+        if tipo_r and SKIP_TIPO.match(str(tipo_r)):
             continue
-
-        # Skip header-looking ubicaciones
-        if is_skip_ubicacion(ubic):
-            ubic = ""
-
-        año_ult  = to_year(ult_r)
-        año_prox = to_year(prox_r)
 
         rows_out.append({
-            "ckey":      current_ckey,
-            "cc_raw":    current_cc_raw,
-            "mes":       mes,
-            "ubic":      ubic,
-            "tipo":      tipo,
-            "cap":       cap,
-            "año_ult":   año_ult,
-            "año_prox":  año_prox,
+            "ckey":    cur_ckey,
+            "cc_raw":  cur_cc_raw,
+            "mes":     mes,
+            "ubic":    ubic,
+            "tipo":    tipo,
+            "cap":     cap,
+            "año_ult": to_year(ult_r),
+            "año_prox": to_year(prox_r),
         })
 
     return rows_out
 
 
+print("\n=== Parsing MATRIZ ===")
 matriz_rows = []
-for sheet_name in wb_mat.sheetnames:
-    mes = sheet_name.strip().upper()
+for sname in wb_mat.sheetnames:
+    mes = sname.strip().upper()
     if mes not in MONTHS:
-        print(f"  Skipping non-month sheet: {sheet_name!r}")
         continue
-    ws = wb_mat[sheet_name]
-    rows = parse_sheet_extintor_rows(ws, mes)
-    print(f"  Sheet '{sheet_name}': {len(rows)} extintor rows")
+    rows = parse_extintor_sheet(wb_mat[sname], mes)
+    print(f"  {sname}: {len(rows)} extintor rows")
     matriz_rows.extend(rows)
 
-print(f"\nTotal MATRIZ rows: {len(matriz_rows)}")
-unique_keys = set(r["ckey"] for r in matriz_rows)
-print(f"Unique locals in MATRIZ: {len(unique_keys)}")
+print(f"\nTotal MATRIZ extintor rows: {len(matriz_rows)}")
+mat_keys = set(r["ckey"] for r in matriz_rows)
+print(f"Unique MATRIZ locals:       {len(mat_keys)}")
 
-
-# ── 3. Parse PROYECCIÓN – get dates and extintor data ─────────────────────────
-# Sheets are month names. Similar structure to MATRIZ.
 
 print("\n=== Parsing PROYECCIÓN ===")
-
 proy_rows = []
-proy_local_info = {}   # ckey -> {mes, cc_raw}
-
-for sheet_name in wb_proy.sheetnames:
-    mes = sheet_name.strip().upper()
+for sname in wb_proy.sheetnames:
+    mes = sname.strip().upper()
     if mes not in MONTHS:
-        print(f"  Skipping non-month sheet: {sheet_name!r}")
         continue
-    ws = wb_proy[sheet_name]
-    rows = parse_sheet_extintor_rows(ws, mes)
-    print(f"  Sheet '{sheet_name}': {len(rows)} extintor rows")
+    rows = parse_extintor_sheet(wb_proy[sname], mes)
+    print(f"  {sname}: {len(rows)} extintor rows")
     proy_rows.extend(rows)
-    # Record first-seen month per local
-    for r in rows:
-        if r["ckey"] not in proy_local_info:
-            proy_local_info[r["ckey"]] = {"mes": r["mes"], "cc_raw": r["cc_raw"]}
 
-print(f"\nTotal PROYECCIÓN rows: {len(proy_rows)}")
 proy_keys = set(r["ckey"] for r in proy_rows)
-print(f"Unique locals in PROYECCIÓN: {len(proy_keys)}")
+print(f"\nTotal PROYECCIÓN extintor rows: {len(proy_rows)}")
+print(f"Unique PROYECCIÓN locals:       {len(proy_keys)}")
 
-# Locals in PROYECCIÓN but not in MATRIZ
-only_proy = proy_keys - unique_keys
-print(f"\nLocals only in PROYECCIÓN (not MATRIZ): {len(only_proy)}")
-for k in sorted(only_proy):
-    info = proy_local_info.get(k, {})
-    print(f"  {fmt_code(*k)} – MES: {info.get('mes','?')} – CC: {info.get('cc_raw','?')}")
+only_proy = proy_keys - mat_keys
+print(f"\nIn PROYECCIÓN but NOT MATRIZ: {sorted(only_proy)}")
 
 
-# ── 4. Build H068 extintores (to merge into K172) ────────────────────────────
+# ── 3. Apply corrections ──────────────────────────────────────────────────────
 
-H068_KEY = ('H', 68) if canonical("H068") == ('H', 68) else None
-# Try to find H068 in MATRIZ
-h068_ckey = None
-for k in unique_keys:
-    if k[1] == 68 and k[0] in ('H', 'K'):
-        print(f"  Candidate for H068: {k}")
-# Actually let's just search directly
-h068_rows = [r for r in matriz_rows if r["ckey"] == ('H', 68)]
-if not h068_rows:
-    # Try alternate: sometimes "HELADERIAS" might be coded differently
-    h068_rows = [r for r in matriz_rows if r["cc_raw"] and "068" in r["cc_raw"].upper() and "H" in r["cc_raw"].upper()[:3]]
-print(f"\nH068 rows found in MATRIZ: {len(h068_rows)}")
-for r in h068_rows:
-    print(f"  {r}")
+print("\n=== Applying corrections ===")
 
-
-# ── 5. Apply corrections and build final dataset ──────────────────────────────
-
-K172_KEY = ('K', 172)
-G042_KEY = ('G', 42)
-K079_KEY = ('K', 79)
-K192_KEY = ('K', 192)
-K194_KEY = ('K', 194)
-
-# Remove G042 (closed)
+# (a) Remove G042 (closed)
+before = len(matriz_rows)
 matriz_rows = [r for r in matriz_rows if r["ckey"] != G042_KEY]
-proy_rows   = [r for r in proy_rows   if r["ckey"] != G042_KEY]
-print(f"\nAfter removing G042: {len(matriz_rows)} MATRIZ rows")
+print(f"Removed G042: {before - len(matriz_rows)} rows removed")
 
-# Merge H068 into K172: add H068's extintores to K172 with same MES as K172
-k172_info = next((r for r in matriz_rows if r["ckey"] == K172_KEY), None)
-k172_mes  = k172_info["mes"] if k172_info else "JULIO"
+# (b) H068 → already absent from MATRIZ (its extintores were merged into K172
+#     which already includes 'heladería' extintor; no additional rows needed)
+h068_in_mat = [r for r in matriz_rows if r["ckey"] == H068_KEY]
+print(f"H068 rows in MATRIZ: {len(h068_in_mat)} (expected 0 – already part of K172)")
 
-for r in h068_rows:
-    merged = dict(r)
-    merged["ckey"]   = K172_KEY
-    merged["cc_raw"] = f"K172 (ex-H068)"
-    merged["mes"]    = k172_mes
-    matriz_rows.append(merged)
-    print(f"  Merged H068 extintor → K172: {merged['tipo']} {merged['cap']}")
+# (c) Add V091 from PROYECCIÓN if not in MATRIZ
+V091_KEY = ('V', 91)
+if V091_KEY not in mat_keys:
+    proy_v091 = [r for r in proy_rows if r["ckey"] == V091_KEY]
+    # Deduplicate (PROYECCIÓN sometimes lists each extintor twice)
+    seen = set()
+    deduped = []
+    for r in proy_v091:
+        sig = (r["tipo"], r["cap"], r["ubic"])
+        if sig not in seen:
+            seen.add(sig)
+            deduped.append(r)
+    print(f"Adding V091 from PROYECCIÓN: {len(deduped)} extintores (from {len(proy_v091)} raw rows)")
+    for r in deduped:
+        print(f"  {r['tipo']} {r['cap']}")
+    matriz_rows.extend(deduped)
+else:
+    print("V091 already in MATRIZ")
 
-# Remove original H068 entries (already done since we only added merges)
-matriz_rows = [r for r in matriz_rows if r["ckey"] != ('H', 68)]
-
-# Add K079, K192, K194 from PROYECCIÓN if not already in MATRIZ
-for target_key in [K079_KEY, K192_KEY, K194_KEY]:
-    existing = [r for r in matriz_rows if r["ckey"] == target_key]
-    if not existing:
-        proy_found = [r for r in proy_rows if r["ckey"] == target_key]
-        # Deduplicate PROYECCIÓN rows (each extintor may appear twice)
-        seen = set()
-        deduped = []
-        for r in proy_found:
-            sig = (r["tipo"], r["cap"], r["ubic"])
-            if sig not in seen:
-                seen.add(sig)
-                deduped.append(r)
-        print(f"\nAdding {target_key} from PROYECCIÓN: {len(deduped)} extintores (deduped from {len(proy_found)})")
-        for r in deduped:
-            print(f"  {r['tipo']} {r['cap']} – {r['ubic']}")
-        matriz_rows.extend(deduped)
-    else:
-        print(f"\n{target_key} already in MATRIZ with {len(existing)} rows")
-
-# CN04=BS04, CN16=BS16, CN37=BS37, CN31=BS31 (same location, CINNABON+BASKIN)
-# Keep only one entry per location. BS entries should map to CN (or vice versa).
-# Per user: CN prefix = CINNABON. BS prefix = BASKIN ROBBINS.
-# These pairs share the same physical location but are different brands.
-# We should keep BOTH as separate locals (they have separate brand names).
-# The issue was that BS031 was listed as CN031 in PRESUPUESTO.
-# Solution: for BS locals that match CN locals, they are still separate in our DB.
-# Just ensure BS031 maps correctly to BASKIN ROBBINS.
-
-# However, user said "CN04 y BS04 son lo mismo" → same physical location, separate entries.
-# We keep both. No de-duplication needed between CN and BS.
-
-
-# ── 6. Determine cycle and COBRO for each local ───────────────────────────────
-# Cycle: OCT 2026 – SEP 2027 = RECARGA for ALL locals
-# Sheets OCT/NOV/DEC → recarga month 2026 (within cycle)
-# Sheets ENE-SEP → recarga month 2027 (within cycle)
-# COBRO_ANUAL = RECARGA price (which includes mantt) if in cycle
-#             = MANTT price only if not in cycle (but ALL are in cycle this year!)
-
-OCT_TO_DEC = {"OCTUBRE", "NOVIEMBRE", "DICIEMBRE"}
-
-def get_recarga_year(mes):
-    """Return the year of recarga in the current cycle."""
-    if mes in OCT_TO_DEC:
-        return 2026
-    return 2027
-
-def get_ult_recarga_year(mes):
-    """Last recarga was 3 years before current cycle."""
-    return get_recarga_year(mes) - 3
-
-
-# ── 7. Determine brand name from PRESUPUESTO map or fallback ─────────────────
-
-BRAND_FALLBACK = {
-    'K':  ("INT FOOD SERVICES CORP SA", "KFC"),
-    'G':  ("INT FOOD SERVICES CORP SA", "KFC"),
-    'M':  ("SHEMLON SA", "MENESTRAS DEL NEGRO"),
-    'T':  ("DELI-INTERNACIONAL SA", "TROPIBURGER"),
-    'V':  ("PROMOTORA ECUATORIANA DE CAFÉ DE COLOMBIA SA", "JUAN VALDEZ"),
-    'I':  ("PRODUCCIONES Y EVENTOS NOVOEVENTOS SA", "IL CAPPO"),
-    'J':  ("GRUPO KFC", "CAJUN"),
-    'BS': ("SHEMLON SA", "BASKIN ROBBINS"),
-    'CN': ("SHEMLON SA", "CINNABON"),
-    'DI': ("GRUPO KFC", "DOLCE INCONTRO"),
-    'CA': ("GRUPO KFC", "AMERICAN DELI"),
-    'F':  ("GRUPO KFC", "SPORT PLANET"),
-}
-
-def get_brand(ckey):
-    pinfo = presupuesto_map.get(ckey)
-    if pinfo and pinfo.get("empresa") and pinfo.get("marca"):
-        return pinfo["empresa"], pinfo["marca"]
-    # Fallback to prefix map
-    pfx = ckey[0]
-    return BRAND_FALLBACK.get(pfx, BRAND_FALLBACK.get(pfx[:1], ("DESCONOCIDO", "DESCONOCIDO")))
-
-
-# ── 8. Assign MES from PROYECCIÓN if not in MATRIZ ───────────────────────────
-# (already done by adding proy rows above)
-
-# Verify/override MES from PROYECCIÓN for all locals where PROYECCIÓN has data
-# The PROYECCIÓN is the source of truth for dates.
-# Build a map: ckey -> mes from PROYECCIÓN
-proy_mes_map = {}
+# (d) Override MES from PROYECCIÓN where PROYECCIÓN is source of truth
+proy_mes = {}
 for r in proy_rows:
-    k = r["ckey"]
-    if k not in proy_mes_map:
-        proy_mes_map[k] = r["mes"]
+    if r["ckey"] not in proy_mes:
+        proy_mes[r["ckey"]] = r["mes"]
 
-# For locals in MATRIZ, if PROYECCIÓN has a different month, we could override.
-# Per user: PROYECCIÓN is source of truth for dates.
-# Apply override only where there's a mismatch and we trust PROYECCIÓN more.
-mes_overrides = {}
-for ckey, proy_mes in proy_mes_map.items():
-    mat_rows = [r for r in matriz_rows if r["ckey"] == ckey]
-    if mat_rows:
-        mat_mes = mat_rows[0]["mes"]
-        if mat_mes != proy_mes:
-            mes_overrides[ckey] = (mat_mes, proy_mes)
+overrides = 0
+for r in matriz_rows:
+    pm = proy_mes.get(r["ckey"])
+    if pm and pm != r["mes"]:
+        r["mes"] = pm
+        overrides += 1
+print(f"\nMES overridden from PROYECCIÓN: {overrides} rows")
 
-if mes_overrides:
-    print(f"\nMES overrides from PROYECCIÓN (MATRIZ→PROYECCIÓN):")
-    for k, (old, new) in list(mes_overrides.items())[:20]:
-        print(f"  {fmt_code(*k)}: {old} → {new}")
-    # Apply overrides
-    for r in matriz_rows:
-        if r["ckey"] in mes_overrides:
-            r["mes"] = mes_overrides[r["ckey"]][1]
+# Final unique locals
+final_keys = set(r["ckey"] for r in matriz_rows)
+print(f"\nFinal unique locals: {len(final_keys)}")
 
 
-# ── 9. Build final rows with pricing ─────────────────────────────────────────
+# ── 4. Brand lookup ───────────────────────────────────────────────────────────
+
+def get_marca(ckey):
+    pinfo = presupuesto_map.get(ckey)
+    if pinfo and pinfo["marca"]:
+        return pinfo["marca"]
+    pfx = ckey[0]
+    return BRAND_FALLBACK.get(pfx, BRAND_FALLBACK.get(pfx[:1], "DESCONOCIDO"))
+
+
+def get_nombre_local(ckey):
+    pinfo = presupuesto_map.get(ckey)
+    if pinfo and pinfo["nombre"]:
+        return pinfo["nombre"]
+    return ""
+
+
+# ── 5. Build final rows ───────────────────────────────────────────────────────
 
 print("\n=== Building final rows ===")
 
-# Group MATRIZ rows by (ckey, mes) to handle unique-per-extintor
-# Use (ckey, mes, tipo, cap, ubic) as de-dup key
-seen_extintores = set()
 final_rows = []
-
 for r in matriz_rows:
-    ckey   = r["ckey"]
-    mes    = r["mes"]
-    tipo   = r["tipo"]
-    cap    = r["cap"]
-    ubic   = r.get("ubic", "")
+    ckey  = r["ckey"]
+    mes   = r["mes"]
+    tipo  = r["tipo"]
+    cap   = r["cap"]
 
-    price_key = (tipo, cap)
-    cm = MANTT.get(price_key)
-    cr = RECARGA.get(price_key)
-    cap_disp = CAP_DISPLAY.get(price_key, f"{cap}")
+    pk  = (tipo, cap)
+    cm  = MANTT.get(pk)
+    cr  = RECARGA.get(pk)
+    cd  = CAP_DISPLAY.get(pk, f"{cap}")
 
-    # Cobro logic: ALL locals are in OCT2026-SEP2027 cycle
-    # RECARGA includes mantt → COBRO = RECARGA price
-    cobro = cr if cr is not None else cm
-    cobro_tipo = "RECARGA (mantt incluido)" if cr is not None else "MANTT"
+    # ALL locals are in OCT2026–SEP2027 recarga cycle
+    # COBRO = RECARGA (includes mantt). If price unknown, fall back to MANTT.
+    cobro      = cr if cr is not None else (cm if cm is not None else None)
+    cobro_tipo = "RECARGA (incl. mantt)" if cr is not None else ("MANTT" if cm is not None else "SIN PRECIO")
 
-    año_rec     = get_recarga_year(mes)
-    año_ult_rec = get_ult_recarga_year(mes)
+    ano_rec     = 2026 if mes in OCT_TO_DEC else 2027
+    ano_ult_rec = ano_rec - 3
 
-    empresa, marca = get_brand(ckey)
+    marca  = get_marca(ckey)
+    nombre = get_nombre_local(ckey)
     codigo = fmt_code(*ckey)
 
-    año_prox_mat = r.get("año_prox", "")
-    año_ult_mat  = r.get("año_ult", "")
     notas = []
     if cm is None:
         notas.append(f"precio no hallado ({tipo}/{cap})")
-    # Override years with calculated values (source of truth = cycle logic)
-    # but keep MATRIZ values as reference
 
     final_rows.append({
-        "CÓDIGO":              codigo,
-        "CC_ORIGINAL":         r.get("cc_raw", ""),
-        "EMPRESA":             empresa,
-        "MARCA":               marca,
-        "MES_SERVICIO":        mes,
-        "UBICACIÓN":           ubic,
-        "TIPO":                tipo,
-        "CAPACIDAD":           cap_disp,
-        "COSTO_MANTT":         round(cm, 2) if cm else None,
-        "PRECIO_RECARGA":      round(cr, 2) if cr else None,
-        "COBRO_ANUAL":         round(cobro, 2) if cobro else None,
-        "TIPO_COBRO":          cobro_tipo,
-        "AÑO_RECARGA":         año_rec,
-        "AÑO_ULT_RECARGA":     año_ult_rec,
-        "AÑO_PROX_MAT":        año_prox_mat,
-        "AÑO_ULT_MAT":         año_ult_mat,
-        "NOTAS":               "; ".join(notas),
-        "_cm":                 cm or 0.0,
-        "_cr":                 cr or 0.0,
-        "_cobro":              cobro or 0.0,
-        "_ckey":               ckey,
+        "CÓDIGO":          codigo,
+        "CC_ORIGINAL":     r.get("cc_raw", ""),
+        "MARCA":           marca,
+        "NOMBRE_LOCAL":    nombre,
+        "MES_SERVICIO":    mes,
+        "UBICACIÓN":       r.get("ubic", ""),
+        "TIPO":            tipo,
+        "CAPACIDAD":       cd,
+        "COSTO_MANTT":     round(cm, 2) if cm is not None else None,
+        "PRECIO_RECARGA":  round(cr, 2) if cr is not None else None,
+        "COBRO_ANUAL_EXT": round(cobro, 2) if cobro is not None else None,
+        "TIPO_COBRO":      cobro_tipo,
+        "AÑO_RECARGA":     ano_rec,
+        "AÑO_ULT_RECARGA": ano_ult_rec,
+        "NOTAS":           "; ".join(notas),
+        "_cm":   cm   or 0.0,
+        "_cr":   cr   or 0.0,
+        "_cobro": cobro or 0.0,
+        "_ckey": ckey,
     })
 
-print(f"Total final extintor rows: {len(final_rows)}")
-unique_locals = set(r["_ckey"] for r in final_rows)
-print(f"Unique locals:             {len(unique_locals)}")
-
-# Check unique local count by ckey
-local_count_by_code = Counter(r["CÓDIGO"] for r in final_rows)
-print(f"Unique CÓDIGO values:      {len(set(r['CÓDIGO'] for r in final_rows))}")
+print(f"Total extintor rows: {len(final_rows)}")
+print(f"Unique locals:       {len(set(r['CÓDIGO'] for r in final_rows))}")
 
 
-# ── 10. Per-local summary ─────────────────────────────────────────────────────
+# ── 6. Per-local summary ──────────────────────────────────────────────────────
 
-local_summary = {}
+local_sum = {}
 for r in final_rows:
     k = r["CÓDIGO"]
-    if k not in local_summary:
-        local_summary[k] = {
-            "CÓDIGO":        k,
-            "CC_ORIGINAL":   r["CC_ORIGINAL"],
-            "EMPRESA":       r["EMPRESA"],
-            "MARCA":         r["MARCA"],
-            "MES_SERVICIO":  r["MES_SERVICIO"],
-            "N_EXTINTORES":  0,
-            "TOTAL_MANTT":   0.0,
-            "TOTAL_RECARGA": 0.0,
-            "COBRO_ANUAL":   0.0,
-            "AÑO_RECARGA":   r["AÑO_RECARGA"],
+    if k not in local_sum:
+        local_sum[k] = {
+            "CÓDIGO":          k,
+            "CC_ORIGINAL":     r["CC_ORIGINAL"],
+            "MARCA":           r["MARCA"],
+            "NOMBRE_LOCAL":    r["NOMBRE_LOCAL"],
+            "MES_SERVICIO":    r["MES_SERVICIO"],
+            "N_EXTINTORES":    0,
+            "TOTAL_MANTT":     0.0,
+            "TOTAL_RECARGA":   0.0,
+            "COBRO_ANUAL":     0.0,
+            "AÑO_RECARGA":     r["AÑO_RECARGA"],
             "AÑO_ULT_RECARGA": r["AÑO_ULT_RECARGA"],
-            "DESGLOSE":      [],
+            "_desglose":       [],
         }
-    s = local_summary[k]
+    s = local_sum[k]
     s["N_EXTINTORES"]  += 1
     s["TOTAL_MANTT"]   += r["_cm"]
     s["TOTAL_RECARGA"] += r["_cr"]
     s["COBRO_ANUAL"]   += r["_cobro"]
-    s["DESGLOSE"].append(f"{r['TIPO']} {r['CAPACIDAD']} ${r['_cobro']:.2f}")
+    s["_desglose"].append(
+        f"{r['TIPO']} {r['CAPACIDAD']}=${r['_cobro']:.2f}"
+    )
 
-for s in local_summary.values():
-    s["TOTAL_MANTT"]   = round(s["TOTAL_MANTT"],   2)
-    s["TOTAL_RECARGA"] = round(s["TOTAL_RECARGA"],  2)
-    s["COBRO_ANUAL"]   = round(s["COBRO_ANUAL"],   2)
-    s["FORMULA_COBRO"] = " + ".join(s["DESGLOSE"])
+for s in local_sum.values():
+    s["TOTAL_MANTT"]  = round(s["TOTAL_MANTT"],  2)
+    s["TOTAL_RECARGA"]= round(s["TOTAL_RECARGA"], 2)
+    s["COBRO_ANUAL"]  = round(s["COBRO_ANUAL"],  2)
+    s["DESGLOSE"]     = " | ".join(s.pop("_desglose"))
 
-print(f"\nLocales en resumen: {len(local_summary)}")
+n_locales   = len(local_sum)
+total_anual = sum(s["COBRO_ANUAL"] for s in local_sum.values())
 
-# Show count by month
-month_counts = Counter(s["MES_SERVICIO"] for s in local_summary.values())
+print(f"\n{'='*50}")
+print(f"LOCALES TOTAL: {n_locales}  (target: 198)")
+print(f"COBRO ANUAL TOTAL: ${total_anual:,.2f}")
+print(f"{'='*50}")
+
 print("\nLocales por mes:")
+mc = Counter(s["MES_SERVICIO"] for s in local_sum.values())
 for m in MONTHS:
-    print(f"  {m}: {month_counts.get(m, 0)}")
+    if mc.get(m): print(f"  {m:15s}: {mc[m]}")
 
-# Show total annual billing
-total_anual = sum(s["COBRO_ANUAL"] for s in local_summary.values())
-print(f"\nCOBRO ANUAL TOTAL: ${total_anual:,.2f}")
+print("\nLocales por marca:")
+bc = Counter(s["MARCA"] for s in local_sum.values())
+for b, c in sorted(bc.items(), key=lambda x: -x[1]):
+    print(f"  {b:25s}: {c}")
 
-# Auditoría: locales en PRESUPUESTO pero no en MATRIZ/final
-pres_keys = set(presupuesto_map.keys())
-final_keys = set(r["_ckey"] for r in final_rows)
-only_pres = pres_keys - final_keys
-only_final = final_keys - pres_keys
+# Audit: in PRESUPUESTO (minus G042, H068) but not in final
+pres_expected = set(k for k in presupuesto_map if k not in (G042_KEY, H068_KEY))
+final_codes   = set(r["_ckey"] for r in final_rows)
+missing_from_final = pres_expected - final_codes
+extra_in_final     = final_codes - pres_expected - {H068_KEY}
 
-print(f"\nEn PRESUPUESTO pero no en MATRIZ final: {len(only_pres)}")
-for k in sorted(only_pres):
+print(f"\nIn PRESUPUESTO but missing from DB ({len(missing_from_final)}):")
+for k in sorted(missing_from_final):
     info = presupuesto_map[k]
-    print(f"  {fmt_code(*k)} ({info.get('cc_pres','?')})")
+    print(f"  {fmt_code(*k)}: {info['cc_pres']} – {info['marca']} – {info['nombre']}")
 
-print(f"\nEn MATRIZ final pero no en PRESUPUESTO: {len(only_final)}")
-for k in sorted(only_final):
+print(f"\nIn DB but not in PRESUPUESTO ({len(extra_in_final)}):")
+for k in sorted(extra_in_final):
     print(f"  {fmt_code(*k)}")
 
 
-# ── 11. Write Excel ───────────────────────────────────────────────────────────
+# ── 7. Write Excel ────────────────────────────────────────────────────────────
 
 OUT = "/home/user/previfuego-facturacion/BASE_DATOS_KFC.xlsx"
 wb = openpyxl.Workbook()
 
 H_FILL  = PatternFill("solid", fgColor="1F4E79")
-H_FONT  = Font(color="FFFFFF", bold=True)
 H2_FILL = PatternFill("solid", fgColor="375623")
-ALT     = PatternFill("solid", fgColor="D6E4F0")
+H3_FILL = PatternFill("solid", fgColor="7B0000")
+ALT1    = PatternFill("solid", fgColor="D6E4F0")
 ALT2    = PatternFill("solid", fgColor="E2EFDA")
+H_FONT  = Font(color="FFFFFF", bold=True)
 CENTER  = Alignment(horizontal="center")
 
+def style_header(ws, fill):
+    for cell in ws[1]:
+        cell.fill = fill; cell.font = H_FONT; cell.alignment = CENTER
 
 def auto_width(ws):
     for col in ws.columns:
-        mx = max((len(str(c.value)) if c.value else 0) for c in col)
-        ws.column_dimensions[col[0].column_letter].width = min(mx + 2, 50)
+        mx = max((len(str(c.value)) if c.value is not None else 0) for c in col)
+        ws.column_dimensions[col[0].column_letter].width = min(mx + 2, 55)
+
+month_sort = {m: i for i, m in enumerate(MONTHS)}
 
 
-# ── Sheet 1: DETALLE ─────────────────────────────────────────────────────────
+# Sheet 1: DETALLE
 ws_det = wb.active
 ws_det.title = "DETALLE"
-
 COLS_DET = [
-    "CÓDIGO","CC_ORIGINAL","EMPRESA","MARCA","MES_SERVICIO","UBICACIÓN",
-    "TIPO","CAPACIDAD","COSTO_MANTT","PRECIO_RECARGA","COBRO_ANUAL","TIPO_COBRO",
-    "AÑO_RECARGA","AÑO_ULT_RECARGA","NOTAS"
+    "CÓDIGO","CC_ORIGINAL","MARCA","NOMBRE_LOCAL","MES_SERVICIO","UBICACIÓN",
+    "TIPO","CAPACIDAD","COSTO_MANTT","PRECIO_RECARGA","COBRO_ANUAL_EXT",
+    "TIPO_COBRO","AÑO_RECARGA","AÑO_ULT_RECARGA","NOTAS"
 ]
-
 ws_det.append(COLS_DET)
-for cell in ws_det[1]:
-    cell.fill = H_FILL; cell.font = H_FONT; cell.alignment = CENTER
+style_header(ws_det, H_FILL)
 
-# Sort by month then code
-month_sort = {m: i for i, m in enumerate(MONTHS)}
-sorted_rows = sorted(final_rows, key=lambda r: (
-    month_sort.get(r["MES_SERVICIO"], 99),
-    r["CÓDIGO"]
-))
-
-for idx, r in enumerate(sorted_rows, 2):
+for idx, r in enumerate(
+    sorted(final_rows, key=lambda x: (month_sort.get(x["MES_SERVICIO"], 99), x["CÓDIGO"])),
+    2
+):
     ws_det.append([r.get(c) for c in COLS_DET])
     if idx % 2 == 0:
-        for cell in ws_det[idx]:
-            cell.fill = ALT
+        for cell in ws_det[idx]: cell.fill = ALT1
 
 auto_width(ws_det)
 
 
-# ── Sheet 2: RESUMEN_LOCALES ─────────────────────────────────────────────────
+# Sheet 2: RESUMEN_LOCALES
 ws_res = wb.create_sheet("RESUMEN_LOCALES")
-
 COLS_RES = [
-    "CÓDIGO","CC_ORIGINAL","EMPRESA","MARCA","MES_SERVICIO","N_EXTINTORES",
-    "TOTAL_MANTT","TOTAL_RECARGA","COBRO_ANUAL","AÑO_RECARGA","AÑO_ULT_RECARGA","FORMULA_COBRO"
+    "CÓDIGO","CC_ORIGINAL","MARCA","NOMBRE_LOCAL","MES_SERVICIO",
+    "N_EXTINTORES","TOTAL_MANTT","TOTAL_RECARGA","COBRO_ANUAL",
+    "AÑO_RECARGA","AÑO_ULT_RECARGA","DESGLOSE"
 ]
-
 ws_res.append(COLS_RES)
-for cell in ws_res[1]:
-    cell.fill = H2_FILL; cell.font = H_FONT; cell.alignment = CENTER
+style_header(ws_res, H2_FILL)
 
-sorted_summaries = sorted(local_summary.values(), key=lambda s: (
-    month_sort.get(s["MES_SERVICIO"], 99),
-    s["CÓDIGO"]
-))
-
-for idx, s in enumerate(sorted_summaries, 2):
+for idx, s in enumerate(
+    sorted(local_sum.values(), key=lambda x: (month_sort.get(x["MES_SERVICIO"], 99), x["CÓDIGO"])),
+    2
+):
     ws_res.append([s.get(c) for c in COLS_RES])
     if idx % 2 == 0:
-        for cell in ws_res[idx]:
-            cell.fill = ALT2
+        for cell in ws_res[idx]: cell.fill = ALT2
 
 auto_width(ws_res)
 
 
-# ── Sheet 3: AUDITORÍA ───────────────────────────────────────────────────────
+# Sheet 3: AUDITORÍA
 ws_aud = wb.create_sheet("AUDITORÍA")
-ws_aud.append(["TIPO","CÓDIGO","DETALLE"])
-for cell in ws_aud[1]:
-    cell.fill = PatternFill("solid", fgColor="7B0000")
-    cell.font = Font(color="FFFFFF", bold=True)
+ws_aud.append(["TIPO", "CÓDIGO", "DETALLE"])
+style_header(ws_aud, H3_FILL)
 
-for k in sorted(only_pres):
-    info = presupuesto_map.get(k, {})
-    ws_aud.append(["EN_PRESUPUESTO_NO_EN_MATRIZ", fmt_code(*k),
-                   f"CC presup: {info.get('cc_pres','?')} | empresa: {info.get('empresa','?')}"])
+for k in sorted(missing_from_final):
+    info = presupuesto_map[k]
+    ws_aud.append(["EN_PRESUP_SIN_EXTINTOR", fmt_code(*k),
+                   f"{info['cc_pres']} – {info['marca']} – {info['nombre']}"])
 
-for k in sorted(only_final):
-    ws_aud.append(["EN_MATRIZ_NO_EN_PRESUPUESTO", fmt_code(*k), ""])
+for k in sorted(extra_in_final):
+    ws_aud.append(["EN_MATRIZ_SIN_PRESUP", fmt_code(*k), "Nuevo local no en PRESUPUESTO 2026"])
 
 for r in final_rows:
     if r["NOTAS"]:
         ws_aud.append(["PRECIO_NO_HALLADO", r["CÓDIGO"],
                        f"{r['TIPO']} {r['CAPACIDAD']} – {r['NOTAS']}"])
 
+ws_aud.append(["FUSIONADO", "H068",
+               "Heladerías Mall del Norte fusionado en K172 (extintor 'heladería' incluido en K172)"])
+ws_aud.append(["ELIMINADO", "G042",
+               "GUS Quito Aguirre – local cerrado, excluido de la base"])
+
 auto_width(ws_aud)
 
 
 wb.save(OUT)
 print(f"\n✓ Saved: {OUT}")
-print(f"  DETALLE rows: {len(final_rows)}")
-print(f"  Locales:      {len(local_summary)}")
-print(f"  Cobro anual:  ${total_anual:,.2f}")
+print(f"  DETALLE rows:  {len(final_rows)}")
+print(f"  Locales:       {n_locales}")
+print(f"  Cobro anual:   ${total_anual:,.2f}")
