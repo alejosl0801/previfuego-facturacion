@@ -1295,9 +1295,9 @@ async function regenerarBaseDatos() {
         const capDisp = tipo==='TIPO K' ? `${cap} GLS` : (tipo ? `${cap} LBS` : cap);
         const [emp,marca] = COMPANY[curPfx]||COMPANY[(curPfx||'')[0]]||['','DESCONOCIDO'];
         const recarga = (añoProx===''||añoProx==='2026') ? 'SI' : 'NO';
-        const crU = recarga==='SI' ? cr : 0;
-        const cobro = cm+crU;
-        const formula = recarga==='SI' && crU>0 ? `MANTT $${cm.toFixed(2)} + RECARGA $${crU.toFixed(2)} = $${cobro.toFixed(2)}` : `MANTT $${cm.toFixed(2)}`;
+        // RECARGA ya incluye mantenimiento — no se suman
+        const cobro = recarga==='SI' ? (cr||cm) : cm;
+        const formula = recarga==='SI' && cr>0 ? `RECARGA $${cr.toFixed(2)} (mantt incluido)` : `MANTT $${cm.toFixed(2)}`;
 
         rows.push({CÓDIGO:curCode||'?',CC_ORIGINAL:curOrig||'',MARCA:marca,EMPRESA:emp,MES:mes,
           UBICACIÓN:ubi,TIPO:tipo,CAPACIDAD:capDisp,COSTO_MANTT:cm,RECARGA_2026:recarga,
