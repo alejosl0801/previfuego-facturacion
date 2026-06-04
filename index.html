@@ -235,7 +235,7 @@
           <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS KFC</div>
           <div style="font-size:12px;color:#666;margin-bottom:14px;">
             198 locales · 898 extintores<br>
-            3 hojas: Detalle, Resumen, Auditoría<br>
+            2 hojas: Detalle, Resumen Locales<br>
             Precios MANTT y RECARGA por extintor
           </div>
           <a href="BASE_DATOS_KFC.xlsx" download="BASE_DATOS_KFC.xlsx"
@@ -282,8 +282,12 @@
           <input type="password" id="dbxToken" placeholder="sl.u...." />
         </div>
         <div class="form-group">
-          <label>API Key Gemini (opcional)</label>
-          <input type="password" id="geminiKey" placeholder="Para leer fotos" />
+          <label>API Key Gemini (OCR fotos)</label>
+          <input type="password" id="geminiKey" placeholder="AIza..." />
+        </div>
+        <div class="form-group">
+          <label>GitHub Token (guardar datos)</label>
+          <input type="password" id="ghToken" placeholder="ghp_..." />
         </div>
       </div>
       <div class="form-row">
@@ -415,6 +419,26 @@
     </div>
   </div>
 
+  <!-- GITHUB PERSIST -->
+  <div class="card">
+    <div class="card-header" onclick="toggleCard('gh')">
+      <h2>☁️ Guardar / Cargar sesión en GitHub</h2>
+      <span class="toggle" id="gh-toggle">▼</span>
+    </div>
+    <div class="card-body" id="gh-body">
+      <p style="font-size:13px;color:#555;margin-bottom:12px">
+        Los datos del mes se guardan como JSON en el repositorio
+        (<code>datos/[MES]-[ANIO].json</code>).
+        Requiere <strong>GitHub Token</strong> con permiso <em>contents: write</em> en Configuración.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary" onclick="ghGuardar()">💾 Guardar en GitHub</button>
+        <button class="btn btn-info" onclick="ghCargar()">📥 Cargar de GitHub</button>
+        <span id="ghStatus" style="font-size:13px;color:#555"></span>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -450,6 +474,7 @@ let facturaMap = {};   // { hojaKey: { factManges: 'XXXX', factMant: 'YYYY' } }
 function loadConfig() {
   document.getElementById('dbxToken').value = localStorage.getItem('dbxToken') || '';
   document.getElementById('geminiKey').value = localStorage.getItem('geminiKey') || '';
+  document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
   document.getElementById('dbxBase').value = localStorage.getItem('dbxBase') || '/Previfuego';
   document.getElementById('dbxSubfolder').value = localStorage.getItem('dbxSubfolder') || 'GRUPO KFC';
 }
@@ -457,12 +482,17 @@ function loadConfig() {
 function saveConfig() {
   localStorage.setItem('dbxToken', document.getElementById('dbxToken').value.trim());
   localStorage.setItem('geminiKey', document.getElementById('geminiKey').value.trim());
+  localStorage.setItem('ghToken', document.getElementById('ghToken').value.trim());
   localStorage.setItem('dbxBase', document.getElementById('dbxBase').value.trim());
   localStorage.setItem('dbxSubfolder', document.getElementById('dbxSubfolder').value.trim());
   const el = document.getElementById('cfgStatus');
   el.textContent = ' ✅ Guardado';
   el.style.color = 'green';
   setTimeout(() => el.textContent = '', 2000);
+}
+
+function getGhToken() {
+  return localStorage.getItem('ghToken') || document.getElementById('ghToken').value.trim();
 }
 
 function toggleCard(id) {
@@ -867,36 +897,114 @@ async function leerFotosNE() {
   }
 
   document.getElementById('fotoStatus').textContent = '🤖 Procesando fotos con Gemini...';
+  let procesadas = 0, errores = 0;
 
   for (const file of files) {
     const base64 = await fileToBase64(file);
     try {
       const result = await callGemini(geminiKey, base64, file.type,
-        `Eres un asistente de facturación. Analiza esta nota de entrega/servicio de Previfuego.
-         Extrae:
-         1. Número de nota de entrega (busca "N°", "No.", "NOTA", un número de 4-5 dígitos)
-         2. Código de local (formato: K02, K105, M35, T032, etc.)
-         Solo responde con JSON: {"notaEntrega": "6494", "localCode": "K02"}
-         Si no encuentras algún campo, usa "".`
+        `Eres un asistente de facturación de extintores de Previfuego (Ecuador).
+Analiza esta nota de entrega/servicio y extrae TODOS los datos posibles.
+
+CAMPOS A EXTRAER:
+1. notaEntrega: número de nota (4-5 dígitos, busca "N°", "No.", "NOTA DE ENTREGA")
+2. localCode: código del local (K02, K105, M35, T032, V091, BS04, etc.)
+3. empresa: nombre de la empresa cliente (ej: "INT FOOD SERVICES CORP")
+4. ciudad: ciudad donde está el local
+5. localNombre: nombre/dirección del local
+6. categoria: "MANTGES" si es mantenimiento anual de extintores, "MANT" si son accesorios/señaléticas/lámparas/recargas extra/instalaciones
+7. descripcion: descripción del servicio (ej: "EXTINTORES MANTENIMIENTO ANUAL", "ACCESORIOS EXTINTORES Y SEÑALETICAS", "LAMPARA EMERGENCIA")
+8. extintores: lista de extintores [{tipo:"CO2", capacidad:"50LBS", cantidad:1, valorUnit:20}]
+9. subtotal: valor sin IVA
+10. iva: valor del IVA
+11. total: valor total con IVA
+12. observacion: observación (ej: "ACCESORIOS DAÑADOS DURANTE MANTENIMIENTO ANUAL", "SOLICITADO POR EL LOCAL")
+
+Responde ÚNICAMENTE con JSON válido:
+{
+  "notaEntrega": "", "localCode": "", "empresa": "", "ciudad": "",
+  "localNombre": "", "categoria": "MANTGES",
+  "descripcion": "EXTINTORES MANTENIMIENTO ANUAL",
+  "extintores": [],
+  "subtotal": 0, "iva": 0, "total": 0,
+  "observacion": ""
+}
+Si no encuentras un campo, usa "" o 0.`
       );
 
-      const json = JSON.parse(result.replace(/```json|```/g, '').trim());
-      if (json.notaEntrega && json.localCode) {
-        const cot = cotizaciones.find(c =>
-          c.localCode.replace(/\D/g,'') === json.localCode.replace(/\D/g,'')
-        );
+      let json;
+      try {
+        json = JSON.parse(result.replace(/```json|```/g, '').trim());
+      } catch(pe) {
+        const m = result.match(/\{[\s\S]*\}/);
+        if (m) json = JSON.parse(m[0]);
+        else throw pe;
+      }
+
+      if (json.localCode || json.notaEntrega) {
+        const rawNum = (json.localCode || '').replace(/\D/g, '');
+        const cot = cotizaciones.find(c => {
+          const cNum = c.localCode.replace(/\D/g, '');
+          return cNum === rawNum && rawNum !== '';
+        });
+
         if (cot) {
-          cot.notaEntrega = json.notaEntrega;
-          renderTabla();
-          document.getElementById('fotoStatus').textContent += ` ✅ ${json.localCode}:${json.notaEntrega}`;
+          // Update existing cotizacion
+          if (json.notaEntrega) cot.notaEntrega = String(json.notaEntrega);
+          if (json.categoria) cot.category = json.categoria;
+          if (json.descripcion) cot.descripcionFact = json.descripcion;
+          if (json.observacion) cot.observacion = json.observacion;
+          if (json.ciudad) cot.ciudad = json.ciudad;
+          if (json.subtotal && !cot.subtotal) cot.subtotal = parseFloat(json.subtotal) || 0;
+          if (json.iva && !cot.iva) cot.iva = parseFloat(json.iva) || 0;
+          if (json.total && !cot.total) cot.total = parseFloat(json.total) || 0;
+          procesadas++;
+          document.getElementById('fotoStatus').textContent =
+            `🤖 [${procesadas}/${files.length}] ✅ ${json.localCode || '?'} NE:${json.notaEntrega || '?'}`;
+        } else if (json.subtotal > 0) {
+          // New entry (cotizacion not loaded from Dropbox, add manually)
+          const localCodeClean = (json.localCode || '').toUpperCase().trim();
+          const emp = getEmpresa(localCodeClean);
+          cotizaciones.push({
+            filename: `foto-${file.name}`,
+            proformaNum: '',
+            rawLocalCode: localCodeClean,
+            localCode: localCodeClean,
+            cc: costCenter(localCodeClean),
+            empresa: emp,
+            localName: json.localNombre || localCodeClean,
+            ciudad: json.ciudad || '',
+            items: (json.extintores || []).map(e => ({
+              qty: e.cantidad || 1, desc: `${e.tipo} ${e.capacidad}`,
+              tipo: e.tipo, capacidad: e.capacidad,
+              unitPrice: e.valorUnit || 0, total: (e.cantidad || 1) * (e.valorUnit || 0),
+              serviceType: 'MANTENIMIENTO', isExtintor: true
+            })),
+            subtotal: parseFloat(json.subtotal) || 0,
+            iva: parseFloat(json.iva) || 0,
+            total: parseFloat(json.total) || 0,
+            category: json.categoria || 'MANTGES',
+            descripcionFact: json.descripcion || 'EXTINTORES MANTENIMIENTO ANUAL',
+            observacion: json.observacion || '',
+            notaEntrega: String(json.notaEntrega || '')
+          });
+          procesadas++;
+          document.getElementById('fotoStatus').textContent =
+            `🤖 [${procesadas}/${files.length}] ➕ ${localCodeClean} NE:${json.notaEntrega || '?'} (nuevo)`;
+        } else {
+          errores++;
         }
+        renderTabla();
+        renderEmpresaFacturas();
       }
     } catch(e) {
-      console.warn('Gemini error:', e);
+      console.warn('Gemini error:', file.name, e);
+      errores++;
     }
   }
 
-  document.getElementById('fotoStatus').textContent += ' — Listo';
+  document.getElementById('fotoStatus').textContent =
+    `✅ Listo: ${procesadas} notas procesadas${errores ? `, ${errores} errores` : ''}`;
 }
 
 async function callGemini(apiKey, base64, mimeType, prompt) {
@@ -926,6 +1034,125 @@ function fileToBase64(file) {
     reader.onerror = rej;
     reader.readAsDataURL(file);
   });
+}
+
+// ─── GITHUB PERSISTENCE ──────────────────────────────────────────────────────
+const GH_REPO = 'alejosl0801/previfuego-facturacion';
+const GH_BRANCH = 'claude/keen-goodall-IqhUc';
+
+function ghFilePath() {
+  const mes = document.getElementById('selMes').value;
+  const anio = document.getElementById('selAnio').value;
+  const mesNombre = MESES_NOMBRE[mes] || mes;
+  return `datos/${mesNombre}-${anio}.json`;
+}
+
+async function ghGuardar() {
+  const token = getGhToken();
+  if (!token) {
+    document.getElementById('ghStatus').textContent = '⚠️ Configura GitHub Token primero';
+    return;
+  }
+  if (!cotizaciones.length) {
+    document.getElementById('ghStatus').textContent = '⚠️ No hay datos cargados';
+    return;
+  }
+
+  const path = ghFilePath();
+  const payload = {
+    mes: document.getElementById('selMes').value,
+    anio: document.getElementById('selAnio').value,
+    savedAt: new Date().toISOString(),
+    cotizaciones: cotizaciones.map(c => ({
+      filename: c.filename, proformaNum: c.proformaNum, localCode: c.localCode,
+      cc: c.cc, localName: c.localName, ciudad: c.ciudad,
+      empresaHoja: c.empresa?.hoja || '',
+      items: c.items, subtotal: c.subtotal, iva: c.iva, total: c.total,
+      category: c.category, descripcionFact: c.descripcionFact,
+      observacion: c.observacion, notaEntrega: c.notaEntrega
+    })),
+    facturaMap
+  };
+
+  document.getElementById('ghStatus').textContent = '⏳ Guardando...';
+  try {
+    // Check if file exists (need SHA to update)
+    let sha = null;
+    const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    });
+    if (check.ok) {
+      const existing = await check.json();
+      sha = existing.sha;
+    }
+
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+    const body = {
+      message: `datos: guardar sesión ${MESES_NOMBRE[payload.mes]}-${payload.anio}`,
+      content,
+      branch: GH_BRANCH
+    };
+    if (sha) body.sha = sha;
+
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (r.ok) {
+      document.getElementById('ghStatus').innerHTML =
+        `<span style="color:green">✅ Guardado: <code>${path}</code> (${cotizaciones.length} registros)</span>`;
+    } else {
+      const err = await r.json();
+      throw new Error(err.message || r.status);
+    }
+  } catch (e) {
+    document.getElementById('ghStatus').innerHTML = `<span style="color:red">❌ ${e.message}</span>`;
+  }
+}
+
+async function ghCargar() {
+  const token = getGhToken();
+  if (!token) {
+    document.getElementById('ghStatus').textContent = '⚠️ Configura GitHub Token primero';
+    return;
+  }
+
+  const path = ghFilePath();
+  document.getElementById('ghStatus').textContent = '⏳ Cargando...';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    });
+    if (!r.ok) throw new Error(`No encontrado: ${path}`);
+    const data = await r.json();
+    const json = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+
+    // Restore session
+    facturaMap = json.facturaMap || {};
+    cotizaciones = (json.cotizaciones || []).map(c => ({
+      ...c,
+      empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
+      notaEntrega: c.notaEntrega || ''
+    }));
+
+    renderTabla();
+    renderEmpresaFacturas();
+    document.getElementById('cardTabla').style.display = '';
+    document.getElementById('cardFacturas').style.display = '';
+    document.getElementById('cardGenerar').style.display = '';
+    enableGenerarBtns();
+
+    document.getElementById('ghStatus').innerHTML =
+      `<span style="color:green">✅ Cargado: ${cotizaciones.length} registros (guardado ${new Date(json.savedAt).toLocaleString()})</span>`;
+  } catch (e) {
+    document.getElementById('ghStatus').innerHTML = `<span style="color:red">❌ ${e.message}</span>`;
+  }
 }
 
 // ─── GENERADORES ─────────────────────────────────────────────────────────────
@@ -1176,7 +1403,7 @@ function markOutput(id) {
 //    build_database.py (3 fuentes, 198 locales, recarga incluye mantt).
 async function regenerarBaseDatos() {
   const status = document.getElementById('regen-status');
-  const token = document.getElementById('dropboxToken')?.value?.trim() || localStorage.getItem('dropboxToken') || '';
+  const token = getToken();
   if (!token) {
     status.innerHTML = '<span style="color:red">⚠️ Configura tu token de Dropbox primero (sección Configuración)</span>';
     return;

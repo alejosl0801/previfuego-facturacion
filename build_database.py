@@ -22,7 +22,7 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from collections import defaultdict, Counter
 
 TOKEN = (
-    "sl.u.AGi_BG-2pjHUsNGNwXqO3-9F2zw0Ho_5by7OvUjvSERga-7WOZCiThedAHHGsQvRU9ngFrB_BDlbbft_eXoaGsNbI1OOmSXWBlCyYVWoF_F-ACSEh91E61VYOjtgKOc9f8FKYj2HyT4TLx4UTB-djpNthqbpCHLhQZMVUv_70laskwf2__wRkcRRPVgXifzMtv1-2Le00eVhlbiykP324HCcb73dMzvT4jQJucswMi2ZzZBiabYD_B-I1m0ugl6DXki56kdyza2YlMUnz6ihJuzPO66SRjnvq9Cf80q59zXWXcEhACPttZl3fmwA7TjliQh9bBkQ3qrjonaRiPRRRqxybaV_4v_5qZ6v431aSJRT2O3z_zPOCpl7eCyk0spR8fNV1ExXwvFKN1N3N4pMDcdAlWkZjg0g74WidzCQRf4fLvhJuf3-eFBBLnQeZHuxvfTQHJZbWrW3zGPu8fctyow14V4ejg37DELUHYXFU5KEOYS92dZzHXFq7WY0C-Drz563sVj1Mo2_kTQ68-HJheGLdWu_4Dsi1PNU4UCn0NePzsFWLKyWYN9o-byG8cpUNbCLbvKRXROecemUDPI1Hu1a2bT0lyR3JVFPtLtAuBUHHGiZIO2KKpmWKgUsaNkzYtOHM51_8EpFa_LYw59Cg3b_Q28GU3fYycG6fl0lDeLNzlcl8w7YamQtyMpXB_Miln3FGzIb6wsktmtkSsdAmswhQPrWTTYEkYEXjstzxdG7qvTIzNMhotEtn-RyzsJ6xAzDLEeLojvoufcaZx0JBz1i64Zv2D1o_BEKQcbFt5euKpa1V8JSdL_mcuFq8QNaDT1lJanha1BazKogV9KRDP1-SgmGsrFXbH0nH-PnOKQn3-Ntie2mYwbydRR45QvAIJBm2XhWEwJ6lWzg9TgOE_hixkDJGCrtJ7sQgHYd6mF4qmEPKNL-JBxEQbb0ZAFXaKl8S9r4lhjbeZys9J4FrGTuAn1hoyIePGNz7eqY4OUVYLcWeUTIitSgsoK0BbRbowY_KYybXLYZpNjauzEasRmFHWh3KnNfXvxHws-nVReHtj0Ofd-1E8I51ony8li6vOxcsMhF1CTyw4N7fuMJHge_QsVcEreUcMVjlXhBcmUKgmlnPqyzjs4ia44HYRsyAUs9XuI_un6EzYnZLEKTnHzP4-AYrlrn5y8PfIBEXFE9on9cAAiFz70uOjcPiWFd_XJhLuYHQG6QCy8ueG7Y09ErglEztMbZLxpkZk1QNbxOCpvBL_eUWDmRR1x1q-dFdeYg0U4fFuR_NlMM7fwNF1--"
+    "sl.u.AGjIpgezlnwaiHgKQ7Bu5YYhccUjjteEDF1RqACnZjg3vFiMjL5x5d3IaLviJ9dyORvEYZT9jSRe2ocUFRy6vc_0Ls5NPIrwAB6HDxh0Rief7rixFm6VGuCmG1QG0La0ZOoKlDsxocS9ewt1m24m3MXbNcfn88LKLmsQpMw2goxO_qOqtX1yas7JTvt5mDkdplEnlMmHEdQXg3zIgeIj0lFlIzVJwaLgfZfVNL1GwShY5RwsMi_aKAm-VWi6Y5rraWcnvPDbCl2ZNy70KAT-0GNYLKlipCrcjFkCKzBvqfWX8zffKCm9A_mTqWpb6N1ZZ-MPAQICCro_UuZ9zVUvgp6sPQVlHS7vfDRiLLVZ9LIs7-h2DbCct4f4FX3fqszjgAr0LFKak5vCNv8zymvTmzTEOucEEsi5nQ4e7UNE7ixEiZ1kZ2WwsFihVJWMxhP4kFjChzHdjSJ12ubYy2JLjNKpAtLBxhVVqV6uzqoH2rkIWmEnmdpS5EjyxRGni7kZfJQZG4Bdy5IJlqJYcBtQmxE9u-UFnBe28LHnUVJB1s50kmV8yNpkvzFlqC0CtGuvLj6FgjsfsUSMOroG8gi-eZaRGDEj9jqqpMsfW9NSb7iz6budr6_5OhzxQ3w3YZRVnB70EQBdHxWZTE_8So9s-y31vhN97tE9lWqqMl0lR9VzjeBU7c5zZY3N1N6oE1Yf-yyXKGxjdC6dU7Up0y5bPj9Z5CnLM33kc2N_-2L_M3Ze7J7t-VgKO2Jaa_B3H6eEeGGztUHYP8mo6Tnj0_1LHK6pzvJsmxIsFeayP_XosPF4gfhf3vHjFm9QgNDvu8hynZoUgAuXYugcqu2iwafkpQ5ZNH8vcpfCC7PBs_qIGVKBAE75ZeoLSovGxY17OIQIzkGHtScwgS1AUgidHDnEEwIieljdLH1n3J46UmL3s9u3UBtbpvhhg3yjd-Mu4fGWM8-fW9BUAMDMFpOTTPb4u0uS6rm31EUTBaNJFATbfV-E_7iqrAsjZaVfy92vvlLA8eEdvkImoPZsY86p7pgTIHuxqJs1OgY56SD5RJMTpcRZq8M8N6PbN134UoXO_5tpvkAbIcQ3Hpiq208kHncSeUIt7Rah3sI3LAgkBrv227x5LUKOvnJjm_mMpNbAwDt965lINR9a_-ME_J_fT-uaGKVE93nUV4JBN2YqwtsP90LGsmtFFSbKhcyWNXmKqkPjr7eTByLy4w0GOoa4cXv2XpBFGX-mfHgb4Zqi9eG6EoFbGglKX6zVzALOratprYdEXEWhZ6Rr-dKFDk9YfWm3uobt"
 )
 
 FILES = {
@@ -421,24 +421,61 @@ print(f"Removed G042: {before - len(matriz_rows)} rows removed")
 h068_in_mat = [r for r in matriz_rows if r["ckey"] == H068_KEY]
 print(f"H068 rows in MATRIZ: {len(h068_in_mat)} (expected 0 – already part of K172)")
 
-# (c) Add V091 from PROYECCIÓN if not in MATRIZ
+# (c) Add any missing locals from PROYECCIÓN (generalised: all missing, not just V091)
+# SHARED_BS_CN defined later in step 4; these 4 CNs are already covered by their BS equivalents
+SHARED_CN = {('CN', 4), ('CN', 16), ('CN', 31), ('CN', 37)}
+pres_expected = set(
+    k for k in presupuesto_map
+    if k not in (G042_KEY, H068_KEY) and k not in SHARED_CN
+)
+mat_keys_now = set(r["ckey"] for r in matriz_rows)
+proy_by_key = {}
+for r in proy_rows:
+    proy_by_key.setdefault(r["ckey"], []).append(r)
+
+added_from_proy = []
+truly_missing = []
+
+for ckey in sorted(pres_expected - mat_keys_now):
+    if ckey in proy_by_key:
+        seen = set()
+        deduped = []
+        for r in proy_by_key[ckey]:
+            sig = (r["tipo"], r["cap"], r["ubic"])
+            if sig not in seen:
+                seen.add(sig); deduped.append(r)
+        matriz_rows.extend(deduped)
+        added_from_proy.append((ckey, len(deduped)))
+    else:
+        truly_missing.append(ckey)
+
+# Also ensure V091 is included even if already in mat_keys (backwards compat)
 V091_KEY = ('V', 91)
-if V091_KEY not in mat_keys:
-    proy_v091 = [r for r in proy_rows if r["ckey"] == V091_KEY]
-    # Deduplicate (PROYECCIÓN sometimes lists each extintor twice)
-    seen = set()
-    deduped = []
-    for r in proy_v091:
-        sig = (r["tipo"], r["cap"], r["ubic"])
-        if sig not in seen:
-            seen.add(sig)
-            deduped.append(r)
-    print(f"Adding V091 from PROYECCIÓN: {len(deduped)} extintores (from {len(proy_v091)} raw rows)")
-    for r in deduped:
-        print(f"  {r['tipo']} {r['cap']}")
-    matriz_rows.extend(deduped)
+if V091_KEY not in mat_keys_now and V091_KEY not in [c for c, _ in added_from_proy]:
+    if V091_KEY in proy_by_key:
+        seen = set(); deduped = []
+        for r in proy_by_key[V091_KEY]:
+            sig = (r["tipo"], r["cap"], r["ubic"])
+            if sig not in seen:
+                seen.add(sig); deduped.append(r)
+        matriz_rows.extend(deduped)
+        added_from_proy.append((V091_KEY, len(deduped)))
+
+if added_from_proy:
+    print(f"\nAdded from PROYECCIÓN ({len(added_from_proy)} locals):")
+    for ckey, n in added_from_proy:
+        info = presupuesto_map.get(ckey, {})
+        print(f"  {fmt_code(*ckey)}: {info.get('nombre','?')} – {n} extintores")
 else:
-    print("V091 already in MATRIZ")
+    print("\nNo missing PRESUPUESTO locals (all already in MATRIZ)")
+
+if truly_missing:
+    print(f"\n*** TRULY MISSING (not in MATRIZ nor PROYECCIÓN) – {len(truly_missing)} locals: ***")
+    for ckey in truly_missing:
+        info = presupuesto_map[ckey]
+        print(f"  {fmt_code(*ckey)}: {info['cc_pres']} – {info['marca']} – {info['nombre']}")
+else:
+    print("All PRESUPUESTO locals resolved ✓")
 
 # (d) Override MES from PROYECCIÓN where PROYECCIÓN is source of truth
 proy_mes = {}
@@ -639,7 +676,6 @@ COL_HDR_FILL  = PatternFill("solid", fgColor="1F4E79")   # dark blue – column 
 LOCAL_FILL    = PatternFill("solid", fgColor="D9E1F2")   # light blue – each local's rows
 TOTALS_FILL   = PatternFill("solid", fgColor="E2EFDA")   # light green – TOTALES row
 RESUMEN_FILL  = PatternFill("solid", fgColor="375623")   # dark green – resumen header
-AUD_FILL      = PatternFill("solid", fgColor="7B0000")   # dark red – audit header
 WHITE_FILL    = PatternFill("solid", fgColor="FFFFFF")
 
 HDR_FONT      = Font(name="Calibri", color="FFFFFF", bold=True, size=11)
@@ -827,47 +863,6 @@ for ci, val in enumerate(grand_vals, 1):
         cell.alignment = RIGHT
     else:
         cell.alignment = CENTER
-
-
-# ── Sheet 3: AUDITORÍA ───────────────────────────────────────────────────────
-ws_aud = wb.create_sheet("AUDITORÍA")
-ws_aud.sheet_view.showGridLines = False
-ws_aud.row_dimensions[1].height = 22
-
-AUD_COLS = ["TIPO", "CÓDIGO", "DETALLE"]
-AUD_WIDTHS = [28, 12, 80]
-for ci, (col_name, width) in enumerate(zip(AUD_COLS, AUD_WIDTHS), 1):
-    cell = ws_aud.cell(row=1, column=ci, value=col_name)
-    cell.fill = AUD_FILL
-    cell.font = HDR_FONT
-    cell.alignment = CENTER
-    cell.border = THIN_BORDER
-    ws_aud.column_dimensions[get_column_letter(ci)].width = width
-
-aud_rows = []
-for k in sorted(missing_from_final):
-    info = presupuesto_map[k]
-    aud_rows.append(["EN_PRESUP_SIN_EXTINTOR", fmt_code(*k),
-                     f"{info['cc_pres']} – {info['marca']} – {info['nombre']}"])
-for k in sorted(extra_in_final):
-    aud_rows.append(["EN_MATRIZ_SIN_PRESUP", fmt_code(*k), "Nuevo local no en PRESUPUESTO 2026"])
-for r in final_rows:
-    if r["NOTAS"]:
-        aud_rows.append(["PRECIO_NO_HALLADO", r["CÓDIGO"],
-                         f"{r['TIPO']} {r['CAPACIDAD']} – {r['NOTAS']}"])
-aud_rows.append(["FUSIONADO", "H068",
-                 "Heladerías Mall del Norte fusionado en K172 (extintor 'heladería' incluido en K172)"])
-aud_rows.append(["ELIMINADO", "G042",
-                 "GUS Quito Aguirre – local cerrado, excluido de la base"])
-
-for ridx, row_data in enumerate(aud_rows, 2):
-    fill = ALT_FILLS[ridx % 2]
-    for ci, val in enumerate(row_data, 1):
-        cell = ws_aud.cell(row=ridx, column=ci, value=val)
-        cell.fill = fill
-        cell.font = NORMAL_FONT
-        cell.border = THIN_BORDER
-        cell.alignment = LEFT
 
 
 wb.save(OUT)
