@@ -461,7 +461,20 @@ print(f"\nFinal unique locals: {len(final_keys)}")
 
 # ── 4. Brand lookup ───────────────────────────────────────────────────────────
 
+# Ubicaciones compartidas Baskin Robbins / Cinnabon (mismo local físico).
+# En MATRIZ se codifican como BS; en PRESUPUESTO algunas aparecen como CN.
+# Mapea la clave BS -> clave CN equivalente en PRESUPUESTO.
+SHARED_BS_CN = {
+    ('BS', 4):  ('CN', 4),
+    ('BS', 16): ('CN', 16),
+    ('BS', 37): ('CN', 37),
+    ('BS', 31): ('CN', 31),
+}
+
 def get_marca(ckey):
+    # Ubicación compartida Baskin/Cinnabon
+    if ckey in SHARED_BS_CN:
+        return "BASKIN ROBBINS / CINNABON"
     pinfo = presupuesto_map.get(ckey)
     if pinfo and pinfo["marca"]:
         return pinfo["marca"]
@@ -473,6 +486,11 @@ def get_nombre_local(ckey):
     pinfo = presupuesto_map.get(ckey)
     if pinfo and pinfo["nombre"]:
         return pinfo["nombre"]
+    # Para ubicaciones compartidas, tomar el nombre de la entrada CN del PRESUPUESTO
+    if ckey in SHARED_BS_CN:
+        cn = presupuesto_map.get(SHARED_BS_CN[ckey])
+        if cn and cn["nombre"]:
+            return cn["nombre"]
     return ""
 
 
@@ -587,8 +605,13 @@ bc = Counter(s["MARCA"] for s in local_sum.values())
 for b, c in sorted(bc.items(), key=lambda x: -x[1]):
     print(f"  {b:25s}: {c}")
 
-# Audit: in PRESUPUESTO (minus G042, H068) but not in final
-pres_expected = set(k for k in presupuesto_map if k not in (G042_KEY, H068_KEY))
+# Audit: in PRESUPUESTO (minus G042, H068) but not in final.
+# Las CN compartidas (CN04/CN16/CN31/CN37) están cubiertas por su BS equivalente.
+SHARED_CN = set(SHARED_BS_CN.values())   # {('CN',4),('CN',16),('CN',31),('CN',37)}
+pres_expected = set(
+    k for k in presupuesto_map
+    if k not in (G042_KEY, H068_KEY) and k not in SHARED_CN
+)
 final_codes   = set(r["_ckey"] for r in final_rows)
 missing_from_final = pres_expected - final_codes
 extra_in_final     = final_codes - pres_expected - {H068_KEY}
