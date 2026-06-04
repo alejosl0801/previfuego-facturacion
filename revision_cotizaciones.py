@@ -59,9 +59,12 @@ def canonical_code(raw: str) -> str:
     s = re.sub(r'^JV', 'V', s)
     # Strip prefix CJNC → J (CAJUN codes)
     s = re.sub(r'^CJNC', 'J', s)
+    # CN → BS (Cinnabon = Baskin-Robin, misma ubicación)
+    s = re.sub(r'^CN', 'BS', s)
     # Now remove leading zeros from the numeric suffix
     # e.g. K002 → K2, BS009 → BS9, M058 → M58
-    m = re.match(r'^([A-Z]+?)0*([1-9]\d*)$', s)
+    # Also strip any trailing non-numeric suffix (e.g. K91PASEO → K91)
+    m = re.match(r'^([A-Z]+?)0*([1-9]\d*)', s)
     if m:
         return m.group(1) + m.group(2)
     return s
