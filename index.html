@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Previfuego – Facturación KFC</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --rojo: #c0392b;
+    --rojo-oscuro: #922b21;
+    --gris: #f5f5f5;
+    --gris-borde: #ddd;
+    --texto: #222;
+    --verde: #27ae60;
+    --azul: #2980b9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f0f0; color: var(--texto); }
+
+  header {
+    background: var(--rojo);
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  header .logo { font-size: 28px; font-weight: 900; letter-spacing: -1px; }
+  header .subtitle { font-size: 13px; opacity: 0.85; }
+
+  .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+
+  .card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .card-header {
+    background: var(--gris);
+    border-bottom: 1px solid var(--gris-borde);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .card-header h2 { font-size: 14px; font-weight: 700; color: var(--rojo); }
+  .card-header .toggle { font-size: 18px; color: #999; }
+  .card-body { padding: 20px; }
+  .card-body.hidden { display: none; }
+
+  .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 200px; }
+  label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+  input, select, textarea {
+    border: 1px solid var(--gris-borde);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    width: 100%;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--rojo); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary { background: var(--rojo); color: white; }
+  .btn-primary:hover { background: var(--rojo-oscuro); }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+  .btn-success { background: var(--verde); color: white; }
+  .btn-success:hover { background: #1e8449; }
+  .btn-info { background: var(--azul); color: white; }
+  .btn-info:hover { background: #1f6fa5; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .status-ok { background: #d5f5e3; color: #1e8449; border: 1px solid #a9dfbf; }
+  .status-error { background: #fdecea; color: #c0392b; border: 1px solid #f1948a; }
+  .status-info { background: #d6eaf8; color: #1a5276; border: 1px solid #85c1e9; }
+  .status-warn { background: #fef9e7; color: #b7950b; border: 1px solid #f9e79f; }
+
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(0,0,0,0.1);
+    border-top-color: var(--rojo);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--rojo); color: white; padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+  td { padding: 6px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  tr:hover td { background: #fafafa; }
+  tr.manges td { background: #eafaf1; }
+  tr.mant td { background: #eaf4fb; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-manges { background: #d5f5e3; color: #1e8449; }
+  .badge-mant { background: #d6eaf8; color: #1a5276; }
+
+  td input { padding: 4px 6px; font-size: 12px; width: 100%; }
+
+  .progress-steps { display: flex; gap: 0; margin-bottom: 24px; }
+  .step {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eee;
+    border-right: 2px solid white;
+    color: #999;
+    transition: all 0.2s;
+  }
+  .step:last-child { border-right: none; }
+  .step.active { background: var(--rojo); color: white; }
+  .step.done { background: var(--verde); color: white; }
+  .step .num { font-size: 18px; font-weight: 900; display: block; }
+
+  .empresa-section {
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .empresa-header {
+    background: #f8f8f8;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--gris-borde);
+  }
+  .empresa-nombre { font-weight: 700; font-size: 14px; }
+  .empresa-facturas { display: flex; gap: 12px; align-items: center; }
+  .fact-input-group { display: flex; align-items: center; gap: 6px; }
+  .fact-input-group label { font-size: 11px; white-space: nowrap; color: #666; }
+  .fact-input-group input { width: 110px; }
+
+  .outputs { display: flex; gap: 12px; flex-wrap: wrap; }
+  .output-card {
+    flex: 1;
+    min-width: 200px;
+    border: 2px dashed var(--gris-borde);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .output-card.ready { border-color: var(--verde); background: #f0fff4; }
+  .output-card .icon { font-size: 32px; margin-bottom: 8px; }
+  .output-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .output-card p { font-size: 11px; color: #666; margin-bottom: 12px; }
+
+  .log-box {
+    background: #1a1a1a;
+    color: #00ff88;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 12px;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 12px;
+  }
+  .log-line { margin-bottom: 2px; }
+  .log-err { color: #ff6b6b; }
+  .log-warn { color: #ffd93d; }
+  .log-ok { color: #6bcb77; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">🔴 PREVIFUEGO</div>
+    <div class="subtitle">Sistema de Facturación – Grupo KFC</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- PROGRESS -->
+  <div class="progress-steps">
+    <div class="step active" id="step1"><span class="num">1</span>Configurar</div>
+    <div class="step" id="step2"><span class="num">2</span>Cargar datos</div>
+    <div class="step" id="step3"><span class="num">3</span>Revisar</div>
+    <div class="step" id="step4"><span class="num">4</span>Generar</div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="card">
+    <div class="card-header" onclick="toggleCard('cfg')">
+      <h2>⚙️ Configuración</h2>
+      <span class="toggle" id="cfg-toggle">▼</span>
+    </div>
+    <div class="card-body" id="cfg-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label>Token de Dropbox</label>
+          <input type="password" id="dbxToken" placeholder="sl.u...." />
+        </div>
+        <div class="form-group">
+          <label>API Key Gemini (opcional)</label>
+          <input type="password" id="geminiKey" placeholder="Para leer fotos" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ruta base en Dropbox</label>
+          <input type="text" id="dbxBase" value="/Previfuego" />
+        </div>
+        <div class="form-group">
+          <label>Subcarpeta del mes</label>
+          <input type="text" id="dbxSubfolder" value="GRUPO KFC" placeholder="GRUPO KFC" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveConfig()">💾 Guardar configuración</button>
+      <span id="cfgStatus"></span>
+    </div>
+  </div>
+
+  <!-- PASO 1: SELECCIONAR MES -->
+  <div class="card">
+    <div class="card-header" onclick="toggleCard('mes')">
+      <h2>📅 Paso 1 – Seleccionar mes</h2>
+      <span class="toggle" id="mes-toggle">▼</span>
+    </div>
+    <div class="card-body" id="mes-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Mes</label>
+          <select id="selMes">
+            <option value="01 ENERO">Enero</option>
+            <option value="02 FEBRERO">Febrero</option>
+            <option value="03 MARZO">Marzo</option>
+            <option value="04 ABRIL">Abril</option>
+            <option value="05 MAYO">Mayo</option>
+            <option value="06 JUNIO">Junio</option>
+            <option value="07 JULIO">Julio</option>
+            <option value="08 AGOSTO">Agosto</option>
+            <option value="09 SEPTIEMBRE">Septiembre</option>
+            <option value="10 OCTUBRE">Octubre</option>
+            <option value="11 NOVIEMBRE">Noviembre</option>
+            <option value="12 DICIEMBRE">Diciembre</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Año</label>
+          <select id="selAnio">
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2027">2027</option>
+          </select>
+        </div>
+        <div class="form-group" style="justify-content:flex-end">
+          <label>&nbsp;</label>
+          <button class="btn btn-primary" id="btnCargar" onclick="cargarCotizaciones()">
+            📂 Cargar cotizaciones
+          </button>
+        </div>
+      </div>
+      <div id="loadStatus"></div>
+    </div>
+  </div>
+
+  <!-- PASO 2: TABLA DE COTIZACIONES -->
+  <div class="card" id="cardTabla" style="display:none">
+    <div class="card-header" onclick="toggleCard('tabla')">
+      <h2>📋 Paso 2 – Cotizaciones cargadas</h2>
+      <span class="toggle" id="tabla-toggle">▼</span>
+    </div>
+    <div class="card-body" id="tabla-body">
+      <div id="tablaContainer"></div>
+    </div>
+  </div>
+
+  <!-- PASO 3: FACTURAS Y NOTAS DE ENTREGA -->
+  <div class="card" id="cardFacturas" style="display:none">
+    <div class="card-header" onclick="toggleCard('fact')">
+      <h2>🧾 Paso 3 – Números de factura y notas de entrega</h2>
+      <span class="toggle" id="fact-toggle">▼</span>
+    </div>
+    <div class="card-body" id="fact-body">
+      <p style="font-size:13px;color:#555;margin-bottom:16px">
+        Ingresa el número de factura por empresa. Las notas de entrega puedes ingresarlas manualmente en la tabla de arriba (columna <strong># N.E.</strong>) o subir fotos para que la IA las lea automáticamente.
+      </p>
+      <div id="empresaFacturasContainer"></div>
+
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee;">
+        <label style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;">📸 Leer # Notas de Entrega desde fotos (Gemini AI)</label>
+        <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="file" id="fotoNE" accept="image/*" multiple style="font-size:13px" />
+          <button class="btn btn-info btn-sm" onclick="leerFotosNE()">🤖 Leer con IA</button>
+          <span id="fotoStatus" style="font-size:12px;color:#666"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 4: GENERAR -->
+  <div class="card" id="cardGenerar" style="display:none">
+    <div class="card-header" onclick="toggleCard('gen')">
+      <h2>⬇️ Paso 4 – Generar Excels</h2>
+      <span class="toggle" id="gen-toggle">▼</span>
+    </div>
+    <div class="card-body" id="gen-body">
+      <div class="outputs">
+        <div class="output-card" id="out1">
+          <div class="icon">📊</div>
+          <h3>DETALLE FACT MENSUAL</h3>
+          <p>Hojas: MANGES + MANT<br>Detalle extintores por local</p>
+          <button class="btn btn-success btn-sm" onclick="generarDetalle()" disabled id="btn1">Generar</button>
+        </div>
+        <div class="output-card" id="out2">
+          <div class="icon">📑</div>
+          <h3>DISTRIBUCIÓN</h3>
+          <p>Una hoja por factura<br>C.C. + descripción + valores</p>
+          <button class="btn btn-success btn-sm" onclick="generarDistribucion()" disabled id="btn2">Generar</button>
+        </div>
+        <div class="output-card" id="out3">
+          <div class="icon">🏢</div>
+          <h3>FORMATO FACTURACIÓN</h3>
+          <p>Una hoja por empresa<br>Resumen con # factura</p>
+          <button class="btn btn-success btn-sm" onclick="generarFormatoFact()" disabled id="btn3">Generar</button>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn btn-primary" onclick="generarTodo()" id="btnGenerarTodo" disabled>
+          ⬇️ Generar y descargar los 3 Excels
+        </button>
+      </div>
+      <div id="genLog" class="log-box" style="display:none"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── DATOS GLOBALES ───────────────────────────────────────────────────────────
+const MESES_NOMBRE = {
+  '01 ENERO':'ENERO','02 FEBRERO':'FEBRERO','03 MARZO':'MARZO',
+  '04 ABRIL':'ABRIL','05 MAYO':'MAYO','06 JUNIO':'JUNIO',
+  '07 JULIO':'JULIO','08 AGOSTO':'AGOSTO','09 SEPTIEMBRE':'SEPTIEMBRE',
+  '10 OCTUBRE':'OCTUBRE','11 NOVIEMBRE':'NOVIEMBRE','12 DICIEMBRE':'DICIEMBRE'
+};
+
+// Mapa de prefijos de código local → empresa
+const EMPRESAS_MAP = {
+  'K':    { empresa:'INT FOOD SERVICES CORP SA',              marca:'KFC',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'G':    { empresa:'INT FOOD SERVICES CORP SA',              marca:'KFC',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'M':    { empresa:'SHEMLON SA',                             marca:'MENESTRAS DEL SEÑOR',ruc:'1792049504001', hoja:'SHEMLON' },
+  'CJNC': { empresa:'SHEMLON SA',                             marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
+  'BS':   { empresa:'SHEMLON SA',                             marca:'BAGUETERIE',         ruc:'1792049504001', hoja:'SHEMLON' },
+  'T':    { empresa:'DELI-INTERNACIONAL SA',                  marca:'TROPIBURGER',        ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
+  'I':    { empresa:'PRODUCCIONES Y EVENTOS NOVOEVENTOS SA',  marca:'IVORY',              ruc:'1792025435001', hoja:'NOVOEVENTOS' },
+  'ILCI': { empresa:'PRODUCCIONES Y EVENTOS NOVOEVENTOS SA',  marca:'IVORY',              ruc:'1792025435001', hoja:'NOVOEVENTOS' },
+  'V':    { empresa:'PROMOTORA ECUATORIANA DE CAFÉ DE COLOMBIA SA', marca:'JUAN VALDEZ',  ruc:'1792141486001', hoja:'PROCAFECOL' },
+  'JV':   { empresa:'PROMOTORA ECUATORIANA DE CAFÉ DE COLOMBIA SA', marca:'JUAN VALDEZ',  ruc:'1792141486001', hoja:'PROCAFECOL' },
+  'AMCA': { empresa:'AMCA SA',                                marca:'AMCA',               ruc:'',              hoja:'AMCA' },
+  'ESPE': { empresa:'ESPRESSO AMERICANO SA',                  marca:'ESPRESSO AMERICANO', ruc:'',              hoja:'ESPRESSO AMERICANO' },
+  'CN':   { empresa:'SHEMLON SA',                             marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
+};
+
+let cotizaciones = []; // array of parsed cotizacion objects
+let facturaMap = {};   // { hojaKey: { factManges: 'XXXX', factMant: 'YYYY' } }
+
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+function loadConfig() {
+  document.getElementById('dbxToken').value = localStorage.getItem('dbxToken') || '';
+  document.getElementById('geminiKey').value = localStorage.getItem('geminiKey') || '';
+  document.getElementById('dbxBase').value = localStorage.getItem('dbxBase') || '/Previfuego';
+  document.getElementById('dbxSubfolder').value = localStorage.getItem('dbxSubfolder') || 'GRUPO KFC';
+}
+
+function saveConfig() {
+  localStorage.setItem('dbxToken', document.getElementById('dbxToken').value.trim());
+  localStorage.setItem('geminiKey', document.getElementById('geminiKey').value.trim());
+  localStorage.setItem('dbxBase', document.getElementById('dbxBase').value.trim());
+  localStorage.setItem('dbxSubfolder', document.getElementById('dbxSubfolder').value.trim());
+  const el = document.getElementById('cfgStatus');
+  el.textContent = ' ✅ Guardado';
+  el.style.color = 'green';
+  setTimeout(() => el.textContent = '', 2000);
+}
+
+function toggleCard(id) {
+  const body = document.getElementById(id + '-body');
+  const tog = document.getElementById(id + '-toggle');
+  const hidden = body.classList.toggle('hidden');
+  tog.textContent = hidden ? '▶' : '▼';
+}
+
+// ─── DROPBOX HELPERS ─────────────────────────────────────────────────────────
+function getToken() {
+  return localStorage.getItem('dbxToken') || document.getElementById('dbxToken').value.trim();
+}
+
+async function dbxListFolder(path) {
+  const r = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path, recursive: false })
+  });
+  if (!r.ok) throw new Error(`Dropbox list error ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+
+async function dbxDownload(path) {
+  const r = await fetch('https://content.dropboxapi.com/2/files/download', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + getToken(),
+      'Dropbox-API-Arg': JSON.stringify({ path })
+    }
+  });
+  if (!r.ok) throw new Error(`Dropbox download error ${r.status}`);
+  return r.arrayBuffer();
+}
+
+// ─── LOCAL CODE NORMALIZATION ─────────────────────────────────────────────────
+function normalizeLocalCode(rawCode) {
+  // KFCK02 → K02, GUSG49 → G49, M58 → M58, T032 → T032
+  let code = rawCode.toUpperCase().trim();
+  if (code.startsWith('KFCK')) code = 'K' + code.slice(4);
+  else if (code.startsWith('GUSG')) code = 'G' + code.slice(4);
+  return code;
+}
+
+function costCenter(localCode) {
+  // K02 → K002EC, M58 → M058EC, K105 → K105EC, CJNC01 → CJNC01EC
+  const m = localCode.match(/^([A-Z]+)(\d+)$/);
+  if (!m) return localCode + 'EC';
+  const prefix = m[1];
+  const num = m[2];
+  // Single-letter prefixes: pad to 3 digits
+  const padded = prefix.length === 1 ? num.padStart(3, '0') : num;
+  return prefix + padded + 'EC';
+}
+
+function getEmpresa(localCode) {
+  const code = localCode.toUpperCase();
+  // Try multi-char prefixes first (longest match)
+  const prefixes = ['CJNC','GUSG','ILCI','AMCA','ESPE','JV','BS','K','M','T','V','I','G','CN'];
+  for (const p of prefixes) {
+    if (code.startsWith(p)) return EMPRESAS_MAP[p] || null;
+  }
+  return null;
+}
+
+// ─── PARSE COTIZACION EXCEL ───────────────────────────────────────────────────
+function parseCotizacion(arrayBuffer, filename) {
+  const wb = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+
+  // Extract from filename: "COTIZACION1262 KFCK02 9 DE OCT Y CHIMBORAZO.xlsx"
+  const fnMatch = filename.match(/COTIZACION(\d+)\s+([A-Z0-9]+)/i);
+  const proformaNum = fnMatch ? fnMatch[1] : '?';
+  const rawLocalCode = fnMatch ? fnMatch[2].toUpperCase() : '?';
+  const localCode = normalizeLocalCode(rawLocalCode);
+  const cc = costCenter(localCode);
+  const empresa = getEmpresa(localCode);
+
+  let localName = '';
+  let currentServiceType = 'MANTENIMIENTO';
+  let items = [];
+  let subtotal = 0, iva = 0, total = 0;
+  let ciudad = '';
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row) continue;
+
+    // Detect service type header (col D = index 3)
+    const colD = row[3];
+    if (typeof colD === 'string') {
+      const upper = colD.toUpperCase().trim();
+      if (upper === 'MANTENIMIENTO') { currentServiceType = 'MANTENIMIENTO'; continue; }
+      if (upper.includes('RECARGA')) { currentServiceType = 'RECARGA'; continue; }
+      if (upper.includes('VENTA') || upper.includes('INSTALACION')) { currentServiceType = 'VENTA'; continue; }
+      if (upper.includes('VARIOS')) { currentServiceType = 'VARIOS'; continue; }
+
+      // LOCAL line
+      if (upper.startsWith('LOCAL:')) {
+        localName = colD.replace(/LOCAL\s*:/i, '').trim();
+        continue;
+      }
+    }
+
+    // Subtotal (col I = index 8 contains 'SUBTOTAL')
+    if (row[8] === 'SUBTOTAL' || row[7] === 'SUBTOTAL') {
+      subtotal = parseFloat(row[9] || row[10] || 0);
+      continue;
+    }
+    // IVA (col H = index 7)
+    if (typeof row[7] === 'string' && row[7].includes('IVA')) {
+      iva = parseFloat(row[9] || 0);
+      continue;
+    }
+    // TOTAL
+    if (row[8] === 'TOTAL') {
+      total = parseFloat(row[10] || 0);
+      continue;
+    }
+
+    // Item row: col C (index 2) = qty (number), col D (index 3) = description
+    const qty = row[2];
+    const desc = row[3];
+    const unitPrice = row[9];
+    const totalItem = row[12];
+
+    if (typeof qty === 'number' && typeof desc === 'string' && desc.length > 2) {
+      // Classify item
+      const descU = desc.toUpperCase();
+      let tipo = '-', capacidad = '-';
+
+      if (descU.includes('CO2') || descU.includes('GAS CARBONICO')) tipo = 'CO2';
+      else if (descU.includes('PQS') || descU.includes('POLVO QUIMICO')) tipo = 'PQS';
+      else if (descU.includes('TIPO K') || descU.includes('ACETATO')) tipo = 'K';
+      else if (descU.includes('FOAM') || descU.includes('AGUA QUIMICA')) tipo = 'FOAM';
+      else tipo = '-';
+
+      // Extract capacity
+      const capMatch = desc.match(/(\d+[\.,]?\d*)\s*(LIBRAS?|LBS|GLNS|GL)/i);
+      if (capMatch) capacidad = capMatch[1] + (capMatch[2].toUpperCase().includes('G') ? ' GLNS' : ' LBS');
+
+      items.push({
+        qty, desc, tipo, capacidad,
+        unitPrice: parseFloat(unitPrice || 0),
+        total: parseFloat(totalItem || 0),
+        serviceType: currentServiceType,
+        isExtintor: descU.includes('EXTINTOR')
+      });
+    }
+  }
+
+  // Determine overall service category
+  const hasOnlyMaint = items.every(i => i.serviceType === 'MANTENIMIENTO');
+  const category = hasOnlyMaint ? 'MANGES' : 'MANT';
+
+  // Description for FORMATO_FACTURACIÓN
+  let descripcionFact = 'EXTINTORES MANTENIMIENTO ANUAL';
+  if (category === 'MANT') {
+    const types = [...new Set(items.map(i => {
+      const d = i.desc.toUpperCase();
+      if (d.includes('LAMPARA')) return 'LAMPARA EMERGENCIA';
+      if (d.includes('LETRERO') || d.includes('SEÑALET')) return 'SEÑALETICAS';
+      if (d.includes('PEDESTAL')) return 'PEDESTAL';
+      if (d.includes('NUEVO')) return 'EXTINTOR NUEVO';
+      if (d.includes('RECARGA') || d.includes('REC')) return 'RECARGA';
+      if (d.includes('REUBICACION')) return 'REUBICACION';
+      if (d.includes('ACCESORIOS')) return 'ACCESORIOS';
+      if (d.includes('VISITA')) return 'VISITA TECNICA';
+      return 'VARIOS';
+    }))];
+    descripcionFact = types.join(' Y ');
+  }
+
+  // Extract observacion (first non-empty mant description)
+  let observacion = '';
+  if (category === 'MANT') {
+    const mantItems = items.filter(i => !i.isExtintor || i.serviceType !== 'MANTENIMIENTO');
+    if (mantItems.length) observacion = mantItems[0].desc.toUpperCase().includes('DAÑADO')
+      ? 'ACCESORIOS DAÑADOS DURANTE MANTENIMIENTO ANUAL' : 'SOLICITADO POR EL LOCAL';
+  }
+
+  return {
+    filename,
+    proformaNum,
+    rawLocalCode,
+    localCode,
+    cc,
+    empresa,
+    localName: localName || rawLocalCode,
+    ciudad,
+    items,
+    subtotal,
+    iva,
+    total,
+    category,
+    descripcionFact,
+    observacion,
+    notaEntrega: '' // to be filled by user
+  };
+}
+
+// ─── CARGAR COTIZACIONES ──────────────────────────────────────────────────────
+async function cargarCotizaciones() {
+  const token = getToken();
+  if (!token) {
+    showStatus('loadStatus', 'error', '⚠️ Falta el token de Dropbox en Configuración');
+    return;
+  }
+
+  const mes = document.getElementById('selMes').value;
+  const anio = document.getElementById('selAnio').value;
+  const base = localStorage.getItem('dbxBase') || '/Previfuego';
+  const subfolder = localStorage.getItem('dbxSubfolder') || 'GRUPO KFC';
+  const path = `${base}/${anio}/${mes}/${subfolder}`;
+
+  const btn = document.getElementById('btnCargar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Cargando...';
+  showStatus('loadStatus', 'info', '🔍 Buscando archivos en Dropbox...');
+
+  try {
+    const listing = await dbxListFolder(path);
+    const xlsxFiles = listing.entries.filter(e =>
+      e['.tag'] === 'file' &&
+      e.name.toUpperCase().includes('COTIZACION') &&
+      e.name.toUpperCase().endsWith('.XLSX')
+    );
+
+    showStatus('loadStatus', 'info', `📥 Descargando ${xlsxFiles.length} archivos...`);
+
+    cotizaciones = [];
+    let ok = 0, err = 0;
+
+    for (const f of xlsxFiles) {
+      try {
+        const buf = await dbxDownload(f.path_display);
+        const parsed = parseCotizacion(buf, f.name);
+        cotizaciones.push(parsed);
+        ok++;
+      } catch(e) {
+        console.warn('Error parsing', f.name, e);
+        err++;
+      }
+    }
+
+    // Sort by company then by local code
+    cotizaciones.sort((a, b) => {
+      const ea = a.empresa?.hoja || 'Z';
+      const eb = b.empresa?.hoja || 'Z';
+      if (ea !== eb) return ea.localeCompare(eb);
+      return a.localCode.localeCompare(b.localCode);
+    });
+
+    showStatus('loadStatus', 'ok', `✅ ${ok} cotizaciones cargadas${err ? ` (${err} con errores)` : ''}`);
+
+    renderTabla();
+    renderEmpresaFacturas();
+
+    document.getElementById('cardTabla').style.display = '';
+    document.getElementById('cardFacturas').style.display = '';
+    document.getElementById('cardGenerar').style.display = '';
+    setStep(2);
+    enableGenerarBtns();
+
+  } catch(e) {
+    showStatus('loadStatus', 'error', '❌ Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '📂 Cargar cotizaciones';
+  }
+}
+
+// ─── RENDER TABLA ─────────────────────────────────────────────────────────────
+function renderTabla() {
+  const container = document.getElementById('tablaContainer');
+
+  const manges = cotizaciones.filter(c => c.category === 'MANGES');
+  const mant = cotizaciones.filter(c => c.category === 'MANT');
+
+  let html = `
+    <div style="margin-bottom:8px;font-size:13px;color:#666">
+      <span class="badge badge-manges">MANGES: ${manges.length}</span>&nbsp;
+      <span class="badge badge-mant">MANT: ${mant.length}</span>&nbsp;
+      Total: ${cotizaciones.length} cotizaciones
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Archivo</th>
+          <th>Cód. Local</th>
+          <th>C.C.</th>
+          <th>Empresa</th>
+          <th>Tipo</th>
+          <th>Descripción Serv.</th>
+          <th>Subtotal</th>
+          <th>IVA</th>
+          <th>Total</th>
+          <th># N.E.</th>
+          <th>Obs.</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  cotizaciones.forEach((c, idx) => {
+    const empNombre = c.empresa?.empresa || '❓ Sin empresa';
+    const cls = c.category === 'MANGES' ? 'manges' : 'mant';
+    html += `
+      <tr class="${cls}">
+        <td>${idx+1}</td>
+        <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.filename}">${c.filename.replace('.xlsx','')}</td>
+        <td><strong>${c.localCode}</strong></td>
+        <td style="font-family:monospace;font-size:11px">${c.cc}</td>
+        <td style="font-size:11px">
+          <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderEmpresaFacturas()">
+            ${Object.entries(EMPRESAS_MAP).map(([k,v]) =>
+              `<option value="${k}" ${c.empresa===v?'selected':''}>${v.empresa}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td><span class="badge badge-${cls.toLowerCase()}">${c.category}</span></td>
+        <td style="font-size:11px;max-width:180px" contenteditable="true" onblur="cotizaciones[${idx}].descripcionFact=this.textContent.trim()">${c.descripcionFact}</td>
+        <td style="text-align:right">$${c.subtotal.toFixed(2)}</td>
+        <td style="text-align:right">$${c.iva.toFixed(2)}</td>
+        <td style="text-align:right;font-weight:700">$${c.total.toFixed(2)}</td>
+        <td><input type="text" value="${c.notaEntrega}" placeholder="ej: 6494" style="width:80px" onchange="cotizaciones[${idx}].notaEntrega=this.value.trim()" /></td>
+        <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim()">${c.observacion}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+// ─── RENDER FACTURAS POR EMPRESA ──────────────────────────────────────────────
+function renderEmpresaFacturas() {
+  const container = document.getElementById('empresaFacturasContainer');
+
+  // Group by hoja
+  const byHoja = {};
+  cotizaciones.forEach(c => {
+    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+    if (!byHoja[hoja]) byHoja[hoja] = { empresa: c.empresa, manges: [], mant: [] };
+    if (c.category === 'MANGES') byHoja[hoja].manges.push(c);
+    else byHoja[hoja].mant.push(c);
+  });
+
+  let html = '';
+  for (const [hoja, data] of Object.entries(byHoja)) {
+    if (!facturaMap[hoja]) facturaMap[hoja] = { factManges: '', factMant: '' };
+    const subtManges = data.manges.reduce((s,c) => s + c.subtotal, 0);
+    const subtMant = data.mant.reduce((s,c) => s + c.subtotal, 0);
+
+    html += `
+      <div class="empresa-section">
+        <div class="empresa-header">
+          <div>
+            <div class="empresa-nombre">${data.empresa?.empresa || hoja}</div>
+            <div style="font-size:11px;color:#777">
+              MANGES: ${data.manges.length} locales ($${subtManges.toFixed(2)}) &nbsp;|&nbsp;
+              MANT: ${data.mant.length} locales ($${subtMant.toFixed(2)})
+            </div>
+          </div>
+          <div class="empresa-facturas">
+            ${data.manges.length ? `
+            <div class="fact-input-group">
+              <label>Fact. MANGES:</label>
+              <input type="text" placeholder="ej: 3296 MANTGES" value="${facturaMap[hoja].factManges}"
+                onchange="facturaMap['${hoja}'].factManges=this.value.trim()" />
+            </div>` : ''}
+            ${data.mant.length ? `
+            <div class="fact-input-group">
+              <label>Fact. MANT:</label>
+              <input type="text" placeholder="ej: 3299 MANTT" value="${facturaMap[hoja].factMant}"
+                onchange="facturaMap['${hoja}'].factMant=this.value.trim()" />
+            </div>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  container.innerHTML = html || '<p style="color:#999;font-size:13px">Sin datos cargados</p>';
+}
+
+// ─── LEER FOTOS NE ────────────────────────────────────────────────────────────
+async function leerFotosNE() {
+  const geminiKey = localStorage.getItem('geminiKey') || document.getElementById('geminiKey').value.trim();
+  if (!geminiKey) {
+    document.getElementById('fotoStatus').textContent = '⚠️ Necesitas API Key de Gemini en Configuración';
+    return;
+  }
+
+  const files = document.getElementById('fotoNE').files;
+  if (!files.length) {
+    document.getElementById('fotoStatus').textContent = '⚠️ Selecciona al menos una foto';
+    return;
+  }
+
+  document.getElementById('fotoStatus').textContent = '🤖 Procesando fotos con Gemini...';
+
+  for (const file of files) {
+    const base64 = await fileToBase64(file);
+    try {
+      const result = await callGemini(geminiKey, base64, file.type,
+        `Eres un asistente de facturación. Analiza esta nota de entrega/servicio de Previfuego.
+         Extrae:
+         1. Número de nota de entrega (busca "N°", "No.", "NOTA", un número de 4-5 dígitos)
+         2. Código de local (formato: K02, K105, M35, T032, etc.)
+         Solo responde con JSON: {"notaEntrega": "6494", "localCode": "K02"}
+         Si no encuentras algún campo, usa "".`
+      );
+
+      const json = JSON.parse(result.replace(/```json|```/g, '').trim());
+      if (json.notaEntrega && json.localCode) {
+        const cot = cotizaciones.find(c =>
+          c.localCode.replace(/\D/g,'') === json.localCode.replace(/\D/g,'')
+        );
+        if (cot) {
+          cot.notaEntrega = json.notaEntrega;
+          renderTabla();
+          document.getElementById('fotoStatus').textContent += ` ✅ ${json.localCode}:${json.notaEntrega}`;
+        }
+      }
+    } catch(e) {
+      console.warn('Gemini error:', e);
+    }
+  }
+
+  document.getElementById('fotoStatus').textContent += ' — Listo';
+}
+
+async function callGemini(apiKey, base64, mimeType, prompt) {
+  const r = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: mimeType, data: base64 } }
+          ]
+        }]
+      })
+    }
+  );
+  const data = await r.json();
+  return data.candidates[0].content.parts[0].text;
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = e => res(e.target.result.split(',')[1]);
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ─── GENERADORES ─────────────────────────────────────────────────────────────
+function log(msg, type='') {
+  const box = document.getElementById('genLog');
+  box.style.display = '';
+  const line = document.createElement('div');
+  line.className = 'log-line' + (type ? ' log-' + type : '');
+  line.textContent = new Date().toLocaleTimeString() + ' › ' + msg;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function generarTodo() {
+  generarDetalle();
+  generarDistribucion();
+  generarFormatoFact();
+}
+
+function getMesLabel() {
+  const mes = document.getElementById('selMes').value;
+  return MESES_NOMBRE[mes] || mes;
+}
+
+function generarDetalle() {
+  log('Generando DETALLE FACT MENSUAL...');
+  const wb = XLSX.utils.book_new();
+
+  // ── MANGES sheet ──────────────────────────────────────────────────────────
+  const mangesRows = [
+    ['DATOS DE LA EMPRESA', null, null, null, null,
+     'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null, null,
+     'DETALLE DE COSTOS', null, null, null, null],
+    ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO',
+     'EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R',
+     'JEFE DE OPERACIONES QUE AUTORIZA',
+     'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
+  ];
+
+  const mangesCots = cotizaciones.filter(c => c.category === 'MANGES');
+  mangesCots.forEach(c => {
+    const emp = c.empresa || {};
+    const extItems = c.items.filter(i => i.isExtintor);
+    // First row: with empresa info + totals
+    const first = extItems[0];
+    mangesRows.push([
+      emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
+      c.localCode,
+      null,
+      first ? first.qty : 1,
+      first ? first.tipo : '-',
+      first ? first.capacidad : '-',
+      'M', null,
+      first ? first.unitPrice : 0,
+      c.subtotal, c.iva, c.total,
+      c.notaEntrega || ''
+    ]);
+    // Remaining items
+    for (let i = 1; i < extItems.length; i++) {
+      const item = extItems[i];
+      mangesRows.push([
+        null, null, null, null, null, null,
+        item.qty, item.tipo, item.capacidad, 'M', null,
+        item.unitPrice, null, null, null, null
+      ]);
+    }
+  });
+
+  const wsManges = XLSX.utils.aoa_to_sheet(mangesRows);
+  wsManges['!cols'] = [15,20,20,12,12,25,8,8,10,4,20,8,8,8,8,10].map(w => ({ wpx: w * 6 }));
+  XLSX.utils.book_append_sheet(wb, wsManges, 'MANGES');
+  log(`  MANGES: ${mangesCots.length} locales`, 'ok');
+
+  // ── MANT sheet ───────────────────────────────────────────────────────────
+  const mantRows = [
+    ['DATOS DE LA EMPRESA', null, null, null, null,
+     'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null,
+     'DETALLE DE COSTOS', null, null, null, null, 'OBSERVACION', null],
+    ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO',
+     'EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD',
+     'JEFE DE OPERACIONES QUE AUTORIZA',
+     'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA', null, null]
+  ];
+
+  const mantCots = cotizaciones.filter(c => c.category === 'MANT');
+  mantCots.forEach(c => {
+    const emp = c.empresa || {};
+    mantRows.push([
+      emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
+      c.localCode,
+      c.descripcionFact,
+      '-', '-', '-', null,
+      c.subtotal, c.subtotal, c.iva, c.total,
+      c.notaEntrega || '',
+      c.observacion || 'SOLICITADO POR EL LOCAL', null
+    ]);
+  });
+
+  const wsMant = XLSX.utils.aoa_to_sheet(mantRows);
+  XLSX.utils.book_append_sheet(wb, wsMant, 'MANT');
+  log(`  MANT: ${mantCots.length} locales`, 'ok');
+
+  XLSX.writeFile(wb, `DETALLE FACT MENSUAL ${getMesLabel()}.xlsx`);
+  log('✅ DETALLE FACT MENSUAL descargado', 'ok');
+  markOutput('out1');
+}
+
+function generarDistribucion() {
+  log('Generando DISTRIBUCIÓN...');
+  const wb = XLSX.utils.book_new();
+
+  // Group by empresa + category (each becomes an invoice)
+  const byHoja = {};
+  cotizaciones.forEach(c => {
+    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+    const key = hoja + '|' + c.category;
+    if (!byHoja[key]) byHoja[key] = { hoja, category: c.category, empresa: c.empresa, items: [] };
+    byHoja[key].items.push(c);
+  });
+
+  let sheetCount = 0;
+  for (const [key, data] of Object.entries(byHoja)) {
+    const factNum = data.category === 'MANGES'
+      ? (facturaMap[data.hoja]?.factManges || 'XXXX MANTGES')
+      : (facturaMap[data.hoja]?.factMant || 'XXXX MANTT');
+
+    const rows = [
+      ['C.C.', 'DESCRIPCION', 'SUBTOTAL', 'IVA', 'TOTAL']
+    ];
+
+    data.items.forEach(c => {
+      rows.push([
+        c.cc,
+        c.descripcionFact,
+        c.subtotal,
+        c.iva,
+        c.total
+      ]);
+    });
+
+    const totSub = data.items.reduce((s,c) => s + c.subtotal, 0);
+    const totIva = data.items.reduce((s,c) => s + c.iva, 0);
+    const totTot = data.items.reduce((s,c) => s + c.total, 0);
+    rows.push([null, 'TOTAL:', totSub, totIva, totTot]);
+
+    const sheetName = ('FACT ' + factNum).slice(0, 31);
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{ wpx: 80 }, { wpx: 200 }, { wpx: 70 }, { wpx: 60 }, { wpx: 70 }];
+
+    // Style header
+    ['A1','B1','C1','D1','E1'].forEach(ref => {
+      if (ws[ref]) ws[ref].s = { font: { bold: true }, fill: { fgColor: { rgb: 'C0392B' } } };
+    });
+
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    sheetCount++;
+    log(`  Hoja: ${sheetName} (${data.items.length} líneas)`, 'ok');
+  }
+
+  XLSX.writeFile(wb, `DISTRIBUCION ${getMesLabel()}.xlsx`);
+  log(`✅ DISTRIBUCIÓN descargado (${sheetCount} hojas)`, 'ok');
+  markOutput('out2');
+}
+
+function generarFormatoFact() {
+  log('Generando FORMATO_FACTURACIÓN...');
+  const wb = XLSX.utils.book_new();
+
+  // Group by empresa hoja
+  const byHoja = {};
+  cotizaciones.forEach(c => {
+    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+    if (!byHoja[hoja]) byHoja[hoja] = { empresa: c.empresa, items: [] };
+    byHoja[hoja].items.push(c);
+  });
+
+  for (const [hoja, data] of Object.entries(byHoja)) {
+    const rows = [
+      ['C.COSTO', 'DESCRIPCION FACTURA + # ACTA/ORDEN DE TRABAJO',
+       'N° FACTURA', 'SUBTOTAL', 'IVA', 'TOTAL', 'ACTA']
+    ];
+
+    data.items.forEach(c => {
+      const factNum = c.category === 'MANGES'
+        ? (facturaMap[hoja]?.factManges || '')
+        : (facturaMap[hoja]?.factMant || '');
+
+      rows.push([
+        c.cc,
+        c.descripcionFact,
+        factNum,
+        c.subtotal,
+        c.iva,
+        c.total,
+        c.notaEntrega || null
+      ]);
+    });
+
+    const totSub = data.items.reduce((s,c) => s + c.subtotal, 0);
+    const totIva = data.items.reduce((s,c) => s + c.iva, 0);
+    const totTot = data.items.reduce((s,c) => s + c.total, 0);
+    rows.push([null, 'TOTALES', null, totSub, totIva, totTot, null]);
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [
+      { wpx: 70 }, { wpx: 240 }, { wpx: 120 },
+      { wpx: 70 }, { wpx: 60 }, { wpx: 70 }, { wpx: 80 }
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, hoja.slice(0, 31));
+    log(`  Hoja: ${hoja} (${data.items.length} líneas)`, 'ok');
+  }
+
+  XLSX.writeFile(wb, `FORMATO_FACTURACIÓN ${getMesLabel()}.xlsx`);
+  log('✅ FORMATO_FACTURACIÓN descargado', 'ok');
+  markOutput('out3');
+}
+
+// ─── UI HELPERS ───────────────────────────────────────────────────────────────
+function showStatus(elId, type, msg) {
+  const el = document.getElementById(elId);
+  el.className = 'status-bar status-' + type;
+  el.innerHTML = msg;
+  el.style.display = 'flex';
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('step' + i);
+    if (i < n) el.className = 'step done';
+    else if (i === n) el.className = 'step active';
+    else el.className = 'step';
+  }
+}
+
+function enableGenerarBtns() {
+  ['btn1','btn2','btn3','btnGenerarTodo'].forEach(id => {
+    document.getElementById(id).disabled = false;
+  });
+  setStep(4);
+}
+
+function markOutput(id) {
+  document.getElementById(id).classList.add('ready');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+loadConfig();
+</script>
+</body>
+</html>
