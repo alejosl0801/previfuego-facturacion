@@ -88,6 +88,8 @@
   .btn-info { background: var(--azul); color: white; }
   .btn-info:hover { background: #1f6fa5; }
   .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-warning { background: #e67e22; color: white; }
+  .btn-warning:hover { background: #ca6f1e; }
 
   .status-bar {
     display: flex;
@@ -167,6 +169,24 @@
   .fact-input-group { display: flex; align-items: center; gap: 6px; }
   .fact-input-group label { font-size: 11px; white-space: nowrap; color: #666; }
   .fact-input-group input { width: 110px; }
+
+  /* ── Panel de Control ── */
+  .local-card { border:1px solid #ddd; border-radius:8px; margin-bottom:8px; overflow:hidden; }
+  .local-card.visitado { border-left:4px solid #27ae60; }
+  .local-card.pendiente { border-left:4px solid #e74c3c; }
+  .local-card-header {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:9px 14px; background:#f9f9f9; cursor:pointer; gap:8px;
+  }
+  .local-card-header:hover { background:#f0f0f0; }
+  .local-card-body {
+    padding:8px 14px 10px; background:#fff;
+    font-size:12px; color:#555; display:none; border-top:1px solid #eee;
+  }
+  .local-card.open .local-card-body { display:block; }
+  .badge-pendiente { background:#e74c3c; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px; white-space:nowrap; }
+  .badge-visitado  { background:#27ae60; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px; white-space:nowrap; }
+  .plan-stats { display:flex; gap:16px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
 
   .outputs { display: flex; gap: 12px; flex-wrap: wrap; }
   .output-card {
@@ -328,6 +348,27 @@
         Si ya guardaste registros antes, usa <strong>Cargar registros guardados</strong> para continuar donde quedaste.
       </p>
       <div id="loadStatus"></div>
+    </div>
+  </div>
+
+  <!-- PANEL DE CONTROL MENSUAL -->
+  <div class="card" id="cardPlan" style="display:none">
+    <div class="card-header" onclick="toggleCard('plan')">
+      <h2>📋 Plan del mes – Locales a visitar</h2>
+      <span class="toggle" id="plan-toggle">▼</span>
+    </div>
+    <div class="card-body" id="plan-body">
+      <div class="plan-stats">
+        <div>
+          <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial NE</label>
+          <input type="number" id="neInicial" value="6700" min="1" style="width:90px;padding:5px"
+                 onchange="renderPlan()" />
+        </div>
+        <div id="planStats" style="font-size:13px;color:#555;font-weight:600"></div>
+      </div>
+      <div id="planContainer">
+        <p style="color:#999;font-size:13px">Cargando locales del mes desde la base de datos…</p>
+      </div>
     </div>
   </div>
 
@@ -677,10 +718,12 @@ function empezarMes() {
   // Restaurar del navegador lo ya registrado para este mes (si no hay nada en memoria)
   let restaurado = false;
   if (!cotizaciones.length) restaurado = localRestore();
+  document.getElementById('cardPlan').style.display = '';
   document.getElementById('cardFotos').style.display = '';
   document.getElementById('cardTabla').style.display = '';
   document.getElementById('cardFacturas').style.display = '';
   document.getElementById('cardGenerar').style.display = '';
+  cargarPlan();
   renderTabla();
   renderEmpresaFacturas();
   enableGenerarBtns();
@@ -1020,7 +1063,9 @@ function buildPayload() {
       category: c.category, descripcionFact: c.descripcionFact,
       observacion: c.observacion, notaEntrega: c.notaEntrega
     })),
-    facturaMap
+    facturaMap,
+    visitaStatus,
+    neInicial: parseInt(document.getElementById('neInicial')?.value) || 6700
   };
 }
 
@@ -1039,6 +1084,11 @@ function localRestore() {
     if (!raw) return false;
     const json = JSON.parse(raw);
     facturaMap = json.facturaMap || {};
+    visitaStatus = json.visitaStatus || {};
+    if (json.neInicial) {
+      const inp = document.getElementById('neInicial');
+      if (inp) inp.value = json.neInicial;
+    }
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
       empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
@@ -1163,6 +1213,269 @@ function log(msg, type='') {
   line.textContent = new Date().toLocaleTimeString() + ' › ' + msg;
   box.appendChild(line);
   box.scrollTop = box.scrollHeight;
+}
+
+// ─── PLAN DEL MES & NOTAS DE ENTREGA ─────────────────────────────────────────
+let planMes = [];
+let visitaStatus = {};
+const RAW_BASE = 'https://raw.githubusercontent.com/alejosl0801/previfuego-facturacion/main';
+
+const NE_TEMPLATE_MAP = {
+  'INT FOOD SERVICES': 'INT',
+  'SHEMLON': 'SHEMLON',
+  'DELI INTERNACIONAL': 'DELI',
+  'PROCAFECOL': 'PROCAFECOL',
+  'NOVOEVENTOS': 'NOVO',
+};
+
+async function cargarPlan() {
+  const mesVal  = document.getElementById('selMes').value;
+  const mesNom  = MESES_NOMBRE[mesVal];
+  const anio    = document.getElementById('selAnio').value;
+
+  document.getElementById('planContainer').innerHTML =
+    '<p style="color:#999;font-size:13px">Cargando base de datos…</p>';
+
+  try {
+    const resp = await fetch(`${RAW_BASE}/BASE_DATOS_KFC.xlsx?t=${Date.now()}`);
+    const buf  = await resp.arrayBuffer();
+    const wb   = XLSX.read(buf, { type: 'array' });
+
+    // RESUMEN: CÓDIGO, MARCA, NOMBRE_LOCAL, MES_SERVICIO, N_EXTINTORES,
+    //          TOTAL_MANTT, TOTAL_RECARGA, COBRO_ANUAL, AÑO_ULT_RECARGA, AÑO_RECARGA
+    const wsRes = wb.Sheets['RESUMEN_LOCALES'];
+    const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
+
+    // DETALLE: MARCA, NOMBRE_LOCAL, MES_SERVICIO, UBICACIÓN, TIPO, CAPACIDAD,
+    //          COSTO_MANTT, PRECIO_RECARGA, AÑO_ULT_RECARGA, AÑO_RECARGA
+    const wsDet  = wb.Sheets['DETALLE'];
+    const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
+
+    // Build extintor map by local code
+    const extMap = {};
+    detalle.slice(1).forEach(r => {
+      if (!r[1] || r[2] !== mesNom) return;
+      const m = String(r[1]).match(/^([A-Z0-9]+)/);
+      if (!m) return;
+      const cod = m[1];
+      if (!extMap[cod]) extMap[cod] = [];
+      extMap[cod].push({ tipo: r[4], cap: r[5], costoMantt: r[6], precioRec: r[7], anioRec: r[9] });
+    });
+
+    planMes = resumen.slice(1)
+      .filter(r => r[0] && r[3] === mesNom)
+      .map(r => {
+        const cod = String(r[0]);
+        const anioRec = parseInt(r[9]) || 9999;
+        const esRecarga = parseInt(anio) >= anioRec;
+        return {
+          codigo: cod,
+          marca: r[1],
+          nombre: String(r[2] || cod),
+          mes: r[3],
+          nExt: r[4] || 0,
+          totalMantt: parseFloat(r[5]) || 0,
+          totalRecarga: parseFloat(r[6]) || 0,
+          cobro: parseFloat(r[7]) || 0,
+          anioRec,
+          esRecarga,
+          empresa: getEmpresa(cod),
+          extintores: extMap[cod] || [],
+        };
+      });
+
+    renderPlan();
+  } catch(e) {
+    console.error('cargarPlan:', e);
+    document.getElementById('planContainer').innerHTML =
+      `<p style="color:#c0392b;font-size:13px">Error cargando base de datos: ${e.message}</p>`;
+  }
+}
+
+function renderPlan() {
+  const total     = planMes.length;
+  const visitados = planMes.filter(l => visitaStatus[l.codigo] === 'visitado').length;
+  const pendientes = total - visitados;
+  const mesNom = MESES_NOMBRE[document.getElementById('selMes').value];
+
+  document.getElementById('planStats').innerHTML =
+    `${mesNom}: <span style="color:#27ae60">✅ ${visitados} visitados</span> &nbsp;·&nbsp; ` +
+    `<span style="color:#e74c3c">🔴 ${pendientes} pendientes</span> &nbsp;·&nbsp; ${total} total`;
+
+  if (!total) {
+    document.getElementById('planContainer').innerHTML =
+      '<p style="color:#999;font-size:13px">Sin locales programados para este mes.</p>';
+    return;
+  }
+
+  const neBase = parseInt(document.getElementById('neInicial').value) || 6700;
+
+  const html = planMes.map((local, idx) => {
+    const status     = visitaStatus[local.codigo] || 'pendiente';
+    const isVisitado = status === 'visitado';
+    const neNum      = neBase + idx;
+    const iva        = parseFloat((local.cobro * 0.15).toFixed(2));
+    const total      = parseFloat((local.cobro + iva).toFixed(2));
+    const localLabel = local.nombre.replace(local.codigo + ' - ', '');
+    const extList    = local.extintores
+      .map(e => `<code style="font-size:11px;background:#f5f5f5;padding:1px 4px;border-radius:3px">${e.tipo} ${e.cap}</code>`)
+      .join(' ');
+    const tipoServ   = local.esRecarga
+      ? `<span style="color:#8e44ad;font-weight:600">⟳ RECARGA ${local.anioRec}</span>`
+      : `<span style="color:#2980b9;font-weight:600">🔧 MANTENIMIENTO</span>`;
+
+    return `
+      <div class="local-card ${status}" id="lcard-${local.codigo}">
+        <div class="local-card-header" onclick="toggleLocalCard('${local.codigo}')">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
+            <span class="badge-${status}">${isVisitado ? '✅' : '🔴'}</span>
+            <strong style="white-space:nowrap">${local.codigo}</strong>
+            <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${localLabel}</span>
+            <span style="font-size:11px;color:#999;white-space:nowrap">${local.marca}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <span style="font-size:12px;font-weight:600;color:#333;white-space:nowrap">${local.nExt} ext · $${local.cobro.toFixed(2)}</span>
+            <button class="btn btn-sm ${isVisitado ? 'btn-warning' : 'btn-success'}" style="font-size:11px;padding:3px 8px;white-space:nowrap"
+              onclick="event.stopPropagation();toggleVisita('${local.codigo}')">
+              ${isVisitado ? '↩ Pendiente' : '✅ Visitado'}
+            </button>
+            <button class="btn btn-sm btn-info" style="font-size:11px;padding:3px 8px;white-space:nowrap"
+              onclick="event.stopPropagation();generarNELocal('${local.codigo}',${neNum})">
+              📄 NE #${neNum}
+            </button>
+          </div>
+        </div>
+        <div class="local-card-body" id="lbody-${local.codigo}">
+          <div style="margin-bottom:6px">${extList || '<em>Sin extintores registrados</em>'}</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;align-items:center">
+            ${tipoServ}
+            <span>Subtotal: <strong>$${local.cobro.toFixed(2)}</strong></span>
+            <span>IVA 15%: <strong>$${iva.toFixed(2)}</strong></span>
+            <span>Total: <strong>$${total.toFixed(2)}</strong></span>
+            <span style="color:#888">NE asignado: <strong>#${neNum}</strong></span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('planContainer').innerHTML = html;
+}
+
+function toggleLocalCard(codigo) {
+  const card = document.getElementById(`lcard-${codigo}`);
+  if (card) card.classList.toggle('open');
+}
+
+function toggleVisita(codigo) {
+  const cur = visitaStatus[codigo] || 'pendiente';
+  visitaStatus[codigo] = cur === 'visitado' ? 'pendiente' : 'visitado';
+  renderPlan();
+  autosave();
+}
+
+async function generarNELocal(codigo, neNum) {
+  const local = planMes.find(l => l.codigo === codigo);
+  if (!local) { log(`Local ${codigo} no encontrado en el plan`, 'error'); return; }
+
+  const tplKey = NE_TEMPLATE_MAP[local.empresa?.hoja] || 'INT';
+  const tplUrl = `${RAW_BASE}/formatos/ne/${tplKey}.xlsx`;
+
+  try {
+    log(`Generando NE #${neNum} para ${codigo}…`);
+    const resp = await fetch(tplUrl);
+    if (!resp.ok) throw new Error(`Template ${tplKey} no encontrado (${resp.status})`);
+    const buf  = await resp.arrayBuffer();
+    const wb   = XLSX.read(buf, { type: 'array', cellStyles: true });
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+
+    // ── Date ────────────────────────────────────────────────────────────────
+    const today = new Date();
+    const MNAMES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
+                    'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+    const fechaStr = `${today.getDate()} DE ${MNAMES[today.getMonth()]} DEL ${today.getFullYear()}`;
+    ws['I10'] = { t:'s', v: fechaStr };
+
+    // ── Service type ─────────────────────────────────────────────────────────
+    ws['C13'] = { t:'s', v: local.esRecarga ? 'RECARGA' : 'MANTENIMIENTO' };
+
+    // ── Clear old sample rows 14-24 ──────────────────────────────────────────
+    for (let r = 14; r <= 24; r++) {
+      ['A','B','C','M','N'].forEach(col => { delete ws[col + r]; });
+    }
+
+    // ── Build grouped items ──────────────────────────────────────────────────
+    const groups = {};
+    local.extintores.forEach(e => {
+      const k = `${e.tipo}|${e.cap}`;
+      if (!groups[k]) groups[k] = {
+        tipo: e.tipo, cap: e.cap, qty: 0,
+        price: parseFloat(local.esRecarga ? e.precioRec : e.costoMantt) || 0
+      };
+      groups[k].qty++;
+    });
+    const items = Object.values(groups);
+
+    let subtotalCalc = 0;
+    items.forEach((item, i) => {
+      if (i >= 11) return; // max 11 item rows (14-24)
+      const r = 14 + i;
+      const desc  = tipoExtDescripcion(item.tipo, item.cap);
+      const lineT = item.qty * item.price;
+      subtotalCalc += lineT;
+      ws[`A${r}`] = { t:'n', v: item.qty };
+      ws[`B${r}`] = { t:'n', v: item.qty };
+      ws[`C${r}`] = { t:'s', v: desc };
+      ws[`L${r}`] = { t:'s', v: '$' };
+      ws[`M${r}`] = { t:'n', v: item.price };
+      ws[`N${r}`] = { t:'n', v: lineT, f: `M${r}*A${r}` };
+    });
+
+    // ── Local info (row 25) ──────────────────────────────────────────────────
+    const localLabel = local.nombre.replace(local.codigo + ' - ', '');
+    ws['C25'] = { t:'s', v: `LOCAL: ${local.codigo} - ${localLabel}` };
+
+    // ── Totals ───────────────────────────────────────────────────────────────
+    const sub = parseFloat(subtotalCalc.toFixed(2));
+    const iva = parseFloat((sub * 0.15).toFixed(2));
+    const tot = parseFloat((sub + iva).toFixed(2));
+    ws['N27'] = { t:'n', v: sub, f:'SUM(N14:N25)' };
+    ws['N29'] = { t:'n', v: iva, f:'N27*0.15' };
+    ws['N31'] = { t:'n', v: tot, f:'N27+N29' };
+    ws['N32'] = { t:'n', v: tot, f:'SUM(N31)' };
+
+    // ── Amount in words ──────────────────────────────────────────────────────
+    ws['B29'] = { t:'s', v: numeroEnLetras(sub) };
+
+    XLSX.writeFile(wb, `NE-${neNum}-${local.codigo}.xlsx`);
+    log(`✅ NE #${neNum} — ${local.codigo} descargada`, 'ok');
+  } catch(e) {
+    console.error('generarNELocal:', e);
+    log(`❌ Error NE ${codigo}: ${e.message}`, 'error');
+  }
+}
+
+function tipoExtDescripcion(tipo, cap) {
+  const tm = { CO2:'GAS CARBONICO', PQS:'POLVO QUIMICO SECO',
+                K:'TIPO K (ACETATO DE POTASIO)', FOAM:'ESPUMA (AGUA QUIMICA)' };
+  const td = tm[(tipo || '').toUpperCase()] || tipo;
+  const cd = (cap || '').replace(/\bLBS\b/gi,'LIBRAS').replace(/\bGLNS\b/gi,'GALONES');
+  return `EXTINTOR ${cd} - ${td}`;
+}
+
+function numeroEnLetras(num) {
+  const un = ['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE',
+              'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS',
+              'DIECISIETE','DIECIOCHO','DIECINUEVE'];
+  const de = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA',
+              'SESENTA','SETENTA','OCHENTA','NOVENTA'];
+  const ce = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS',
+              'QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+  const b100 = n => n < 20 ? un[n] : (n%10===0 ? de[~~(n/10)] : de[~~(n/10)]+' Y '+un[n%10]);
+  const b1000 = n => n===100 ? 'CIEN' : n<100 ? b100(n) : (n%100===0 ? ce[~~(n/100)] : ce[~~(n/100)]+' '+b100(n%100));
+  const int = Math.floor(num), dec = Math.round((num - int) * 100);
+  let txt = int===0 ? 'CERO' : int<1000 ? b1000(int)
+    : (int<1000000 ? (~~(int/1000)===1?'MIL':b1000(~~(int/1000))+' MIL')+(int%1000===0?'':' '+b1000(int%1000)) : 'MONTO');
+  return `                ${txt} CON ${String(dec).padStart(2,'0')}/100 USD`;
 }
 
 function generarTodo() {
