@@ -541,18 +541,27 @@ const MESES_NOMBRE = {
 // Mapa de prefijos de código local → empresa
 const EMPRESAS_MAP = {
   'K':    { empresa:'INT FOOD SERVICES CORP SA',              marca:'KFC',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'G':    { empresa:'INT FOOD SERVICES CORP SA',              marca:'KFC',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'M':    { empresa:'SHEMLON SA',                             marca:'MENESTRAS DEL SEÑOR',ruc:'1792049504001', hoja:'SHEMLON' },
+  'G':    { empresa:'INT FOOD SERVICES CORP SA',              marca:'GUS',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'M':    { empresa:'SHEMLON SA',                             marca:'MENESTRAS DEL NEGRO',ruc:'1792049504001', hoja:'SHEMLON' },
+  'J':    { empresa:'SHEMLON SA',                             marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
   'CJNC': { empresa:'SHEMLON SA',                             marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
-  'BS':   { empresa:'SHEMLON SA',                             marca:'BAGUETERIE',         ruc:'1792049504001', hoja:'SHEMLON' },
+  'CN':   { empresa:'CINNABON SA',                            marca:'CINNABON',           ruc:'',              hoja:'CINNABON' },
+  'BS':   { empresa:'BASKIN ROBBINS SA',                      marca:'BASKIN ROBBINS',     ruc:'',              hoja:'BASKIN ROBBINS' },
   'T':    { empresa:'DELI-INTERNACIONAL SA',                  marca:'TROPIBURGER',        ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
-  'I':    { empresa:'PRODUCCIONES Y EVENTOS NOVOEVENTOS SA',  marca:'IVORY',              ruc:'1792025435001', hoja:'NOVOEVENTOS' },
+  'I':    { empresa:'IL CAPPO SA',                            marca:'IL CAPPO',           ruc:'',              hoja:'IL CAPPO' },
   'ILCI': { empresa:'PRODUCCIONES Y EVENTOS NOVOEVENTOS SA',  marca:'IVORY',              ruc:'1792025435001', hoja:'NOVOEVENTOS' },
   'V':    { empresa:'PROMOTORA ECUATORIANA DE CAFÉ DE COLOMBIA SA', marca:'JUAN VALDEZ',  ruc:'1792141486001', hoja:'PROCAFECOL' },
   'JV':   { empresa:'PROMOTORA ECUATORIANA DE CAFÉ DE COLOMBIA SA', marca:'JUAN VALDEZ',  ruc:'1792141486001', hoja:'PROCAFECOL' },
   'AMCA': { empresa:'AMCA SA',                                marca:'AMCA',               ruc:'',              hoja:'AMCA' },
   'ESPE': { empresa:'ESPRESSO AMERICANO SA',                  marca:'ESPRESSO AMERICANO', ruc:'',              hoja:'ESPRESSO AMERICANO' },
-  'CN':   { empresa:'SHEMLON SA',                             marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
+  'DI':   { empresa:'DOLCE INCONTRO SA',                      marca:'DOLCE INCONTRO',     ruc:'',              hoja:'DOLCE INCONTRO' },
+  'CA':   { empresa:'CAFA SA',                                marca:'CAFA',               ruc:'',              hoja:'CAFA' },
+  'A':    { empresa:'AMERICAN DELI SA',                       marca:'AMERICAN DELI',      ruc:'',              hoja:'AMERICAN DELI' },
+  'B':    { empresa:'AMERICAN DELI SA',                       marca:'AMERICAN DELI',      ruc:'',              hoja:'AMERICAN DELI' },
+  'F':    { empresa:'AMERICAN DELI SA',                       marca:'AMERICAN DELI',      ruc:'',              hoja:'AMERICAN DELI' },
+  'E':    { empresa:'ESPAÑOL SA',                             marca:'ESPAÑOL',            ruc:'',              hoja:'ESPAÑOL' },
+  'R':    { empresa:'CASA RES SA',                            marca:'CASA RES',           ruc:'',              hoja:'CASA RES' },
+  'H':    { empresa:'HELADERIAS SA',                          marca:'HELADERIAS',         ruc:'',              hoja:'HELADERIAS' },
 };
 
 let cotizaciones = []; // array of parsed cotizacion objects
@@ -607,7 +616,7 @@ function costCenter(localCode) {
 function getEmpresa(localCode) {
   const code = localCode.toUpperCase();
   // Try multi-char prefixes first (longest match)
-  const prefixes = ['CJNC','GUSG','ILCI','AMCA','ESPE','JV','BS','K','M','T','V','I','G','CN'];
+  const prefixes = ['CJNC','GUSG','ILCI','AMCA','ESPE','JV','BS','DI','CA','K','M','T','V','I','G','J','A','B','E','F','H','R','CN'];
   for (const p of prefixes) {
     if (code.startsWith(p)) return EMPRESAS_MAP[p] || null;
   }
@@ -1052,7 +1061,7 @@ Si no encuentras un campo, usa "" o 0.`
 
 async function callGemini(apiKey, base64, mimeType, prompt) {
   const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1308,7 +1317,7 @@ async function cargarPlan() {
       .map(r => {
         const cod = String(r[0]);
         const anioRec = parseInt(r[9]) || 9999;
-        const esRecarga = parseInt(anio) >= anioRec;
+        const esRecarga = parseInt(anio) === anioRec;
         return {
           codigo: cod,
           marca: r[1],
@@ -1445,7 +1454,7 @@ async function generarNELocal(codigo, neNum) {
 
     // ── Clear old sample rows 14-24 ──────────────────────────────────────────
     for (let r = 14; r <= 24; r++) {
-      ['A','B','C','M','N'].forEach(col => { delete ws[col + r]; });
+      ['A','B','C','L','M','N'].forEach(col => { delete ws[col + r]; });
     }
 
     // ── Build grouped items ──────────────────────────────────────────────────
@@ -1503,7 +1512,7 @@ function tipoExtDescripcion(tipo, cap) {
   const tm = { CO2:'GAS CARBONICO', PQS:'POLVO QUIMICO SECO',
                 K:'TIPO K (ACETATO DE POTASIO)', FOAM:'ESPUMA (AGUA QUIMICA)' };
   const td = tm[(tipo || '').toUpperCase()] || tipo;
-  const cd = (cap || '').replace(/\bLBS\b/gi,'LIBRAS').replace(/\bGLNS\b/gi,'GALONES');
+  const cd = (cap || '').replace(/\bLBS\b/gi,'LIBRAS').replace(/\b(?:GLNS|GLS|GL)\b/gi,'GALONES');
   return `EXTINTOR ${cd} - ${td}`;
 }
 
@@ -2082,7 +2091,7 @@ async function generarCertLocal() {
     localCode: local.codigo,
     exts: local.extintores.map(e=>({tipo:e.tipo,cap:e.cap})),
     FB64,
-    ACCS: certAccs.filter(a=>a.desc.trim()),
+    ACCS: certAccs.filter(a=>a.desc && a.desc.trim()),
     certNum: local.codigo+'-MANT EXTINTORES-'+anio,
     MA:  mesNum+'/'+anio,
     MAS: mesNum+'/'+(parseInt(anio)+1),

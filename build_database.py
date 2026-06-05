@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build_database.py  –  Builds BASE_DATOS_KFC.xlsx (198 locales)
+build_database.py  –  Builds BASE_DATOS_KFC.xlsx (197 locales)
 
 Sources (Dropbox):
   1. PRESUPUESTO PROVEEDORES 2026  → brand names (source of truth)
@@ -25,7 +25,7 @@ from dropbox_auth import get_access_token
 TOKEN = get_access_token()
 
 FILES = {
-    "PRESUPUESTO": "/Previfuego/2026/PRESUPUESTO PROVEEDORES AÑ0 2026.xlsx",
+    "PRESUPUESTO": "/Previfuego/2026/PRESUPUESTO PROVEEDORES AÑO 2026.xlsx",
     "MATRIZ":      "/Previfuego/MATRIZ LOCALES/MATRIZ EXTINTORES GRUPO KFC.xlsx",
     "PROYECCION":  "/Previfuego/PRESUPUESTOS/PROYECCION INGRESOS MENSUAL 2026.xlsx",
 }
