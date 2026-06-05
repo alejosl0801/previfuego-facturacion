@@ -213,7 +213,7 @@
   <!-- PROGRESS -->
   <div class="progress-steps">
     <div class="step active" id="step1"><span class="num">1</span>Configurar</div>
-    <div class="step" id="step2"><span class="num">2</span>Cargar datos</div>
+    <div class="step" id="step2"><span class="num">2</span>Registrar notas</div>
     <div class="step" id="step3"><span class="num">3</span>Revisar</div>
     <div class="step" id="step4"><span class="num">4</span>Generar</div>
   </div>
@@ -244,21 +244,6 @@
           </a>
         </div>
 
-        <div style="background:#f0fff4;border:1px solid #b0e0c0;border-radius:8px;padding:20px;flex:1;min-width:240px;text-align:center;">
-          <div style="font-size:36px;margin-bottom:8px;">🔄</div>
-          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">REGENERAR BASE DE DATOS</div>
-          <div style="font-size:12px;color:#666;margin-bottom:14px;">
-            Reconstruye la base desde Dropbox<br>
-            con los datos más recientes del<br>
-            MATRIZ EXTINTORES GRUPO KFC
-          </div>
-          <button onclick="regenerarBaseDatos()"
-             style="background:#375623;color:white;padding:9px 20px;border-radius:6px;border:none;font-size:13px;font-weight:600;cursor:pointer;">
-            🔄 Actualizar desde Dropbox
-          </button>
-          <div id="regen-status" style="margin-top:10px;font-size:12px;color:#555;min-height:20px;"></div>
-        </div>
-
       </div>
 
       <div style="margin-top:16px;padding:12px 16px;background:#fffbe6;border:1px solid #f0d060;border-radius:6px;font-size:12px;color:#7a5c00;">
@@ -278,26 +263,12 @@
     <div class="card-body" id="cfg-body">
       <div class="form-row">
         <div class="form-group" style="flex:2">
-          <label>Token de Dropbox</label>
-          <input type="password" id="dbxToken" placeholder="sl.u...." />
-        </div>
-        <div class="form-group">
-          <label>API Key Gemini (OCR fotos)</label>
+          <label>🟢 API Key Gemini — REQUERIDA (lee las fotos de las notas de entrega)</label>
           <input type="password" id="geminiKey" placeholder="AIza..." />
         </div>
-        <div class="form-group">
-          <label>GitHub Token (guardar datos)</label>
+        <div class="form-group" style="flex:2">
+          <label>⚫ GitHub Token (guarda los registros del mes para que no se pierdan)</label>
           <input type="password" id="ghToken" placeholder="ghp_..." />
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Ruta base en Dropbox</label>
-          <input type="text" id="dbxBase" value="/Previfuego" />
-        </div>
-        <div class="form-group">
-          <label>Subcarpeta del mes</label>
-          <input type="text" id="dbxSubfolder" value="GRUPO KFC" placeholder="GRUPO KFC" />
         </div>
       </div>
       <button class="btn btn-primary" onclick="saveConfig()">💾 Guardar configuración</button>
@@ -340,46 +311,72 @@
         </div>
         <div class="form-group" style="justify-content:flex-end">
           <label>&nbsp;</label>
-          <button class="btn btn-primary" id="btnCargar" onclick="cargarCotizaciones()">
-            📂 Cargar cotizaciones
+          <button class="btn btn-primary" id="btnEmpezar" onclick="empezarMes()">
+            ▶️ Empezar / continuar este mes
+          </button>
+        </div>
+        <div class="form-group" style="justify-content:flex-end">
+          <label>&nbsp;</label>
+          <button class="btn btn-info" id="btnCargarGh" onclick="ghCargar()">
+            📥 Cargar registros guardados
           </button>
         </div>
       </div>
+      <p style="font-size:12px;color:#777;margin-top:4px">
+        Elige el mes y pulsa <strong>Empezar</strong> para registrar notas de entrega con foto.
+        Si ya guardaste registros antes, usa <strong>Cargar registros guardados</strong> para continuar donde quedaste.
+      </p>
       <div id="loadStatus"></div>
     </div>
   </div>
 
-  <!-- PASO 2: TABLA DE COTIZACIONES -->
+  <!-- PASO 2: REGISTRAR NOTAS DE ENTREGA (FOTO + GEMINI) -->
+  <div class="card" id="cardFotos" style="display:none">
+    <div class="card-header" onclick="toggleCard('fotos')">
+      <h2>📸 Paso 2 – Registrar notas de entrega (foto)</h2>
+      <span class="toggle" id="fotos-toggle">▼</span>
+    </div>
+    <div class="card-body" id="fotos-body">
+      <p style="font-size:13px;color:#555;margin-bottom:12px">
+        Toma o sube la <strong>foto de cada nota de entrega</strong>. La IA (Gemini) la lee y la
+        registra sola: local, # nota de entrega, extintores/servicio, valores y si es
+        <strong>MANTGES</strong> (presupuestado) o <strong>MANT</strong> (fuera de presupuesto).
+        Puedes subir varias a la vez; cualquier dato lo corriges en el Paso 3.
+      </p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input type="file" id="fotoNE" accept="image/*" multiple style="font-size:13px" />
+        <button class="btn btn-info" onclick="leerFotosNE()">🤖 Leer con IA</button>
+        <span id="fotoStatus" style="font-size:13px;color:#666"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 3: REVISAR REGISTROS DEL MES -->
   <div class="card" id="cardTabla" style="display:none">
     <div class="card-header" onclick="toggleCard('tabla')">
-      <h2>📋 Paso 2 – Cotizaciones cargadas</h2>
+      <h2>📋 Paso 3 – Revisar registros del mes</h2>
       <span class="toggle" id="tabla-toggle">▼</span>
     </div>
     <div class="card-body" id="tabla-body">
+      <p style="font-size:12px;color:#777;margin-bottom:8px">
+        Revisa lo que leyó la IA. Puedes cambiar empresa, <strong>MANTGES/MANT</strong>,
+        descripción, # nota de entrega y observación directamente en la tabla.
+      </p>
       <div id="tablaContainer"></div>
     </div>
   </div>
 
-  <!-- PASO 3: FACTURAS Y NOTAS DE ENTREGA -->
+  <!-- PASO 3b: FACTURAS POR EMPRESA -->
   <div class="card" id="cardFacturas" style="display:none">
     <div class="card-header" onclick="toggleCard('fact')">
-      <h2>🧾 Paso 3 – Números de factura y notas de entrega</h2>
+      <h2>🧾 Números de factura por empresa</h2>
       <span class="toggle" id="fact-toggle">▼</span>
     </div>
     <div class="card-body" id="fact-body">
       <p style="font-size:13px;color:#555;margin-bottom:16px">
-        Ingresa el número de factura por empresa. Las notas de entrega puedes ingresarlas manualmente en la tabla de arriba (columna <strong># N.E.</strong>) o subir fotos para que la IA las lea automáticamente.
+        Ingresa el número de factura por empresa (MANGES y MANT) antes de generar los Excels.
       </p>
       <div id="empresaFacturasContainer"></div>
-
-      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee;">
-        <label style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;">📸 Leer # Notas de Entrega desde fotos (Gemini AI)</label>
-        <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <input type="file" id="fotoNE" accept="image/*" multiple style="font-size:13px" />
-          <button class="btn btn-info btn-sm" onclick="leerFotosNE()">🤖 Leer con IA</button>
-          <span id="fotoStatus" style="font-size:12px;color:#666"></span>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -472,19 +469,13 @@ let facturaMap = {};   // { hojaKey: { factManges: 'XXXX', factMant: 'YYYY' } }
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 function loadConfig() {
-  document.getElementById('dbxToken').value = localStorage.getItem('dbxToken') || '';
   document.getElementById('geminiKey').value = localStorage.getItem('geminiKey') || '';
   document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
-  document.getElementById('dbxBase').value = localStorage.getItem('dbxBase') || '/Previfuego';
-  document.getElementById('dbxSubfolder').value = localStorage.getItem('dbxSubfolder') || 'GRUPO KFC';
 }
 
 function saveConfig() {
-  localStorage.setItem('dbxToken', document.getElementById('dbxToken').value.trim());
   localStorage.setItem('geminiKey', document.getElementById('geminiKey').value.trim());
   localStorage.setItem('ghToken', document.getElementById('ghToken').value.trim());
-  localStorage.setItem('dbxBase', document.getElementById('dbxBase').value.trim());
-  localStorage.setItem('dbxSubfolder', document.getElementById('dbxSubfolder').value.trim());
   const el = document.getElementById('cfgStatus');
   el.textContent = ' ✅ Guardado';
   el.style.color = 'green';
@@ -500,33 +491,6 @@ function toggleCard(id) {
   const tog = document.getElementById(id + '-toggle');
   const hidden = body.classList.toggle('hidden');
   tog.textContent = hidden ? '▶' : '▼';
-}
-
-// ─── DROPBOX HELPERS ─────────────────────────────────────────────────────────
-function getToken() {
-  return localStorage.getItem('dbxToken') || document.getElementById('dbxToken').value.trim();
-}
-
-async function dbxListFolder(path) {
-  const r = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path, recursive: false })
-  });
-  if (!r.ok) throw new Error(`Dropbox list error ${r.status}: ${await r.text()}`);
-  return r.json();
-}
-
-async function dbxDownload(path) {
-  const r = await fetch('https://content.dropboxapi.com/2/files/download', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + getToken(),
-      'Dropbox-API-Arg': JSON.stringify({ path })
-    }
-  });
-  if (!r.ok) throw new Error(`Dropbox download error ${r.status}`);
-  return r.arrayBuffer();
 }
 
 // ─── LOCAL CODE NORMALIZATION ─────────────────────────────────────────────────
@@ -696,74 +660,37 @@ function parseCotizacion(arrayBuffer, filename) {
   };
 }
 
-// ─── CARGAR COTIZACIONES ──────────────────────────────────────────────────────
-async function cargarCotizaciones() {
-  const token = getToken();
-  if (!token) {
-    showStatus('loadStatus', 'error', '⚠️ Falta el token de Dropbox en Configuración');
-    return;
-  }
-
-  const mes = document.getElementById('selMes').value;
+// ─── EMPEZAR / MOSTRAR PANELES ────────────────────────────────────────────────
+// Revela los paneles de registro, revisión y generación para el mes elegido.
+function empezarMes() {
+  const mesLbl = MESES_NOMBRE[document.getElementById('selMes').value];
   const anio = document.getElementById('selAnio').value;
-  const base = localStorage.getItem('dbxBase') || '/Previfuego';
-  const subfolder = localStorage.getItem('dbxSubfolder') || 'GRUPO KFC';
-  const path = `${base}/${anio}/${mes}/${subfolder}`;
+  document.getElementById('cardFotos').style.display = '';
+  document.getElementById('cardTabla').style.display = '';
+  document.getElementById('cardFacturas').style.display = '';
+  document.getElementById('cardGenerar').style.display = '';
+  renderTabla();
+  renderEmpresaFacturas();
+  enableGenerarBtns();
+  setStep(2);
+  showStatus('loadStatus', 'ok',
+    `✅ Trabajando en <strong>${mesLbl} ${anio}</strong>. Sube las fotos de las notas de entrega en el Paso 2. ` +
+    `Tienes ${cotizaciones.length} registro(s) en memoria.`);
+}
 
-  const btn = document.getElementById('btnCargar');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Cargando...';
-  showStatus('loadStatus', 'info', '🔍 Buscando archivos en Dropbox...');
+// Normaliza la categoría a 'MANGES' (presupuestado) o 'MANT' (extra fuera de presupuesto).
+// Gemini/el usuario lo llaman "MANTGES"; internamente usamos 'MANGES'.
+function normCategoria(v) {
+  const s = String(v || '').toUpperCase();
+  return s.includes('GES') ? 'MANGES' : 'MANT';
+}
 
-  try {
-    const listing = await dbxListFolder(path);
-    const xlsxFiles = listing.entries.filter(e =>
-      e['.tag'] === 'file' &&
-      e.name.toUpperCase().includes('COTIZACION') &&
-      e.name.toUpperCase().endsWith('.XLSX')
-    );
-
-    showStatus('loadStatus', 'info', `📥 Descargando ${xlsxFiles.length} archivos...`);
-
-    cotizaciones = [];
-    let ok = 0, err = 0;
-
-    for (const f of xlsxFiles) {
-      try {
-        const buf = await dbxDownload(f.path_display);
-        const parsed = parseCotizacion(buf, f.name);
-        cotizaciones.push(parsed);
-        ok++;
-      } catch(e) {
-        console.warn('Error parsing', f.name, e);
-        err++;
-      }
-    }
-
-    // Sort by company then by local code
-    cotizaciones.sort((a, b) => {
-      const ea = a.empresa?.hoja || 'Z';
-      const eb = b.empresa?.hoja || 'Z';
-      if (ea !== eb) return ea.localeCompare(eb);
-      return a.localCode.localeCompare(b.localCode);
-    });
-
-    showStatus('loadStatus', 'ok', `✅ ${ok} cotizaciones cargadas${err ? ` (${err} con errores)` : ''}`);
-
+// Cambia MANTGES/MANT de un registro desde la tabla y re-renderiza.
+function setCategoria(idx, val) {
+  if (cotizaciones[idx]) {
+    cotizaciones[idx].category = normCategoria(val);
     renderTabla();
     renderEmpresaFacturas();
-
-    document.getElementById('cardTabla').style.display = '';
-    document.getElementById('cardFacturas').style.display = '';
-    document.getElementById('cardGenerar').style.display = '';
-    setStep(2);
-    enableGenerarBtns();
-
-  } catch(e) {
-    showStatus('loadStatus', 'error', '❌ Error: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '📂 Cargar cotizaciones';
   }
 }
 
@@ -817,7 +744,12 @@ function renderTabla() {
             ).join('')}
           </select>
         </td>
-        <td><span class="badge badge-${cls.toLowerCase()}">${c.category}</span></td>
+        <td>
+          <select style="font-size:11px;padding:2px 4px" onchange="setCategoria(${idx}, this.value)">
+            <option value="MANGES" ${c.category==='MANGES'?'selected':''}>MANTGES (presup.)</option>
+            <option value="MANT" ${c.category==='MANT'?'selected':''}>MANT (extra)</option>
+          </select>
+        </td>
         <td style="font-size:11px;max-width:180px" contenteditable="true" onblur="cotizaciones[${idx}].descripcionFact=this.textContent.trim()">${c.descripcionFact}</td>
         <td style="text-align:right">$${c.subtotal.toFixed(2)}</td>
         <td style="text-align:right">$${c.iva.toFixed(2)}</td>
@@ -951,7 +883,7 @@ Si no encuentras un campo, usa "" o 0.`
         if (cot) {
           // Update existing cotizacion
           if (json.notaEntrega) cot.notaEntrega = String(json.notaEntrega);
-          if (json.categoria) cot.category = json.categoria;
+          if (json.categoria) cot.category = normCategoria(json.categoria);
           if (json.descripcion) cot.descripcionFact = json.descripcion;
           if (json.observacion) cot.observacion = json.observacion;
           if (json.ciudad) cot.ciudad = json.ciudad;
@@ -962,7 +894,7 @@ Si no encuentras un campo, usa "" o 0.`
           document.getElementById('fotoStatus').textContent =
             `🤖 [${procesadas}/${files.length}] ✅ ${json.localCode || '?'} NE:${json.notaEntrega || '?'}`;
         } else if (json.subtotal > 0) {
-          // New entry (cotizacion not loaded from Dropbox, add manually)
+          // Registro nuevo leído de la foto (no existía previamente)
           const localCodeClean = (json.localCode || '').toUpperCase().trim();
           const emp = getEmpresa(localCodeClean);
           cotizaciones.push({
@@ -983,7 +915,7 @@ Si no encuentras un campo, usa "" o 0.`
             subtotal: parseFloat(json.subtotal) || 0,
             iva: parseFloat(json.iva) || 0,
             total: parseFloat(json.total) || 0,
-            category: json.categoria || 'MANTGES',
+            category: normCategoria(json.categoria),
             descripcionFact: json.descripcion || 'EXTINTORES MANTENIMIENTO ANUAL',
             observacion: json.observacion || '',
             notaEntrega: String(json.notaEntrega || '')
@@ -1005,6 +937,15 @@ Si no encuentras un campo, usa "" o 0.`
 
   document.getElementById('fotoStatus').textContent =
     `✅ Listo: ${procesadas} notas procesadas${errores ? `, ${errores} errores` : ''}`;
+
+  // Revelar paneles de revisión y generación
+  if (cotizaciones.length) {
+    document.getElementById('cardTabla').style.display = '';
+    document.getElementById('cardFacturas').style.display = '';
+    document.getElementById('cardGenerar').style.display = '';
+    enableGenerarBtns();
+    setStep(3);
+  }
 }
 
 async function callGemini(apiKey, base64, mimeType, prompt) {
@@ -1143,6 +1084,7 @@ async function ghCargar() {
 
     renderTabla();
     renderEmpresaFacturas();
+    document.getElementById('cardFotos').style.display = '';
     document.getElementById('cardTabla').style.display = '';
     document.getElementById('cardFacturas').style.display = '';
     document.getElementById('cardGenerar').style.display = '';
@@ -1396,199 +1338,6 @@ function enableGenerarBtns() {
 
 function markOutput(id) {
   document.getElementById(id).classList.add('ready');
-}
-
-// ─── REGENERAR BASE DE DATOS ──────────────────────────────────────────────────
-// ── Regenera BASE_DATOS_KFC.xlsx en el navegador con la MISMA lógica que
-//    build_database.py (3 fuentes, 197 locales, recarga incluye mantt).
-async function regenerarBaseDatos() {
-  const status = document.getElementById('regen-status');
-  const token = getToken();
-  if (!token) {
-    status.innerHTML = '<span style="color:red">⚠️ Configura tu token de Dropbox primero (sección Configuración)</span>';
-    return;
-  }
-
-  const FILES = {
-    PRESUPUESTO: '/Previfuego/2026/PRESUPUESTO PROVEEDORES AÑ0 2026.xlsx',
-    MATRIZ:      '/Previfuego/MATRIZ LOCALES/MATRIZ EXTINTORES GRUPO KFC.xlsx',
-    PROYECCION:  '/Previfuego/PRESUPUESTOS/PROYECCION INGRESOS MENSUAL 2026.xlsx',
-  };
-
-  const MANTT = {'PQS|5':2,'PQS|10':4,'PQS|20':8,'CO2|5':2,'CO2|10':4,'CO2|20':8,'CO2|50':20,'CO2|75':30,'TIPO K|2.5':8};
-  const RECARGA = {'PQS|5':4.90,'PQS|10':9.80,'PQS|20':19.60,'CO2|5':4.50,'CO2|10':9.00,'CO2|20':18.00,'CO2|50':45,'CO2|75':67.50,'TIPO K|2.5':98.80};
-  const CAP_DISP = {'PQS|5':'5 LBS','PQS|10':'10 LBS','PQS|20':'20 LBS','CO2|5':'5 LBS','CO2|10':'10 LBS','CO2|20':'20 LBS','CO2|50':'50 LBS','CO2|75':'75 LBS','TIPO K|2.5':'2.5 GLS'};
-  const MONTHS = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-  const OCT_DIC = ['OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-  const BRAND_FALLBACK = {K:'KFC',G:'GUS',M:'MENESTRAS DEL NEGRO',T:'TROPIBURGER',V:'JUAN VALDEZ',I:'ILCAPPO',J:'CAJUN',BS:'BASKIN ROBBINS',CN:'CINNABON',DI:'DOLCE INCONTRO',CA:'CAFA',A:'AMERICAN DELI',B:'AMERICAN DELI',F:'AMERICAN DELI',E:'ESPAÑOL',R:'CASA RES',H:'HELADERIAS'};
-  const MARCA_NORM = {BASKIN:'BASKIN ROBBINS',DOLCE:'DOLCE INCONTRO',ILCAPPO:'IL CAPPO'};
-  // Ubicaciones compartidas Baskin/Cinnabon (clave BS -> clave CN equivalente)
-  const SHARED = {'BS|4':'CN|4','BS|16':'CN|16','BS|37':'CN|37','BS|31':'CN|31'};
-  const SKIP_TIPO = /^(MANTENIMIENTO|SIST|SISTEMA|TOTAL|SUBTOTAL)/i;
-
-  function marcaNorm(s){ s=(s||'').trim(); return MARCA_NORM[s]||s; }
-  function canonical(raw){
-    if (!raw) return null;
-    let s = String(raw).trim().toUpperCase().replace(/EC$/,'').trim();
-    const pats = [[/^KFC(?:K+)?\s*(\d+)/,'K'],[/^GUS\s*(\d+)/,'G'],[/^JV\s*(\d+)/,'V'],[/^JB\s*(\d+)/,'V'],
-      [/^CJNC\s*(\d+)/,'J'],[/^CN\s*(\d+)/,'CN'],[/^BS\s*(\d+)/,'BS'],[/^DI\s*(\d+)/,'DI'],[/^CA\s*(\d+)/,'CA'],[/^F\s*0*(\d+)/,'F']];
-    for (const [re,pfx] of pats){ const m=s.match(re); if (m) return pfx+'|'+parseInt(m[1]); }
-    let m = s.match(/^([A-Z])\s*(\d+)/); if (m) return m[1]+'|'+parseInt(m[2]);
-    m = s.match(/^([A-Z]{2,4})\s*(\d+)/); if (m) return m[1]+'|'+parseInt(m[2]);
-    return null;
-  }
-  function fmtCode(ckey){ const [p,n]=ckey.split('|'); return p+String(parseInt(n)).padStart(3,'0'); }
-  function normTipo(v){ if(v==null) return ''; const s=String(v).trim().toUpperCase();
-    if (/^(K|TIPO\s*K|TYPE\s*K)$/.test(s)) return 'TIPO K';
-    if (s.startsWith('CO2')) return 'CO2'; if (s.startsWith('PQS')) return 'PQS'; return s; }
-  function normCap(v){ if(v==null) return '';
-    if (typeof v==='number'){ return Number.isInteger(v)?String(v):String(Math.round(v*10)/10); }
-    let s=String(v).trim().toUpperCase().replace(/[A-Z\s]/g,'').replace(/,,/g,'.').replace(/,/g,'.').replace(/\.{2,}/g,'.');
-    const m=s.match(/(\d+(?:\.\d+)?)/); if(m){ const f=parseFloat(m[1]); return Number.isInteger(f)?String(f):String(Math.round(f*10)/10);} return ''; }
-  function normTipoCap(t,c){ let tipo=normTipo(t), cap=normCap(c);
-    if (tipo==='PQS' && cap==='2.5') tipo='TIPO K';
-    if (cap==='2.5' && c && /G/.test(String(c).toUpperCase())) tipo='TIPO K';
-    return [tipo,cap]; }
-
-  async function dl(path){
-    const r = await fetch('https://content.dropboxapi.com/2/files/download', {
-      method:'POST', headers:{'Authorization':`Bearer ${token}`,'Dropbox-API-Arg':JSON.stringify({path})} });
-    if (!r.ok) throw new Error(`HTTP ${r.status} (${path.split('/').pop()})`);
-    return XLSX.read(await r.arrayBuffer(), {type:'array'});
-  }
-
-  function parseExtintorWB(wb){
-    const out = [];
-    for (const sn of wb.SheetNames){
-      const mes = sn.trim().toUpperCase();
-      if (!MONTHS.includes(mes)) continue;
-      const data = XLSX.utils.sheet_to_json(wb.Sheets[sn], {header:1, defval:null});
-      // localizar header
-      let hidx=0;
-      for (let i=0;i<Math.min(10,data.length);i++){
-        const cells=(data[i]||[]).map(c=>c?String(c).trim().toUpperCase():'');
-        const hits=cells.filter(c=>['CC','TIPO','CAPACIDAD','UBICACION','UBICACIÓN','LOCAL','NOMBRE'].includes(c)).length;
-        if (hits>=2){ hidx=i; break; }
-      }
-      const hrow=(data[hidx]||[]).map(c=>c?String(c).trim().toUpperCase():'');
-      const fc=(...names)=>{ for(const nm of names){ for(let j=0;j<hrow.length;j++){ if(hrow[j].includes(nm)) return j; } } return null; };
-      const cCC=fc('CC')??0, cTipo=fc('TIPO')??2, cCap=fc('CAPACIDAD','CAP')??3;
-      let cUbic=fc('UBICACION','UBICACIÓN','NOMBRE','LOCAL'); if(cUbic==null) cUbic=cCC+1;
-      let cur=null;
-      for (let ri=hidx+1; ri<data.length; ri++){
-        const row=data[ri]; if(!row || row.every(c=>c==null)) continue;
-        const ccr=row[cCC], tr=row[cTipo], cr=row[cCap];
-        if (ccr!=null && String(ccr).trim()){ const ck=canonical(String(ccr).trim()); if(ck) cur=ck; }
-        if (!cur) continue;
-        const [tipo,cap]=normTipoCap(tr,cr);
-        if (!tipo || !['PQS','CO2','TIPO K'].includes(tipo)) continue;
-        if (tr && SKIP_TIPO.test(String(tr))) continue;
-        out.push({ckey:cur, mes, tipo, cap, ubic:(row[cUbic]!=null?String(row[cUbic]).trim():'')});
-      }
-    }
-    return out;
-  }
-
-  try {
-    status.textContent = '⏳ Descargando PRESUPUESTO, MATRIZ y PROYECCIÓN…';
-    const [wbPres, wbMat, wbProy] = await Promise.all([dl(FILES.PRESUPUESTO), dl(FILES.MATRIZ), dl(FILES.PROYECCION)]);
-
-    status.textContent = '⏳ Procesando PRESUPUESTO (marcas)…';
-    // PRESUPUESTO hoja SSO. Columnas detectadas dinámicamente (SheetJS puede
-    // recortar la columna A vacía, por eso NO se hardcodean los índices).
-    const presMap = {};
-    const sso = XLSX.utils.sheet_to_json(wbPres.Sheets['SSO'], {header:1, defval:null});
-    // localizar fila de cabecera (contiene LOCAL/MARCA/PROVEEDOR)
-    let pHdr=-1;
-    for (let i=0;i<Math.min(12,sso.length);i++){
-      const cells=(sso[i]||[]).map(c=>c?String(c).trim().toUpperCase():'');
-      if (cells.some(c=>c==='LOCAL') && cells.some(c=>c==='MARCA')){ pHdr=i; break; }
-    }
-    if (pHdr<0) throw new Error('No se halló cabecera en PRESUPUESTO hoja SSO');
-    const ph=(sso[pHdr]||[]).map(c=>c?String(c).trim().toUpperCase():'');
-    const pcol=(...names)=>{ for(const nm of names){ const j=ph.indexOf(nm); if(j>=0) return j; }
-      for(const nm of names){ for(let j=0;j<ph.length;j++){ if(ph[j].includes(nm)) return j; } } return -1; };
-    const pCC=pcol('LOCAL'), pMarca=pcol('MARCA'), pNombre=pcol('NOMBRE LOCAL SIR','NOMBRE'), pProv=pcol('PROVEEDOR');
-    for (let i=pHdr+1;i<sso.length;i++){
-      const row=sso[i]; if(!row) continue;
-      const prov=(pProv>=0 && row[pProv]!=null)?String(row[pProv]).trim().toUpperCase():'';
-      if (prov!=='PREVIFUEGO') continue;
-      const ck=canonical(row[pCC]); if(!ck) continue;
-      presMap[ck]={marca:marcaNorm(pMarca>=0&&row[pMarca]?String(row[pMarca]).trim():''),
-        nombre:pNombre>=0&&row[pNombre]?String(row[pNombre]).trim():'',
-        cc:row[pCC]?String(row[pCC]).trim():''};
-    }
-    if (Object.keys(presMap).length < 150) throw new Error('PRESUPUESTO parseó solo '+Object.keys(presMap).length+' locales (esperado ~200)');
-
-    status.textContent = '⏳ Procesando MATRIZ y PROYECCIÓN…';
-    let matRows = parseExtintorWB(wbMat);
-    const proyRows = parseExtintorWB(wbProy);
-    const matKeys = new Set(matRows.map(r=>r.ckey));
-
-    // (a) eliminar G042 (cerrado)
-    matRows = matRows.filter(r=>r.ckey!=='G|42');
-    // (b) V091 desde PROYECCIÓN si no está en MATRIZ
-    if (!matKeys.has('V|91')){
-      const seen=new Set(); const ded=[];
-      for (const r of proyRows.filter(r=>r.ckey==='V|91')){ const sig=r.tipo+'|'+r.cap+'|'+r.ubic; if(!seen.has(sig)){seen.add(sig);ded.push(r);} }
-      matRows.push(...ded);
-    }
-    // (c) override MES desde PROYECCIÓN
-    const proyMes={};
-    for (const r of proyRows){ if(!(r.ckey in proyMes)) proyMes[r.ckey]=r.mes; }
-    for (const r of matRows){ const pm=proyMes[r.ckey]; if(pm) r.mes=pm; }
-
-    function getMarca(ck){ if (ck in SHARED) return 'BASKIN ROBBINS / CINNABON';
-      const p=presMap[ck]; if(p && p.marca) return p.marca; const pfx=ck.split('|')[0]; return BRAND_FALLBACK[pfx]||BRAND_FALLBACK[pfx[0]]||'DESCONOCIDO'; }
-    function getNombre(ck){ const p=presMap[ck]; if(p && p.nombre) return p.nombre;
-      if (ck in SHARED){ const cn=presMap[SHARED[ck]]; if(cn && cn.nombre) return cn.nombre; } return ''; }
-
-    // construir filas DETALLE
-    const rows = [];
-    for (const r of matRows){
-      const key=r.tipo+'|'+r.cap;
-      const cm=MANTT[key], cr=RECARGA[key], cd=CAP_DISP[key]||r.cap;
-      const cobro = (cr!=null)?cr:(cm!=null?cm:null);
-      const tcobro = (cr!=null)?'RECARGA (incl. mantt)':(cm!=null?'MANTT':'SIN PRECIO');
-      const anoRec = OCT_DIC.includes(r.mes)?2026:2027;
-      rows.push({CÓDIGO:fmtCode(r.ckey), CC_ORIGINAL:r.ckey, MARCA:getMarca(r.ckey), NOMBRE_LOCAL:getNombre(r.ckey),
-        MES_SERVICIO:r.mes, UBICACIÓN:r.ubic, TIPO:r.tipo, CAPACIDAD:cd,
-        COSTO_MANTT:cm!=null?cm:null, PRECIO_RECARGA:cr!=null?cr:null, COBRO_ANUAL_EXT:cobro!=null?cobro:null,
-        TIPO_COBRO:tcobro, AÑO_RECARGA:anoRec, AÑO_ULT_RECARGA:anoRec-3,
-        NOTAS: cm==null ? `precio no hallado (${r.tipo}/${r.cap})` : '',
-        _cm:cm||0, _cr:cr||0, _cobro:cobro||0});
-    }
-
-    // RESUMEN por local
-    const locMap = {};
-    for (const r of rows){
-      const k=r.CÓDIGO;
-      if (!locMap[k]) locMap[k]={CÓDIGO:k,MARCA:r.MARCA,NOMBRE_LOCAL:r.NOMBRE_LOCAL,MES_SERVICIO:r.MES_SERVICIO,
-        N_EXTINTORES:0,TOTAL_MANTT:0,TOTAL_RECARGA:0,COBRO_ANUAL:0,AÑO_RECARGA:r.AÑO_RECARGA,AÑO_ULT_RECARGA:r.AÑO_ULT_RECARGA,_d:[]};
-      const li=locMap[k]; li.N_EXTINTORES++; li.TOTAL_MANTT+=r._cm; li.TOTAL_RECARGA+=r._cr; li.COBRO_ANUAL+=r._cobro;
-      li._d.push(`${r.TIPO} ${r.CAPACIDAD}=$${r._cobro.toFixed(2)}`);
-    }
-    const r2 = Object.values(locMap).map(li=>({
-      CÓDIGO:li.CÓDIGO,MARCA:li.MARCA,NOMBRE_LOCAL:li.NOMBRE_LOCAL,MES_SERVICIO:li.MES_SERVICIO,
-      N_EXTINTORES:li.N_EXTINTORES,TOTAL_MANTT:Math.round(li.TOTAL_MANTT*100)/100,
-      TOTAL_RECARGA:Math.round(li.TOTAL_RECARGA*100)/100,COBRO_ANUAL:Math.round(li.COBRO_ANUAL*100)/100,
-      AÑO_RECARGA:li.AÑO_RECARGA,AÑO_ULT_RECARGA:li.AÑO_ULT_RECARGA,DESGLOSE:li._d.join(' | ')}));
-
-    const mOrd=m=>MONTHS.indexOf(m);
-    rows.sort((a,b)=>mOrd(a.MES_SERVICIO)-mOrd(b.MES_SERVICIO)||a.CÓDIGO.localeCompare(b.CÓDIGO));
-    r2.sort((a,b)=>mOrd(a.MES_SERVICIO)-mOrd(b.MES_SERVICIO)||a.CÓDIGO.localeCompare(b.CÓDIGO));
-
-    const rowsOut = rows.map(({_cm,_cr,_cobro,...keep})=>keep);
-    const wbOut = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wbOut, XLSX.utils.json_to_sheet(rowsOut), 'DETALLE');
-    XLSX.utils.book_append_sheet(wbOut, XLSX.utils.json_to_sheet(r2), 'RESUMEN_LOCALES');
-    XLSX.writeFile(wbOut, 'BASE_DATOS_KFC.xlsx');
-
-    const total = r2.reduce((s,x)=>s+x.COBRO_ANUAL,0);
-    status.innerHTML = `<span style="color:green">✅ ${rowsOut.length} extintores · ${r2.length} locales · cobro anual $${total.toFixed(2)}</span>`;
-  } catch(e) {
-    status.innerHTML = `<span style="color:red">❌ Error: ${e.message}</span>`;
-  }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
