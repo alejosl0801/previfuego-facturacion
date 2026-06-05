@@ -218,263 +218,331 @@
   .log-err { color: #ff6b6b; }
   .log-warn { color: #ffd93d; }
   .log-ok { color: #6bcb77; }
+
+  /* ── Navegación por secciones ── */
+  header {
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    justify-content: space-between;
+  }
+  .hdr-left { display: flex; flex-direction: column; }
+  .nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; justify-content: center; }
+  .nav-tab {
+    background: rgba(255,255,255,0.12);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .nav-tab:hover { background: rgba(255,255,255,0.25); }
+  .nav-tab.active { background: white; color: var(--rojo); }
+  .hdr-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .month-sel { display: flex; gap: 6px; }
+  .month-sel select {
+    padding: 6px 8px; border-radius: 5px; border: none;
+    font-size: 13px; font-weight: 600; width: auto; min-width: 90px;
+  }
+  .profile-toggle { display: flex; background: rgba(0,0,0,0.18); border-radius: 6px; padding: 3px; }
+  .prof-btn {
+    background: transparent; color: white; border: none;
+    padding: 6px 12px; border-radius: 4px; font-size: 12px;
+    font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .prof-btn.active { background: white; color: var(--rojo); }
+  .icon-btn {
+    background: rgba(255,255,255,0.15); color: white; border: none;
+    width: 34px; height: 34px; border-radius: 6px; cursor: pointer; font-size: 16px;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.3); }
+
+  .app-section { animation: fadeIn 0.2s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .section-title { font-size: 18px; font-weight: 800; color: var(--rojo); margin-bottom: 4px; }
+  .section-desc { font-size: 13px; color: #777; margin-bottom: 18px; }
+
+  .search-box {
+    width: 100%; padding: 10px 14px; font-size: 14px;
+    border: 2px solid var(--gris-borde); border-radius: 8px; margin-bottom: 14px;
+  }
+  .search-box:focus { outline: none; border-color: var(--rojo); }
+
+  /* ── Modo oscuro ── */
+  body.dark { background: #15171a; color: #e6e6e6; }
+  body.dark .card, body.dark .local-card { background: #1f2227; border-color: #333; }
+  body.dark .card-header, body.dark .local-card-header { background: #262a30; border-color: #333; }
+  body.dark .local-card-header:hover { background: #2d323a; }
+  body.dark .card-header h2 { color: #ff7b6b; }
+  body.dark .local-card-body { background: #1f2227; color: #bbb; border-color: #333; }
+  body.dark input, body.dark select, body.dark textarea {
+    background: #262a30; color: #e6e6e6; border-color: #3a3f47;
+  }
+  body.dark .search-box { background: #262a30; color: #e6e6e6; }
+  body.dark td { border-color: #2d2d2d; }
+  body.dark tr:hover td { background: #262a30; }
+  body.dark tr.manges td { background: #1c2e22; }
+  body.dark tr.mant td { background: #1c2733; }
+  body.dark .section-title { color: #ff7b6b; }
+  body.dark code { background: #2d323a !important; color: #d6d6d6; }
 </style>
 </head>
 <body>
 
 <header>
-  <div>
+  <div class="hdr-left">
     <div class="logo">🔴 PREVIFUEGO</div>
-    <div class="subtitle">Sistema de Facturación – Grupo KFC</div>
+    <div class="subtitle">Gestión de Extintores</div>
+  </div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" data-sec="plan" onclick="goToSection('plan')">📅 Plan del Mes</button>
+    <button class="nav-tab admin-only" data-sec="ne" onclick="goToSection('ne')">📄 Notas de Entrega</button>
+    <button class="nav-tab" data-sec="certs" onclick="goToSection('certs')">📜 Certificados</button>
+    <button class="nav-tab admin-only" data-sec="bd" onclick="goToSection('bd')">🗄️ Base de Datos</button>
+    <button class="nav-tab admin-only" data-sec="config" onclick="goToSection('config')">⚙️ Configuración</button>
+  </nav>
+  <div class="hdr-right">
+    <div id="monthSelector" class="month-sel">
+      <select id="selMes" onchange="onMonthChange()">
+        <option value="01 ENERO">Enero</option>
+        <option value="02 FEBRERO">Febrero</option>
+        <option value="03 MARZO">Marzo</option>
+        <option value="04 ABRIL">Abril</option>
+        <option value="05 MAYO">Mayo</option>
+        <option value="06 JUNIO">Junio</option>
+        <option value="07 JULIO">Julio</option>
+        <option value="08 AGOSTO">Agosto</option>
+        <option value="09 SEPTIEMBRE">Septiembre</option>
+        <option value="10 OCTUBRE">Octubre</option>
+        <option value="11 NOVIEMBRE">Noviembre</option>
+        <option value="12 DICIEMBRE">Diciembre</option>
+      </select>
+      <select id="selAnio" onchange="onMonthChange()">
+        <option value="2026">2026</option>
+        <option value="2025">2025</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
+    <div class="profile-toggle">
+      <button id="prof-admin" class="prof-btn active" onclick="setPerfil('admin')">👤 Admin</button>
+      <button id="prof-emp" class="prof-btn" onclick="setPerfil('empleado')">👷 Empleado</button>
+    </div>
+    <button class="icon-btn" onclick="toggleDark()" title="Modo oscuro">🌙</button>
   </div>
 </header>
 
 <div class="container">
 
-  <!-- PROGRESS -->
-  <div class="progress-steps">
-    <div class="step active" id="step1"><span class="num">1</span>Configurar</div>
-    <div class="step" id="step2"><span class="num">2</span>Registrar notas</div>
-    <div class="step" id="step3"><span class="num">3</span>Revisar</div>
-    <div class="step" id="step4"><span class="num">4</span>Generar</div>
+  <!-- ════════════ SECCIÓN: PLAN DEL MES ════════════ -->
+  <div class="app-section" id="sec-plan">
+    <div class="section-title">📅 Plan del Mes</div>
+    <div class="section-desc">Locales a visitar este mes. Selecciona un local, realiza el trabajo y genera su certificado.</div>
+
+    <input type="text" id="planSearch" class="search-box" placeholder="🔍 Buscar local por código o nombre…" oninput="renderPlan()" />
+
+    <div class="plan-stats">
+      <div class="admin-only">
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial NE</label>
+        <input type="number" id="neInicial" value="6700" min="1" style="width:90px;padding:5px" onchange="renderPlan()" />
+      </div>
+      <div id="planStats" style="font-size:13px;color:#555;font-weight:600"></div>
+    </div>
+    <div id="loadStatus"></div>
+    <div id="planContainer">
+      <p style="color:#999;font-size:13px">Cargando locales del mes desde la base de datos…</p>
+    </div>
   </div>
 
-  <!-- DESCARGAS -->
-  <div class="card">
-    <div class="card-header" onclick="toggleCard('descargas')">
-      <h2>📥 Archivos y Base de Datos</h2>
-      <span class="toggle" id="descargas-toggle">▼</span>
+  <!-- ════════════ SECCIÓN: NOTAS DE ENTREGA (admin) ════════════ -->
+  <div class="app-section admin-only" id="sec-ne" style="display:none">
+    <div class="section-title">📄 Notas de Entrega</div>
+    <div class="section-desc">
+      Para servicios <strong>fuera del presupuesto</strong> (mantenimientos extra, ventas, cambios de accesorios):
+      sube la foto de la nota y la IA la registra. Para los locales del presupuesto, genera la NE directamente
+      desde el <strong>Plan del Mes</strong>.
     </div>
-    <div class="card-body" id="descargas-body">
-      <p style="font-size:13px;color:#555;margin-bottom:16px;">
-        Descarga la base de datos consolidada de extintores del Grupo KFC con costos de mantenimiento y recarga, fórmulas detalladas e inconsistencias detectadas.
-      </p>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;">
 
-        <div style="background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px;padding:20px;flex:1;min-width:240px;text-align:center;">
-          <div style="font-size:36px;margin-bottom:8px;">📊</div>
-          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS KFC</div>
-          <div style="font-size:12px;color:#666;margin-bottom:14px;">
-            197 locales · 906 extintores<br>
-            2 hojas: Detalle, Resumen Locales<br>
-            Precios MANTT y RECARGA por extintor
+    <!-- Registrar notas con foto -->
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('fotos')">
+        <h2>📸 Registrar notas de entrega (foto + IA)</h2>
+        <span class="toggle" id="fotos-toggle">▼</span>
+      </div>
+      <div class="card-body" id="fotos-body">
+        <p style="font-size:13px;color:#555;margin-bottom:12px">
+          Sube la <strong>foto de cada nota de entrega</strong>. La IA (Gemini) la lee y la registra sola:
+          local, # nota de entrega, extintores/servicio, valores y si es <strong>MANTGES</strong> (presupuestado)
+          o <strong>MANT</strong> (fuera de presupuesto). Puedes corregir cualquier dato en la tabla.
+        </p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="file" id="fotoNE" accept="image/*" multiple style="font-size:13px" />
+          <button class="btn btn-info" onclick="leerFotosNE()">🤖 Leer con IA</button>
+          <span id="fotoStatus" style="font-size:13px;color:#666"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revisar registros -->
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('tabla')">
+        <h2>📋 Revisar registros del mes</h2>
+        <span class="toggle" id="tabla-toggle">▼</span>
+      </div>
+      <div class="card-body" id="tabla-body">
+        <p style="font-size:12px;color:#777;margin-bottom:8px">
+          Revisa lo que leyó la IA. Puedes cambiar empresa, <strong>MANTGES/MANT</strong>,
+          descripción, # nota de entrega y observación directamente en la tabla.
+        </p>
+        <div id="tablaContainer"></div>
+      </div>
+    </div>
+
+    <!-- Facturas por empresa -->
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('fact')">
+        <h2>🧾 Números de factura por empresa</h2>
+        <span class="toggle" id="fact-toggle">▼</span>
+      </div>
+      <div class="card-body" id="fact-body">
+        <p style="font-size:13px;color:#555;margin-bottom:16px">
+          Ingresa el número de factura por empresa (MANGES y MANT) antes de generar los Excels.
+        </p>
+        <div id="empresaFacturasContainer"></div>
+      </div>
+    </div>
+
+    <!-- Generar Excels -->
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('gen')">
+        <h2>⬇️ Generar Excels</h2>
+        <span class="toggle" id="gen-toggle">▼</span>
+      </div>
+      <div class="card-body" id="gen-body">
+        <div class="outputs">
+          <div class="output-card" id="out1">
+            <div class="icon">📊</div>
+            <h3>DETALLE FACT MENSUAL</h3>
+            <p>Hojas: MANGES + MANT<br>Detalle extintores por local</p>
+            <button class="btn btn-success btn-sm" onclick="generarDetalle()" disabled id="btn1">Generar</button>
           </div>
-          <a href="BASE_DATOS_KFC.xlsx" download="BASE_DATOS_KFC.xlsx"
-             style="display:inline-block;background:#1F4E79;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
-            ⬇️ Descargar Excel
-          </a>
+          <div class="output-card" id="out2">
+            <div class="icon">📑</div>
+            <h3>DISTRIBUCIÓN</h3>
+            <p>Una hoja por factura<br>C.C. + descripción + valores</p>
+            <button class="btn btn-success btn-sm" onclick="generarDistribucion()" disabled id="btn2">Generar</button>
+          </div>
+          <div class="output-card" id="out3">
+            <div class="icon">🏢</div>
+            <h3>FORMATO FACTURACIÓN</h3>
+            <p>Una hoja por empresa<br>Resumen con # factura</p>
+            <button class="btn btn-success btn-sm" onclick="generarFormatoFact()" disabled id="btn3">Generar</button>
+          </div>
+          <div class="output-card" id="out4">
+            <div class="icon">📜</div>
+            <h3>CERTIFICADOS PDF</h3>
+            <p>Un PDF por local MANGES<br>Formato Previfuego/Pyroshield</p>
+            <button class="btn btn-success btn-sm" onclick="generarCertificados()" disabled id="btn4">Generar</button>
+          </div>
         </div>
-
-      </div>
-
-      <div style="margin-top:16px;padding:12px 16px;background:#fffbe6;border:1px solid #f0d060;border-radius:6px;font-size:12px;color:#7a5c00;">
-        <strong>ℹ️ Nota:</strong> La base de datos usa el ciclo <strong>OCT 2026 → SEP 2027</strong> (recarga para todos los locales).
-        El <strong>COBRO_ANUAL</strong> es el precio de <em>RECARGA</em> (que ya incluye el mantenimiento), nunca aditivo.
-        Locales servidos OCT–DIC tienen recarga en 2026; ENE–SEP en 2027. <em>AÑO_ULT_RECARGA</em> = AÑO_RECARGA − 3.
-      </div>
-    </div>
-  </div>
-
-  <!-- CONFIG -->
-  <div class="card">
-    <div class="card-header" onclick="toggleCard('cfg')">
-      <h2>⚙️ Configuración</h2>
-      <span class="toggle" id="cfg-toggle">▼</span>
-    </div>
-    <div class="card-body" id="cfg-body">
-      <div class="form-row">
-        <div class="form-group" style="flex:2">
-          <label>🟢 API Key Gemini — requerida para leer fotos de notas de entrega</label>
-          <input type="text" id="geminiKey" placeholder="AIza..." autocomplete="off" oninput="saveConfig()" />
-        </div>
-        <div class="form-group" style="flex:2">
-          <label>⚫ GitHub Token — respalda tus datos en la nube (opcional)</label>
-          <input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off" oninput="saveConfig()" />
-        </div>
-      </div>
-      <span id="cfgStatus" style="font-size:12px;color:#27ae60"></span>
-    </div>
-  </div>
-
-  <!-- PASO 1: SELECCIONAR MES -->
-  <div class="card">
-    <div class="card-header" onclick="toggleCard('mes')">
-      <h2>📅 Paso 1 – Seleccionar mes</h2>
-      <span class="toggle" id="mes-toggle">▼</span>
-    </div>
-    <div class="card-body" id="mes-body">
-      <div class="form-row">
-        <div class="form-group">
-          <label>Mes</label>
-          <select id="selMes">
-            <option value="01 ENERO">Enero</option>
-            <option value="02 FEBRERO">Febrero</option>
-            <option value="03 MARZO">Marzo</option>
-            <option value="04 ABRIL">Abril</option>
-            <option value="05 MAYO">Mayo</option>
-            <option value="06 JUNIO">Junio</option>
-            <option value="07 JULIO">Julio</option>
-            <option value="08 AGOSTO">Agosto</option>
-            <option value="09 SEPTIEMBRE">Septiembre</option>
-            <option value="10 OCTUBRE">Octubre</option>
-            <option value="11 NOVIEMBRE">Noviembre</option>
-            <option value="12 DICIEMBRE">Diciembre</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Año</label>
-          <select id="selAnio">
-            <option value="2026">2026</option>
-            <option value="2025">2025</option>
-            <option value="2027">2027</option>
-          </select>
-        </div>
-        <div class="form-group" style="justify-content:flex-end">
-          <label>&nbsp;</label>
-          <button class="btn btn-primary" id="btnEmpezar" onclick="empezarMes()">
-            ▶️ Empezar / continuar este mes
+        <div style="margin-top:16px">
+          <button class="btn btn-primary" onclick="generarTodo()" id="btnGenerarTodo" disabled>
+            ⬇️ Generar y descargar los 3 Excels
           </button>
         </div>
-        <div class="form-group" style="justify-content:flex-end">
-          <label>&nbsp;</label>
-          <button class="btn btn-info" id="btnCargarGh" onclick="ghCargar()">
-            📥 Cargar registros guardados
-          </button>
-        </div>
-      </div>
-      <p style="font-size:12px;color:#777;margin-top:4px">
-        Elige el mes y pulsa <strong>Empezar</strong> para registrar notas de entrega con foto.
-        Si ya guardaste registros antes, usa <strong>Cargar registros guardados</strong> para continuar donde quedaste.
-      </p>
-      <div id="loadStatus"></div>
-    </div>
-  </div>
-
-  <!-- PANEL DE CONTROL MENSUAL -->
-  <div class="card" id="cardPlan" style="display:none">
-    <div class="card-header" onclick="toggleCard('plan')">
-      <h2>📋 Plan del mes – Locales a visitar</h2>
-      <span class="toggle" id="plan-toggle">▼</span>
-    </div>
-    <div class="card-body" id="plan-body">
-      <div class="plan-stats">
-        <div>
-          <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial NE</label>
-          <input type="number" id="neInicial" value="6700" min="1" style="width:90px;padding:5px"
-                 onchange="renderPlan()" />
-        </div>
-        <div id="planStats" style="font-size:13px;color:#555;font-weight:600"></div>
-      </div>
-      <div id="planContainer">
-        <p style="color:#999;font-size:13px">Cargando locales del mes desde la base de datos…</p>
+        <div id="genLog" class="log-box" style="display:none"></div>
       </div>
     </div>
   </div>
 
-  <!-- PASO 2: REGISTRAR NOTAS DE ENTREGA (FOTO + GEMINI) -->
-  <div class="card" id="cardFotos" style="display:none">
-    <div class="card-header" onclick="toggleCard('fotos')">
-      <h2>📸 Paso 2 – Registrar notas de entrega (foto)</h2>
-      <span class="toggle" id="fotos-toggle">▼</span>
+  <!-- ════════════ SECCIÓN: CERTIFICADOS ════════════ -->
+  <div class="app-section" id="sec-certs" style="display:none">
+    <div class="section-title">📜 Certificados</div>
+    <div class="section-desc" id="certsDesc">
+      Los certificados se generan desde el <strong>Plan del Mes</strong>: abre un local, adjunta las fotos del
+      trabajo realizado y pulsa <strong>Generar Certificado</strong>.
     </div>
-    <div class="card-body" id="fotos-body">
-      <p style="font-size:13px;color:#555;margin-bottom:12px">
-        Toma o sube la <strong>foto de cada nota de entrega</strong>. La IA (Gemini) la lee y la
-        registra sola: local, # nota de entrega, extintores/servicio, valores y si es
-        <strong>MANTGES</strong> (presupuestado) o <strong>MANT</strong> (fuera de presupuesto).
-        Puedes subir varias a la vez; cualquier dato lo corriges en el Paso 3.
-      </p>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <input type="file" id="fotoNE" accept="image/*" multiple style="font-size:13px" />
-        <button class="btn btn-info" onclick="leerFotosNE()">🤖 Leer con IA</button>
-        <span id="fotoStatus" style="font-size:13px;color:#666"></span>
+    <div id="certsContainer">
+      <p style="color:#999;font-size:13px">Aún no hay certificados guardados para este mes.</p>
+    </div>
+  </div>
+
+  <!-- ════════════ SECCIÓN: BASE DE DATOS (admin) ════════════ -->
+  <div class="app-section admin-only" id="sec-bd" style="display:none">
+    <div class="section-title">🗄️ Base de Datos</div>
+    <div class="section-desc">Consulta y descarga la base de datos consolidada de extintores del Grupo KFC.</div>
+
+    <div class="card">
+      <div class="card-body">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+          <div style="background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px;padding:20px;flex:1;min-width:240px;text-align:center;">
+            <div style="font-size:36px;margin-bottom:8px;">📊</div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS KFC</div>
+            <div style="font-size:12px;color:#666;margin-bottom:14px;">
+              197 locales · 906 extintores<br>
+              2 hojas: Detalle, Resumen Locales<br>
+              Precios MANTT y RECARGA por extintor
+            </div>
+            <a href="BASE_DATOS_KFC.xlsx" download="BASE_DATOS_KFC.xlsx"
+               style="display:inline-block;background:#1F4E79;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
+              ⬇️ Descargar Excel
+            </a>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding:12px 16px;background:#fffbe6;border:1px solid #f0d060;border-radius:6px;font-size:12px;color:#7a5c00;">
+          <strong>ℹ️ Nota:</strong> La base de datos usa el ciclo <strong>OCT 2026 → SEP 2027</strong> (recarga para todos los locales).
+          El <strong>COBRO_ANUAL</strong> es el precio de <em>RECARGA</em> (que ya incluye el mantenimiento), nunca aditivo.
+          Locales servidos OCT–DIC tienen recarga en 2026; ENE–SEP en 2027. <em>AÑO_ULT_RECARGA</em> = AÑO_RECARGA − 3.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('bdtable')">
+        <h2>📋 Locales del mes seleccionado</h2>
+        <span class="toggle" id="bdtable-toggle">▼</span>
+      </div>
+      <div class="card-body" id="bdtable-body">
+        <div id="bdContainer"><p style="color:#999;font-size:13px">Selecciona un mes para ver sus locales.</p></div>
       </div>
     </div>
   </div>
 
-  <!-- PASO 3: REVISAR REGISTROS DEL MES -->
-  <div class="card" id="cardTabla" style="display:none">
-    <div class="card-header" onclick="toggleCard('tabla')">
-      <h2>📋 Paso 3 – Revisar registros del mes</h2>
-      <span class="toggle" id="tabla-toggle">▼</span>
-    </div>
-    <div class="card-body" id="tabla-body">
-      <p style="font-size:12px;color:#777;margin-bottom:8px">
-        Revisa lo que leyó la IA. Puedes cambiar empresa, <strong>MANTGES/MANT</strong>,
-        descripción, # nota de entrega y observación directamente en la tabla.
-      </p>
-      <div id="tablaContainer"></div>
-    </div>
-  </div>
+  <!-- ════════════ SECCIÓN: CONFIGURACIÓN (admin) ════════════ -->
+  <div class="app-section admin-only" id="sec-config" style="display:none">
+    <div class="section-title">⚙️ Configuración</div>
+    <div class="section-desc">Tus claves se guardan automáticamente y de forma permanente en este navegador.</div>
 
-  <!-- PASO 3b: FACTURAS POR EMPRESA -->
-  <div class="card" id="cardFacturas" style="display:none">
-    <div class="card-header" onclick="toggleCard('fact')">
-      <h2>🧾 Números de factura por empresa</h2>
-      <span class="toggle" id="fact-toggle">▼</span>
-    </div>
-    <div class="card-body" id="fact-body">
-      <p style="font-size:13px;color:#555;margin-bottom:16px">
-        Ingresa el número de factura por empresa (MANGES y MANT) antes de generar los Excels.
-      </p>
-      <div id="empresaFacturasContainer"></div>
-    </div>
-  </div>
-
-  <!-- PASO 4: GENERAR -->
-  <div class="card" id="cardGenerar" style="display:none">
-    <div class="card-header" onclick="toggleCard('gen')">
-      <h2>⬇️ Paso 4 – Generar Excels</h2>
-      <span class="toggle" id="gen-toggle">▼</span>
-    </div>
-    <div class="card-body" id="gen-body">
-      <div class="outputs">
-        <div class="output-card" id="out1">
-          <div class="icon">📊</div>
-          <h3>DETALLE FACT MENSUAL</h3>
-          <p>Hojas: MANGES + MANT<br>Detalle extintores por local</p>
-          <button class="btn btn-success btn-sm" onclick="generarDetalle()" disabled id="btn1">Generar</button>
+    <div class="card">
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label>🟢 API Key Gemini — requerida para leer fotos de notas de entrega</label>
+            <input type="text" id="geminiKey" placeholder="AIza..." autocomplete="off" oninput="saveConfig()" />
+          </div>
+          <div class="form-group" style="flex:2">
+            <label>⚫ GitHub Token — respalda tus datos en la nube (opcional)</label>
+            <input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off" oninput="saveConfig()" />
+          </div>
         </div>
-        <div class="output-card" id="out2">
-          <div class="icon">📑</div>
-          <h3>DISTRIBUCIÓN</h3>
-          <p>Una hoja por factura<br>C.C. + descripción + valores</p>
-          <button class="btn btn-success btn-sm" onclick="generarDistribucion()" disabled id="btn2">Generar</button>
-        </div>
-        <div class="output-card" id="out3">
-          <div class="icon">🏢</div>
-          <h3>FORMATO FACTURACIÓN</h3>
-          <p>Una hoja por empresa<br>Resumen con # factura</p>
-          <button class="btn btn-success btn-sm" onclick="generarFormatoFact()" disabled id="btn3">Generar</button>
-        </div>
-        <div class="output-card" id="out4">
-          <div class="icon">📜</div>
-          <h3>CERTIFICADOS PDF</h3>
-          <p>Un PDF por local MANGES<br>Formato Previfuego/Pyroshield</p>
-          <button class="btn btn-success btn-sm" onclick="generarCertificados()" disabled id="btn4">Generar</button>
-        </div>
+        <span id="cfgStatus" style="font-size:12px;color:#27ae60"></span>
       </div>
-      <div style="margin-top:16px">
-        <button class="btn btn-primary" onclick="generarTodo()" id="btnGenerarTodo" disabled>
-          ⬇️ Generar y descargar los 3 Excels
-        </button>
-      </div>
-      <div id="genLog" class="log-box" style="display:none"></div>
     </div>
-  </div>
 
-  <!-- GITHUB PERSIST -->
-  <div class="card">
-    <div class="card-header" onclick="toggleCard('gh')">
-      <h2>☁️ Respaldo en la nube (auto-guardado)</h2>
-      <span class="toggle" id="gh-toggle">▼</span>
-    </div>
-    <div class="card-body" id="gh-body">
-      <p style="font-size:13px;color:#555;margin-bottom:10px">
-        Todo se guarda automáticamente — al instante en este navegador, y si hay GitHub Token también en la nube.
-        Nunca necesitas guardar a mano.
-      </p>
-      <span id="ghStatus" style="font-size:12px;color:#27ae60"></span>
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('gh')">
+        <h2>☁️ Respaldo en la nube</h2>
+        <span class="toggle" id="gh-toggle">▼</span>
+      </div>
+      <div class="card-body" id="gh-body">
+        <p style="font-size:13px;color:#555;margin-bottom:10px">
+          Todo se guarda automáticamente — al instante en este navegador, y si hay GitHub Token también en la nube.
+          Nunca necesitas guardar a mano.
+        </p>
+        <span id="ghStatus" style="font-size:12px;color:#27ae60"></span>
+      </div>
     </div>
   </div>
 
@@ -486,6 +554,18 @@
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <h3 style="color:#9e1212;font-size:15px;margin:0">📜 Certificado — <span id="certModalTitle"></span></h3>
       <button onclick="cerrarCertModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666;line-height:1">✕</button>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <h4 style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:8px;letter-spacing:0.4px">Tipo de trabajo realizado</h4>
+      <div style="display:flex;gap:8px">
+        <label style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">
+          <input type="radio" name="certTipoServ" value="mantenimiento" style="width:auto" /> 🔧 Mantenimiento
+        </label>
+        <label style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">
+          <input type="radio" name="certTipoServ" value="recarga" style="width:auto" /> ⟳ Recarga
+        </label>
+      </div>
     </div>
 
     <div style="margin-bottom:14px">
@@ -754,30 +834,57 @@ function parseCotizacion(arrayBuffer, filename) {
   };
 }
 
-// ─── EMPEZAR / MOSTRAR PANELES ────────────────────────────────────────────────
-// Revela los paneles de registro, revisión y generación para el mes elegido.
-function empezarMes() {
-  const mesLbl = MESES_NOMBRE[document.getElementById('selMes').value];
-  const anio = document.getElementById('selAnio').value;
-  // Restaurar del navegador lo ya registrado para este mes (si no hay nada en memoria)
-  let restaurado = false;
-  if (!cotizaciones.length) restaurado = localRestore();
-  document.getElementById('cardPlan').style.display = '';
-  document.getElementById('cardFotos').style.display = '';
-  document.getElementById('cardTabla').style.display = '';
-  document.getElementById('cardFacturas').style.display = '';
-  document.getElementById('cardGenerar').style.display = '';
+// ─── NAVEGACIÓN POR SECCIONES ─────────────────────────────────────────────────
+function goToSection(name) {
+  document.querySelectorAll('.app-section').forEach(s => s.style.display = 'none');
+  const sec = document.getElementById('sec-' + name);
+  if (sec) sec.style.display = '';
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const tab = document.querySelector(`.nav-tab[data-sec="${name}"]`);
+  if (tab) tab.classList.add('active');
+  localStorage.setItem('lastSection', name);
+  if (name === 'bd') renderBD();
+  if (name === 'certs') renderCertsList();
+}
+
+// ─── PERFILES (admin / empleado) ──────────────────────────────────────────────
+let currentProfile = localStorage.getItem('perfil') || 'admin';
+
+function setPerfil(p) {
+  currentProfile = p;
+  localStorage.setItem('perfil', p);
+  applyPerfil();
+}
+
+function applyPerfil() {
+  const isAdmin = currentProfile === 'admin';
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+  document.getElementById('prof-admin').classList.toggle('active', isAdmin);
+  document.getElementById('prof-emp').classList.toggle('active', !isAdmin);
+  // El empleado solo trabaja sobre el mes activo y empieza en el Plan
+  document.getElementById('monthSelector').style.display = isAdmin ? '' : 'none';
+  if (!isAdmin) {
+    goToSection('plan');
+  } else {
+    const last = localStorage.getItem('lastSection') || 'plan';
+    goToSection(last);
+  }
+  renderPlan();
+}
+
+// ─── CAMBIO DE MES ────────────────────────────────────────────────────────────
+function onMonthChange() {
+  if (!cotizaciones.length) localRestore();
   cargarPlan();
   renderTabla();
   renderEmpresaFacturas();
-  enableGenerarBtns();
-  setStep(2);
-  const extra = restaurado
-    ? `Recuperé ${cotizaciones.length} nota(s) que ya tenías guardadas en este navegador. `
-    : (cotizaciones.length ? `Tienes ${cotizaciones.length} nota(s) en memoria. ` : '');
-  showStatus('loadStatus', 'ok',
-    `✅ Trabajando en <strong>${mesLbl} ${anio}</strong>. ${extra}` +
-    `Agrega fotos de notas de entrega cuando quieras — todo se guarda automáticamente.`);
+  renderBD();
+}
+
+// ─── MODO OSCURO ──────────────────────────────────────────────────────────────
+function toggleDark() {
+  const dark = document.body.classList.toggle('dark');
+  localStorage.setItem('darkMode', dark ? '1' : '0');
 }
 
 // Normaliza la categoría a 'MANGES' (presupuestado) o 'MANT' (extra fuera de presupuesto).
@@ -1041,14 +1148,7 @@ Si no encuentras un campo, usa "" o 0.`
   document.getElementById('fotoStatus').textContent =
     `✅ Listo: ${procesadas} notas procesadas${errores ? `, ${errores} errores` : ''}`;
 
-  // Revelar paneles de revisión y generación
-  if (cotizaciones.length) {
-    document.getElementById('cardTabla').style.display = '';
-    document.getElementById('cardFacturas').style.display = '';
-    document.getElementById('cardGenerar').style.display = '';
-    enableGenerarBtns();
-    setStep(3);
-  }
+  if (cotizaciones.length) enableGenerarBtns();
   autosave();   // guarda las notas recién registradas
 }
 
@@ -1208,24 +1308,12 @@ async function ghCargar() {
   if (!token) {
     const ok = localRestore();
     if (ok) {
-      renderTabla(); renderEmpresaFacturas(); enableGenerarBtns();
-      document.getElementById('cardFotos').style.display = '';
-      document.getElementById('cardTabla').style.display = '';
-      document.getElementById('cardFacturas').style.display = '';
-      document.getElementById('cardGenerar').style.display = '';
-      showStatus('loadStatus', 'ok',
-        `✅ Recuperados ${cotizaciones.length} registro(s) de este navegador. ` +
-        `<small>Para respaldar en la nube agrega un GitHub Token en Configuración.</small>`);
-    } else {
-      showStatus('loadStatus', 'error',
-        `⚠️ No hay registros guardados en este navegador para este mes. ` +
-        `Para cargar desde la nube, configura un GitHub Token en Configuración.`);
+      renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan();
     }
     return;
   }
 
   const path = ghFilePath();
-  showStatus('loadStatus', 'ok', '⏳ Cargando desde la nube...');
   try {
     const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
       headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
@@ -1233,17 +1321,7 @@ async function ghCargar() {
     if (!r.ok) {
       // Fallback to localStorage
       const ok = localRestore();
-      if (ok) {
-        renderTabla(); renderEmpresaFacturas(); enableGenerarBtns();
-        document.getElementById('cardFotos').style.display = '';
-        document.getElementById('cardTabla').style.display = '';
-        document.getElementById('cardFacturas').style.display = '';
-        document.getElementById('cardGenerar').style.display = '';
-        showStatus('loadStatus', 'ok',
-          `✅ Recuperados ${cotizaciones.length} registro(s) de este navegador (aún no hay datos en la nube para este mes).`);
-      } else {
-        showStatus('loadStatus', 'error', `⚠️ No hay registros guardados para este mes (ni nube ni navegador).`);
-      }
+      if (ok) { renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan(); }
       return;
     }
     const data = await r.json();
@@ -1258,16 +1336,11 @@ async function ghCargar() {
     }));
 
     renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan();
-    document.getElementById('cardFotos').style.display = '';
-    document.getElementById('cardTabla').style.display = '';
-    document.getElementById('cardFacturas').style.display = '';
-    document.getElementById('cardGenerar').style.display = '';
-
-    showStatus('loadStatus', 'ok',
-      `✅ Cargados ${cotizaciones.length} registros de la nube (${new Date(json.savedAt).toLocaleString()}).`);
-    document.getElementById('ghStatus').textContent = '';
+    const gs = document.getElementById('ghStatus');
+    if (gs) gs.textContent = `☁️ Sincronizado (${new Date(json.savedAt).toLocaleString()})`;
   } catch (e) {
-    showStatus('loadStatus', 'error', `❌ Error cargando: ${e.message}`);
+    const ok = localRestore();
+    if (ok) { renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan(); }
   }
 }
 
@@ -1364,23 +1437,40 @@ function renderPlan() {
   const visitados = planMes.filter(l => visitaStatus[l.codigo] === 'visitado').length;
   const pendientes = total - visitados;
   const mesNom = MESES_NOMBRE[document.getElementById('selMes').value];
+  const isAdmin = currentProfile === 'admin';
 
-  document.getElementById('planStats').innerHTML =
+  const statsEl = document.getElementById('planStats');
+  if (statsEl) statsEl.innerHTML =
     `${mesNom}: <span style="color:#27ae60">✅ ${visitados} visitados</span> &nbsp;·&nbsp; ` +
     `<span style="color:#e74c3c">🔴 ${pendientes} pendientes</span> &nbsp;·&nbsp; ${total} total`;
 
+  const cont = document.getElementById('planContainer');
+  if (!cont) return;
+
   if (!total) {
-    document.getElementById('planContainer').innerHTML =
-      '<p style="color:#999;font-size:13px">Sin locales programados para este mes.</p>';
+    cont.innerHTML = '<p style="color:#999;font-size:13px">Sin locales programados para este mes.</p>';
     return;
   }
 
-  const neBase = parseInt(document.getElementById('neInicial').value) || 6700;
+  // Filtro de búsqueda
+  const q = (document.getElementById('planSearch')?.value || '').toUpperCase().trim();
+  const neBase = parseInt(document.getElementById('neInicial')?.value) || 6700;
 
-  const html = planMes.map((local, idx) => {
+  const visibles = planMes
+    .map((local, idx) => ({ local, neNum: neBase + idx }))
+    .filter(({ local }) => !q ||
+      local.codigo.toUpperCase().includes(q) ||
+      String(local.nombre).toUpperCase().includes(q) ||
+      String(local.marca).toUpperCase().includes(q));
+
+  if (!visibles.length) {
+    cont.innerHTML = `<p style="color:#999;font-size:13px">Ningún local coincide con "${q}".</p>`;
+    return;
+  }
+
+  const html = visibles.map(({ local, neNum }) => {
     const status     = visitaStatus[local.codigo] || 'pendiente';
     const isVisitado = status === 'visitado';
-    const neNum      = neBase + idx;
     const iva        = parseFloat((local.cobro * 0.15).toFixed(2));
     const total      = parseFloat((local.cobro + iva).toFixed(2));
     const localLabel = local.nombre.replace(local.codigo + ' - ', '');
@@ -1390,6 +1480,13 @@ function renderPlan() {
     const tipoServ   = local.esRecarga
       ? `<span style="color:#8e44ad;font-weight:600">⟳ RECARGA ${local.anioRec}</span>`
       : `<span style="color:#2980b9;font-weight:600">🔧 MANTENIMIENTO</span>`;
+
+    // Botón NE solo para admin; Certificado para ambos
+    const btnNE = isAdmin ? `
+            <button class="btn btn-sm btn-info" style="font-size:11px;padding:3px 8px;white-space:nowrap"
+              onclick="event.stopPropagation();generarNELocal('${local.codigo}',${neNum})">
+              📄 NE #${neNum}
+            </button>` : '';
 
     return `
       <div class="local-card ${status}" id="lcard-${local.codigo}">
@@ -1401,18 +1498,15 @@ function renderPlan() {
             <span style="font-size:11px;color:#999;white-space:nowrap">${local.marca}</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <span class="badge-${status}">${isVisitado ? 'VISITADO' : 'PENDIENTE'}</span>
             <span style="font-size:12px;font-weight:600;color:#333;white-space:nowrap">${local.nExt} ext · $${local.cobro.toFixed(2)}</span>
             <button class="btn btn-sm ${isVisitado ? 'btn-warning' : 'btn-success'}" style="font-size:11px;padding:3px 8px;white-space:nowrap"
               onclick="event.stopPropagation();toggleVisita('${local.codigo}')">
               ${isVisitado ? '↩ Pendiente' : '✅ Visitado'}
-            </button>
-            <button class="btn btn-sm btn-info" style="font-size:11px;padding:3px 8px;white-space:nowrap"
-              onclick="event.stopPropagation();generarNELocal('${local.codigo}',${neNum})">
-              📄 NE #${neNum}
-            </button>
+            </button>${btnNE}
             <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
               onclick="event.stopPropagation();abrirCertModal('${local.codigo}')">
-              📜 Cert
+              📜 Generar Certificado
             </button>
           </div>
         </div>
@@ -1423,13 +1517,90 @@ function renderPlan() {
             <span>Subtotal: <strong>$${local.cobro.toFixed(2)}</strong></span>
             <span>IVA 15%: <strong>$${iva.toFixed(2)}</strong></span>
             <span>Total: <strong>$${total.toFixed(2)}</strong></span>
-            <span style="color:#888">NE asignado: <strong>#${neNum}</strong></span>
+            ${isAdmin ? `<span style="color:#888">NE asignado: <strong>#${neNum}</strong></span>` : ''}
           </div>
         </div>
       </div>`;
   }).join('');
 
-  document.getElementById('planContainer').innerHTML = html;
+  cont.innerHTML = html;
+}
+
+// ─── BASE DE DATOS: tabla del mes ─────────────────────────────────────────────
+function renderBD() {
+  const cont = document.getElementById('bdContainer');
+  if (!cont) return;
+  if (!planMes.length) {
+    cont.innerHTML = '<p style="color:#999;font-size:13px">Sin locales para este mes.</p>';
+    return;
+  }
+  let html = `<table><thead><tr>
+    <th>Código</th><th>Local</th><th>Marca</th><th>Extintores</th>
+    <th>Servicio</th><th>Cobro</th></tr></thead><tbody>`;
+  html += planMes.map(l => {
+    const ext = l.extintores.map(e => `${e.tipo} ${e.cap}`).join(', ');
+    const serv = l.esRecarga ? `RECARGA ${l.anioRec}` : 'MANTENIMIENTO';
+    return `<tr>
+      <td><strong>${l.codigo}</strong></td>
+      <td>${l.nombre.replace(l.codigo+' - ','')}</td>
+      <td>${l.marca}</td>
+      <td style="font-size:11px">${ext || '—'}</td>
+      <td>${serv}</td>
+      <td style="text-align:right">$${l.cobro.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+  html += '</tbody></table>';
+  cont.innerHTML = html;
+}
+
+// ─── CERTIFICADOS: lista guardada (admin) ─────────────────────────────────────
+async function renderCertsList() {
+  const cont = document.getElementById('certsContainer');
+  const desc = document.getElementById('certsDesc');
+  if (!cont) return;
+  const isAdmin = currentProfile === 'admin';
+
+  if (!isAdmin) {
+    if (desc) desc.innerHTML =
+      `Abre un local en el <strong>Plan del Mes</strong>, adjunta las fotos del trabajo y pulsa ` +
+      `<strong>Generar Certificado</strong>. El PDF se descarga y se respalda en la nube.`;
+    cont.innerHTML = '<p style="color:#999;font-size:13px">Ve a 📅 Plan del Mes para generar certificados por local.</p>';
+    return;
+  }
+
+  if (desc) desc.innerHTML = `Certificados generados por el personal este mes. Descárgalos para enviarlos por correo.`;
+
+  const token = getGhToken();
+  if (!token) {
+    cont.innerHTML = '<p style="color:#999;font-size:13px">Configura un GitHub Token para ver los certificados guardados en la nube.</p>';
+    return;
+  }
+  const mes = MESES_NOMBRE[document.getElementById('selMes').value];
+  const anio = document.getElementById('selAnio').value;
+  const dir = `certificados/${mes}-${anio}`;
+  cont.innerHTML = '<p style="color:#999;font-size:13px">⏳ Cargando certificados…</p>';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${dir}?ref=${GH_BRANCH}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    });
+    if (!r.ok) {
+      cont.innerHTML = '<p style="color:#999;font-size:13px">Aún no hay certificados guardados para este mes.</p>';
+      return;
+    }
+    const files = await r.json();
+    const pdfs = (Array.isArray(files) ? files : []).filter(f => f.name.endsWith('.pdf'));
+    if (!pdfs.length) {
+      cont.innerHTML = '<p style="color:#999;font-size:13px">Aún no hay certificados guardados para este mes.</p>';
+      return;
+    }
+    cont.innerHTML = pdfs.map(f => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid #eee;border-radius:6px;margin-bottom:6px">
+        <span style="font-size:13px">📜 ${f.name}</span>
+        <a href="${f.download_url}" download="${f.name}" class="btn btn-sm btn-info" style="font-size:12px">⬇️ Descargar</a>
+      </div>`).join('');
+  } catch (e) {
+    cont.innerHTML = `<p style="color:#c0392b;font-size:13px">Error cargando certificados: ${e.message}</p>`;
+  }
 }
 
 function toggleLocalCard(codigo) {
@@ -2015,6 +2186,7 @@ async function hacerPDF(opts) {
   }
 
   doc.save('CERT-'+localCode+'-'+anio+'.pdf');
+  return doc;
 }
 
 async function generarCertificados() {
@@ -2061,6 +2233,11 @@ function abrirCertModal(codigo) {
     const el = document.getElementById('certFoto'+n);
     if (el) el.value = '';
   });
+  // Preseleccionar tipo de servicio según la base de datos
+  const tipoVal = local.esRecarga ? 'recarga' : 'mantenimiento';
+  document.querySelectorAll('input[name="certTipoServ"]').forEach(r => {
+    r.checked = (r.value === tipoVal);
+  });
   renderCertAccs();
   document.getElementById('certModal').style.display = 'flex';
 }
@@ -2102,19 +2279,50 @@ async function generarCertLocal() {
   const anio   = document.getElementById('selAnio').value;
   const mesNum = mesVal.substring(0,2);
 
-  await hacerPDF({
+  // Tipo de servicio elegido por el empleado
+  const tipoServSel = document.querySelector('input[name="certTipoServ"]:checked')?.value || 'mantenimiento';
+  const tipoLabel = tipoServSel === 'recarga' ? 'RECARGA' : 'MANT';
+
+  const doc = await hacerPDF({
     localNom:  local.nombre.replace(local.codigo+' - ',''),
     puntNom:   local.nombre,
     localCode: local.codigo,
     exts: local.extintores.map(e=>({tipo:e.tipo,cap:e.cap})),
     FB64,
     ACCS: certAccs.filter(a=>a.desc && a.desc.trim()),
-    certNum: local.codigo+'-MANT EXTINTORES-'+anio,
+    certNum: local.codigo+'-'+tipoLabel+' EXTINTORES-'+anio,
     MA:  mesNum+'/'+anio,
     MAS: mesNum+'/'+(parseInt(anio)+1),
     anio,
+    tipoServ: tipoServSel,
   });
+
+  // Respaldar el certificado en la nube (si hay token)
+  try { if (doc) await subirCertGitHub(local.codigo, anio, mesVal, doc); } catch(e) { console.warn('subirCert:', e); }
+
   cerrarCertModal();
+}
+
+// Sube el PDF del certificado a GitHub: certificados/[MES]-[ANIO]/CERT-[CODIGO]-[ANIO].pdf
+async function subirCertGitHub(localCode, anio, mesVal, doc) {
+  const token = getGhToken();
+  if (!token) return;
+  const mes = MESES_NOMBRE[mesVal];
+  const path = `certificados/${mes}-${anio}/CERT-${localCode}-${anio}.pdf`;
+  // jsPDF → base64 (sin el prefijo data:)
+  const content = doc.output('datauristring').split(',')[1];
+  let sha = null;
+  const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+  });
+  if (check.ok) { const d = await check.json(); sha = d.sha; }
+  const body = { message: `cert: ${localCode} ${mes}-${anio}`, content, branch: GH_BRANCH };
+  if (sha) body.sha = sha;
+  await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
 }
 
 // ─── UI HELPERS ───────────────────────────────────────────────────────────────
@@ -2125,20 +2333,13 @@ function showStatus(elId, type, msg) {
   el.style.display = 'flex';
 }
 
-function setStep(n) {
-  for (let i = 1; i <= 4; i++) {
-    const el = document.getElementById('step' + i);
-    if (i < n) el.className = 'step done';
-    else if (i === n) el.className = 'step active';
-    else el.className = 'step';
-  }
-}
+function setStep(n) { /* obsoleto: la app ya no usa pasos lineales */ }
 
 function enableGenerarBtns() {
   ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => {
-    document.getElementById(id).disabled = false;
+    const el = document.getElementById(id);
+    if (el) el.disabled = false;
   });
-  setStep(4);
 }
 
 function markOutput(id) {
@@ -2146,7 +2347,37 @@ function markOutput(id) {
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-loadConfig();
+function init() {
+  loadConfig();
+
+  // Modo oscuro guardado
+  if (localStorage.getItem('darkMode') === '1') document.body.classList.add('dark');
+
+  // Mes actual por defecto (si no hay datos previos en memoria)
+  const hoy = new Date();
+  const mesActual = String(hoy.getMonth() + 1).padStart(2, '0');
+  const selMes = document.getElementById('selMes');
+  const opt = Array.from(selMes.options).find(o => o.value.startsWith(mesActual));
+  if (opt) selMes.value = opt.value;
+  const anioActual = String(hoy.getFullYear());
+  const selAnio = document.getElementById('selAnio');
+  if (Array.from(selAnio.options).some(o => o.value === anioActual)) selAnio.value = anioActual;
+
+  // Restaurar registros del navegador y cargar plan automáticamente
+  localRestore();
+  cargarPlan();
+  renderTabla();
+  renderEmpresaFacturas();
+  enableGenerarBtns();
+
+  // Sincronizar con la nube si hay token (silencioso)
+  if (getGhToken()) ghCargar();
+
+  // Aplicar perfil (admin/empleado) y mostrar la sección guardada
+  applyPerfil();
+}
+
+init();
 </script>
 </body>
 </html>
