@@ -419,14 +419,16 @@
   <!-- GITHUB PERSIST -->
   <div class="card">
     <div class="card-header" onclick="toggleCard('gh')">
-      <h2>☁️ Guardar / Cargar sesión en GitHub</h2>
+      <h2>☁️ Respaldo en la nube (auto-guardado)</h2>
       <span class="toggle" id="gh-toggle">▼</span>
     </div>
     <div class="card-body" id="gh-body">
       <p style="font-size:13px;color:#555;margin-bottom:12px">
-        Los datos del mes se guardan como JSON en el repositorio
-        (<code>datos/[MES]-[ANIO].json</code>).
-        Requiere <strong>GitHub Token</strong> con permiso <em>contents: write</em> en Configuración.
+        <strong>No tienes que guardar a mano.</strong> Cada nota que registras se guarda sola:
+        al instante en este navegador y, si pusiste el <strong>GitHub Token</strong> en Configuración,
+        también en la nube (<code>datos/[MES]-[ANIO].json</code>). Así puedes registrar 1 hoy y 30 mañana,
+        cerrar y volver cuando quieras — nada se pierde. Los botones de abajo son solo por si quieres
+        forzar el guardado o traer los datos manualmente.
       </p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-primary" onclick="ghGuardar()">💾 Guardar en GitHub</button>
@@ -665,6 +667,9 @@ function parseCotizacion(arrayBuffer, filename) {
 function empezarMes() {
   const mesLbl = MESES_NOMBRE[document.getElementById('selMes').value];
   const anio = document.getElementById('selAnio').value;
+  // Restaurar del navegador lo ya registrado para este mes (si no hay nada en memoria)
+  let restaurado = false;
+  if (!cotizaciones.length) restaurado = localRestore();
   document.getElementById('cardFotos').style.display = '';
   document.getElementById('cardTabla').style.display = '';
   document.getElementById('cardFacturas').style.display = '';
@@ -673,9 +678,13 @@ function empezarMes() {
   renderEmpresaFacturas();
   enableGenerarBtns();
   setStep(2);
+  const extra = restaurado
+    ? `Recuperé ${cotizaciones.length} nota(s) que ya tenías guardadas en este navegador. `
+    : (cotizaciones.length ? `Tienes ${cotizaciones.length} nota(s) en memoria. ` : '');
   showStatus('loadStatus', 'ok',
-    `✅ Trabajando en <strong>${mesLbl} ${anio}</strong>. Sube las fotos de las notas de entrega en el Paso 2. ` +
-    `Tienes ${cotizaciones.length} registro(s) en memoria.`);
+    `✅ Trabajando en <strong>${mesLbl} ${anio}</strong>. ${extra}` +
+    `Agrega notas de entrega con foto cuando quieras (1 o muchas, varios días) — se guardan solas. ` +
+    `Si trabajas en otra compu, usa 📥 "Cargar registros guardados" para traerlas de la nube.`);
 }
 
 // Normaliza la categoría a 'MANGES' (presupuestado) o 'MANT' (extra fuera de presupuesto).
@@ -691,6 +700,7 @@ function setCategoria(idx, val) {
     cotizaciones[idx].category = normCategoria(val);
     renderTabla();
     renderEmpresaFacturas();
+    autosave();
   }
 }
 
@@ -738,7 +748,7 @@ function renderTabla() {
         <td><strong>${c.localCode}</strong></td>
         <td style="font-family:monospace;font-size:11px">${c.cc}</td>
         <td style="font-size:11px">
-          <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderEmpresaFacturas()">
+          <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderEmpresaFacturas();autosave()">
             ${Object.entries(EMPRESAS_MAP).map(([k,v]) =>
               `<option value="${k}" ${c.empresa===v?'selected':''}>${v.empresa}</option>`
             ).join('')}
@@ -750,12 +760,12 @@ function renderTabla() {
             <option value="MANT" ${c.category==='MANT'?'selected':''}>MANT (extra)</option>
           </select>
         </td>
-        <td style="font-size:11px;max-width:180px" contenteditable="true" onblur="cotizaciones[${idx}].descripcionFact=this.textContent.trim()">${c.descripcionFact}</td>
+        <td style="font-size:11px;max-width:180px" contenteditable="true" onblur="cotizaciones[${idx}].descripcionFact=this.textContent.trim();autosave()">${c.descripcionFact}</td>
         <td style="text-align:right">$${c.subtotal.toFixed(2)}</td>
         <td style="text-align:right">$${c.iva.toFixed(2)}</td>
         <td style="text-align:right;font-weight:700">$${c.total.toFixed(2)}</td>
-        <td><input type="text" value="${c.notaEntrega}" placeholder="ej: 6494" style="width:80px" onchange="cotizaciones[${idx}].notaEntrega=this.value.trim()" /></td>
-        <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim()">${c.observacion}</td>
+        <td><input type="text" value="${c.notaEntrega}" placeholder="ej: 6494" style="width:80px" onchange="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
+        <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim();autosave()">${c.observacion}</td>
       </tr>
     `;
   });
@@ -798,13 +808,13 @@ function renderEmpresaFacturas() {
             <div class="fact-input-group">
               <label>Fact. MANGES:</label>
               <input type="text" placeholder="ej: 3296 MANTGES" value="${facturaMap[hoja].factManges}"
-                onchange="facturaMap['${hoja}'].factManges=this.value.trim()" />
+                onchange="facturaMap['${hoja}'].factManges=this.value.trim();autosave()" />
             </div>` : ''}
             ${data.mant.length ? `
             <div class="fact-input-group">
               <label>Fact. MANT:</label>
               <input type="text" placeholder="ej: 3299 MANTT" value="${facturaMap[hoja].factMant}"
-                onchange="facturaMap['${hoja}'].factMant=this.value.trim()" />
+                onchange="facturaMap['${hoja}'].factMant=this.value.trim();autosave()" />
             </div>` : ''}
           </div>
         </div>
@@ -946,6 +956,7 @@ Si no encuentras un campo, usa "" o 0.`
     enableGenerarBtns();
     setStep(3);
   }
+  autosave();   // guarda las notas recién registradas
 }
 
 async function callGemini(apiKey, base64, mimeType, prompt) {
@@ -988,19 +999,9 @@ function ghFilePath() {
   return `datos/${mesNombre}-${anio}.json`;
 }
 
-async function ghGuardar() {
-  const token = getGhToken();
-  if (!token) {
-    document.getElementById('ghStatus').textContent = '⚠️ Configura GitHub Token primero';
-    return;
-  }
-  if (!cotizaciones.length) {
-    document.getElementById('ghStatus').textContent = '⚠️ No hay datos cargados';
-    return;
-  }
-
-  const path = ghFilePath();
-  const payload = {
+// Construye el objeto de la sesión del mes (registros + facturas)
+function buildPayload() {
+  return {
     mes: document.getElementById('selMes').value,
     anio: document.getElementById('selAnio').value,
     savedAt: new Date().toISOString(),
@@ -1014,8 +1015,57 @@ async function ghGuardar() {
     })),
     facturaMap
   };
+}
 
-  document.getElementById('ghStatus').textContent = '⏳ Guardando...';
+// ─── AUTO-GUARDADO ────────────────────────────────────────────────────────────
+// Cada cambio se guarda SOLO: al instante en el navegador (localStorage) y, si hay
+// token de GitHub, también en la nube (con un pequeño retraso para no saturar).
+function lsKey() { return 'sesion_' + ghFilePath(); }
+
+function localSave() {
+  try { localStorage.setItem(lsKey(), JSON.stringify(buildPayload())); } catch(e) {}
+}
+
+function localRestore() {
+  try {
+    const raw = localStorage.getItem(lsKey());
+    if (!raw) return false;
+    const json = JSON.parse(raw);
+    facturaMap = json.facturaMap || {};
+    cotizaciones = (json.cotizaciones || []).map(c => ({
+      ...c,
+      empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
+      notaEntrega: c.notaEntrega || ''
+    }));
+    return true;
+  } catch(e) { return false; }
+}
+
+let _autosaveTimer = null;
+function autosave() {
+  localSave();                       // inmediato y local — nunca se pierde
+  if (getGhToken()) {                // y a la nube, con debounce de 2.5s
+    clearTimeout(_autosaveTimer);
+    _autosaveTimer = setTimeout(() => ghGuardar(true), 2500);
+  }
+}
+
+async function ghGuardar(silent = false) {
+  const token = getGhToken();
+  const st = document.getElementById('ghStatus');
+  if (!token) {
+    if (!silent && st) st.textContent = '⚠️ Configura GitHub Token para respaldar en la nube (por ahora se guarda en este navegador)';
+    return;
+  }
+  if (!cotizaciones.length) {
+    if (!silent && st) st.textContent = '⚠️ No hay registros aún';
+    return;
+  }
+
+  const path = ghFilePath();
+  const payload = buildPayload();
+
+  if (!silent && st) st.textContent = '⏳ Guardando...';
   try {
     // Check if file exists (need SHA to update)
     let sha = null;
@@ -1029,7 +1079,7 @@ async function ghGuardar() {
 
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
     const body = {
-      message: `datos: guardar sesión ${MESES_NOMBRE[payload.mes]}-${payload.anio}`,
+      message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio} (${cotizaciones.length} notas)`,
       content,
       branch: GH_BRANCH
     };
@@ -1046,14 +1096,14 @@ async function ghGuardar() {
     });
 
     if (r.ok) {
-      document.getElementById('ghStatus').innerHTML =
-        `<span style="color:green">✅ Guardado: <code>${path}</code> (${cotizaciones.length} registros)</span>`;
+      if (st) st.innerHTML =
+        `<span style="color:green">✅ Guardado en la nube (${cotizaciones.length} notas) · ${new Date().toLocaleTimeString()}</span>`;
     } else {
       const err = await r.json();
       throw new Error(err.message || r.status);
     }
   } catch (e) {
-    document.getElementById('ghStatus').innerHTML = `<span style="color:red">❌ ${e.message}</span>`;
+    if (st) st.innerHTML = `<span style="color:red">❌ ${e.message}</span>`;
   }
 }
 
