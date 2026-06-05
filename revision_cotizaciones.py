@@ -192,6 +192,7 @@ def load_db_full(db_path: str):
             "mantt": float(row[5]) if row[5] is not None else None,
             "recarga": float(row[6]) if row[6] is not None else None,
             "cobro": float(row[7]) if row[7] is not None else None,
+            "ano_recarga": int(row[9]) if row[9] is not None else None,
         }
 
     # DETALLE — extract canonical code from NOMBRE_LOCAL "K079 - BABAHOYO"
@@ -366,7 +367,11 @@ def main():
 
             nombre    = db_entry["nombre"]
             db_exts   = detalle.get(local_code, [])
-            tipo      = "RECARGA" if mes_name in RECARGA_MONTHS else "MANTENIMIENTO"
+            # If DB says AÑO_RECARGA=2026, this local does recarga in current ENE-SEP cycle
+            if db_entry.get("ano_recarga") == 2026 and mes_name not in RECARGA_MONTHS:
+                tipo = "RECARGA"
+            else:
+                tipo = "RECARGA" if mes_name in RECARGA_MONTHS else "MANTENIMIENTO"
             valor_db  = db_entry["recarga"] if tipo == "RECARGA" else db_entry["mantt"]
 
             # Status

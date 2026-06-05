@@ -36,6 +36,32 @@ MONTHS = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
 MONTH_IDX = {m: i for i, m in enumerate(MONTHS)}
 OCT_TO_DEC = {"OCTUBRE", "NOVIEMBRE", "DICIEMBRE"}
 
+# Locales fuera de Guayaquil: movilización/viáticos extraídos de cotizaciones 2026
+# ckey → (descripción ruta, valor $)
+VIATICOS = {
+    ('K', 79):  ('GYE-BABAHOYO 75KM',         40.00),
+    ('K', 65):  ('GYE-MILAGRO 50KM',           25.00),
+    ('V', 75):  ('GYE-MACHALA',                 8.00),
+    ('V', 79):  ('GYE-MILAGRO',                 8.00),
+    ('K', 90):  ('GYE-MACHALA 185KM',          55.50),
+    ('K', 91):  ('GYE-MACHALA 185KM',          55.50),
+    ('K', 148): ('GYE-MACHALA 185KM',          55.50),
+    ('K', 82):  ('GYE-PLAYAS',                 44.00),
+    ('J', 20):  ('GYE-LIBERTAD 136KM x2',        68.00),  # RETIRO+ENTREGA
+    ('K', 93):  ('GYE-QUEVEDO',                35.00),
+    ('K', 106): ('GYE-QUEVEDO',                35.00),
+    ('M', 32):  ('GYE-QUEVEDO',                35.00),
+    ('K', 149): ('GYE-QUEVEDO/VENTANAS',       35.00),
+    ('K', 78):  ('GYE-DAULE',                  25.00),
+    ('M', 39):  ('GYE-BABAHOYO',               24.00),
+    ('K', 53):  ('GYE-BABAHOYO',               24.00),
+    ('R', 10):  ('GYE-ORELLANA',               18.80),
+}
+
+# Locales con AÑO_RECARGA=2026 aunque su mes de servicio sea ENE-SEP
+# (su recarga ya ocurrió en el ciclo OCT2025-SEP2026)
+RECARGA_2026_OVERRIDE = {('R', 3), ('R', 8), ('R', 10)}
+
 # ── Pricing ───────────────────────────────────────────────────────────────────
 
 MANTT = {
@@ -547,12 +573,15 @@ for r in matriz_rows:
     cr  = RECARGA.get(pk)
     cd  = CAP_DISPLAY.get(pk, f"{cap}")
 
-    # ALL locals are in OCT2026–SEP2027 recarga cycle
     # COBRO = RECARGA (includes mantt). If price unknown, fall back to MANTT.
     cobro      = cr if cr is not None else (cm if cm is not None else None)
     cobro_tipo = "RECARGA (incl. mantt)" if cr is not None else ("MANTT" if cm is not None else "SIN PRECIO")
 
-    ano_rec     = 2026 if mes in OCT_TO_DEC else 2027
+    # R003/R008/R010 hicieron recarga en el ciclo OCT2025-SEP2026 (mayo 2026)
+    if ckey in RECARGA_2026_OVERRIDE:
+        ano_rec = 2026
+    else:
+        ano_rec = 2026 if mes in OCT_TO_DEC else 2027
     ano_ult_rec = ano_rec - 3
 
     marca  = get_marca(ckey)
@@ -588,6 +617,37 @@ for r in matriz_rows:
 print(f"Total extintor rows: {len(final_rows)}")
 print(f"Unique locals:       {len(set(r['CÓDIGO'] for r in final_rows))}")
 
+# ── Inject viáticos/movilización rows ─────────────────────────────────────────
+viat_rows = []
+for r in final_rows:
+    ckey = r["_ckey"]
+    if ckey in VIATICOS and ckey not in {rv["_ckey"] for rv in viat_rows}:
+        ruta, monto = VIATICOS[ckey]
+        viat_rows.append({
+            "CÓDIGO":          r["CÓDIGO"],
+            "CC_ORIGINAL":     r["CC_ORIGINAL"],
+            "MARCA":           r["MARCA"],
+            "NOMBRE_LOCAL":    r["NOMBRE_LOCAL"],
+            "MES_SERVICIO":    r["MES_SERVICIO"],
+            "UBICACIÓN":       ruta,
+            "TIPO":            "MOVILIZACIÓN",
+            "CAPACIDAD":       "",
+            "COSTO_MANTT":     monto,
+            "PRECIO_RECARGA":  monto,
+            "COBRO_ANUAL_EXT": monto,
+            "TIPO_COBRO":      "MOVILIZACIÓN",
+            "AÑO_RECARGA":     None,
+            "AÑO_ULT_RECARGA": None,
+            "NOTAS":           "Viáticos/movilización según cotización",
+            "_cm":   monto,
+            "_cr":   monto,
+            "_cobro": monto,
+            "_ckey": ckey,
+        })
+
+final_rows.extend(viat_rows)
+print(f"Viáticos rows added: {len(viat_rows)} locales")
+
 
 # ── 6. Per-local summary ──────────────────────────────────────────────────────
 
@@ -610,7 +670,12 @@ for r in final_rows:
             "_desglose":       [],
         }
     s = local_sum[k]
-    s["N_EXTINTORES"]  += 1
+    if r["TIPO"] != "MOVILIZACIÓN":
+        s["N_EXTINTORES"] += 1
+    # Update AÑO_RECARGA from first non-movilización row
+    if r["TIPO"] != "MOVILIZACIÓN" and r["AÑO_RECARGA"] is not None:
+        s["AÑO_RECARGA"]     = r["AÑO_RECARGA"]
+        s["AÑO_ULT_RECARGA"] = r["AÑO_ULT_RECARGA"]
     s["TOTAL_MANTT"]   += r["_cm"]
     s["TOTAL_RECARGA"] += r["_cr"]
     s["COBRO_ANUAL"]   += r["_cobro"]
@@ -741,8 +806,13 @@ for code in local_order:
     group = rows_by_local[code]
     first = group[0]
 
-    # Write each extintor row
-    for r in group:
+    # Write each extintor row (and movilización if present)
+    ext_group    = [r for r in group if r["TIPO"] != "MOVILIZACIÓN"]
+    mov_group    = [r for r in group if r["TIPO"] == "MOVILIZACIÓN"]
+
+    MOVIL_FILL = PatternFill("solid", fgColor="FFF2CC")  # light yellow for viáticos
+
+    for r in ext_group:
         ws_det.row_dimensions[cur_row].height = 18
         values = [
             r["MARCA"], r["NOMBRE_LOCAL"], r["MES_SERVICIO"], r["UBICACIÓN"],
@@ -762,14 +832,36 @@ for code in local_order:
                 cell.alignment = LEFT
         cur_row += 1
 
-    # TOTALES row
+    for r in mov_group:
+        ws_det.row_dimensions[cur_row].height = 18
+        values = [
+            r["MARCA"], r["NOMBRE_LOCAL"], r["MES_SERVICIO"], r["UBICACIÓN"],
+            r["TIPO"], r["CAPACIDAD"],
+            r["COSTO_MANTT"], r["PRECIO_RECARGA"],
+            r["AÑO_ULT_RECARGA"], r["AÑO_RECARGA"],
+        ]
+        for ci, val in enumerate(values, 1):
+            cell = ws_det.cell(row=cur_row, column=ci, value=val)
+            cell.fill = MOVIL_FILL
+            cell.font = NORMAL_FONT
+            cell.border = THIN_BORDER
+            if ci in price_cols:
+                cell.number_format = CURRENCY_FMT
+                cell.alignment = RIGHT
+            else:
+                cell.alignment = LEFT
+        cur_row += 1
+
+    # TOTALES row (includes movilización)
     total_mantt   = round(sum(r["_cm"] for r in group), 2)
     total_recarga = round(sum(r["_cr"] for r in group), 2)
     ws_det.row_dimensions[cur_row].height = 20
+    n_ext_only = len(ext_group)
+    mov_note   = f" + movil.${mov_group[0]['_cm']:.2f}" if mov_group else ""
     totals_values = [
         f"TOTALES  {first['MARCA']} – {first['NOMBRE_LOCAL']}",
         "", "", "",
-        "", f"{len(group)} ext.",
+        "", f"{n_ext_only} ext.{mov_note}",
         total_mantt, total_recarga,
         "", "",
     ]
