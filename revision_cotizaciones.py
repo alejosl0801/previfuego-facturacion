@@ -16,8 +16,12 @@ from openpyxl.utils import get_column_letter
 
 TOKEN = "sl.u.AGjIpgezlnwaiHgKQ7Bu5YYhccUjjteEDF1RqACnZjg3vFiMjL5x5d3IaLviJ9dyORvEYZT9jSRe2ocUFRy6vc_0Ls5NPIrwAB6HDxh0Rief7rixFm6VGuCmG1QG0La0ZOoKlDsxocS9ewt1m24m3MXbNcfn88LKLmsQpMw2goxO_qOqtX1yas7JTvt5mDkdplEnlMmHEdQXg3zIgeIj0lFlIzVJwaLgfZfVNL1GwShY5RwsMi_aKAm-VWi6Y5rraWcnvPDbCl2ZNy70KAT-0GNYLKlipCrcjFkCKzBvqfWX8zffKCm9A_mTqWpb6N1ZZ-MPAQICCro_UuZ9zVUvgp6sPQVlHS7vfDRiLLVZ9LIs7-h2DbCct4f4FX3fqszjgAr0LFKak5vCNv8zymvTmzTEOucEEsi5nQ4e7UNE7ixEiZ1kZ2WwsFihVJWMxhP4kFjChzHdjSJ12ubYy2JLjNKpAtLBxhVVqV6uzqoH2rkIWmEnmdpS5EjyxRGni7kZfJQZG4Bdy5IJlqJYcBtQmxE9u-UFnBe28LHnUVJB1s50kmV8yNpkvzFlqC0CtGuvLj6FgjsfsUSMOroG8gi-eZaRGDEj9jqqpMsfW9NSb7iz6budr6_5OhzxQ3w3YZRVnB70EQBdHxWZTE_8So9s-y31vhN97tE9lWqqMl0lR9VzjeBU7c5zZY3N1N6oE1Yf-yyXKGxjdC6dU7Up0y5bPj9Z5CnLM33kc2N_-2L_M3Ze7J7t-VgKO2Jaa_B3H6eEeGGztUHYP8mo6Tnj0_1LHK6pzvJsmxIsFeayP_XosPF4gfhf3vHjFm9QgNDvu8hynZoUgAuXYugcqu2iwafkpQ5ZNH8vcpfCC7PBs_qIGVKBAE75ZeoLSovGxY17OIQIzkGHtScwgS1AUgidHDnEEwIieljdLH1n3J46UmL3s9u3UBtbpvhhg3yjd-Mu4fGWM8-fW9BUAMDMFpOTTPb4u0uS6rm31EUTBaNJFATbfV-E_7iqrAsjZaVfy92vvlLA8eEdvkImoPZsY86p7pgTIHuxqJs1OgY56SD5RJMTpcRZq8M8N6PbN134UoXO_5tpvkAbIcQ3Hpiq208kHncSeUIt7Rah3sI3LAgkBrv227x5LUKOvnJjm_mMpNbAwDt965lINR9a_-ME_J_fT-uaGKVE93nUV4JBN2YqwtsP90LGsmtFFSbKhcyWNXmKqkPjr7eTByLy4w0GOoa4cXv2XpBFGX-mfHgb4Zqi9eG6EoFbGglKX6zVzALOratprYdEXEWhZ6Rr-dKFDk9YfWm3uobt"
 
-DB_PATH    = "/home/user/previfuego-facturacion/BASE_DATOS_KFC.xlsx"
+DB_PATH     = "/home/user/previfuego-facturacion/BASE_DATOS_KFC.xlsx"
 OUTPUT_PATH = "/home/user/previfuego-facturacion/REVISION_COTIZACIONES_2026.xlsx"
+CACHE_DIR   = "/home/user/previfuego-facturacion/.cotizaciones_cache"
+
+import os, hashlib
+os.makedirs(CACHE_DIR, exist_ok=True)
 
 MONTH_FOLDERS = [
     ("01 ENERO",      "ENERO"),
@@ -56,6 +60,12 @@ def extract_code_from_filename(filename: str) -> str:
 # ─── DROPBOX ─────────────────────────────────────────────────────────────────
 
 def dbx_list(path: str) -> list:
+    cache_key  = "list_" + hashlib.md5(path.encode()).hexdigest()
+    cache_file = os.path.join(CACHE_DIR, cache_key + ".json")
+    if os.path.exists(cache_file):
+        with open(cache_file) as f:
+            return json.load(f)
+
     url = "https://api.dropboxapi.com/2/files/list_folder"
     hdrs = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
     r = requests.post(url, headers=hdrs, data=json.dumps({"path": path, "limit": 2000}))
@@ -72,48 +82,70 @@ def dbx_list(path: str) -> list:
         )
         result = r2.json()
         entries.extend(result.get("entries", []))
+
+    with open(cache_file, "w") as f:
+        json.dump(entries, f)
     return entries
 
 
 def dbx_download(path: str) -> bytes:
+    cache_key  = hashlib.md5(path.encode()).hexdigest()
+    cache_file = os.path.join(CACHE_DIR, cache_key + ".xlsx")
+    if os.path.exists(cache_file):
+        with open(cache_file, "rb") as f:
+            return f.read()
     r = requests.post(
         "https://content.dropboxapi.com/2/files/download",
         headers={"Authorization": f"Bearer {TOKEN}",
                  "Dropbox-API-Arg": json.dumps({"path": path})},
     )
     r.raise_for_status()
+    with open(cache_file, "wb") as f:
+        f.write(r.content)
     return r.content
 
 
 # ─── COTIZACION PARSING ───────────────────────────────────────────────────────
 
+_MOVIL_KEYWORDS = ("MOVIL", "VIATICO", "TRASLADO", "FLETE", "KILOMETRO", "RECORRIDO")
+
 def parse_cotizacion(wb: openpyxl.Workbook) -> dict:
     """
-    Returns {subtotal, items: [{qty, desc, unit_price, line_total}]}
-    Items are rows where col3=numeric qty, col4=description, col10=unit price.
+    Returns {subtotal, items: [{qty,desc,unit_price,line_total}], movil_items: [{desc,total}]}
+    - items: rows with col4 containing EXTINTOR
+    - movil_items: rows with col4 containing MOVIL/VIATICO/etc
     """
     ws = wb.active
     items = []
+    movil_items = []
     subtotal = None
     total = None
 
     for row in ws.iter_rows():
         cells = {c.column: c.value for c in row if c.value is not None}
-        # Line item: col3 = integer qty, col4 = string desc starting with EXTINTOR
-        qty = cells.get(3)
+        qty  = cells.get(3)
         desc = cells.get(4, "")
         unit = cells.get(10)
         ltot = cells.get(13)
-        if (isinstance(qty, (int, float)) and qty > 0
-                and isinstance(desc, str) and "EXTINTOR" in desc.upper()
-                and isinstance(unit, (int, float))):
-            items.append({
-                "qty": int(qty),
-                "desc": desc.strip(),
-                "unit_price": float(unit),
-                "line_total": float(ltot) if isinstance(ltot, (int, float)) else float(qty * unit),
-            })
-        # SUBTOTAL label
+
+        if isinstance(desc, str):
+            du = desc.upper()
+            if ("EXTINTOR" in du and isinstance(qty, (int, float)) and qty > 0
+                    and isinstance(unit, (int, float))):
+                items.append({
+                    "qty": int(qty),
+                    "desc": desc.strip(),
+                    "unit_price": float(unit),
+                    "line_total": float(ltot) if isinstance(ltot, (int, float)) else float(qty * unit),
+                })
+            elif any(k in du for k in _MOVIL_KEYWORDS):
+                t = float(ltot) if isinstance(ltot, (int, float)) and ltot > 0 else 0.0
+                if t == 0 and isinstance(qty, (int, float)) and isinstance(unit, (int, float)):
+                    t = float(qty) * float(unit)
+                if t > 0:
+                    movil_items.append({"desc": desc.strip(), "total": t})
+
+        # SUBTOTAL / TOTAL labels
         for c in row:
             if c.value and str(c.value).strip().upper() == "SUBTOTAL":
                 for c2 in ws[c.row]:
@@ -129,16 +161,21 @@ def parse_cotizacion(wb: openpyxl.Workbook) -> dict:
     if subtotal is None and total is not None:
         subtotal = round(total / 1.15, 2)
 
-    return {"subtotal": subtotal, "items": items}
+    return {"subtotal": subtotal, "items": items, "movil_items": movil_items}
 
 
-def fmt_items(items: list, price_key: str = "unit_price") -> str:
-    """Format line items as '2×50lbCO2@$20 + 1×10lbPQS@$4'."""
+def fmt_items(items: list, movil_items: list = None, price_key: str = "unit_price") -> str:
+    """Format line items as '2×50lbCO2@$20 + 1×10lbPQS@$4 [+movil:$40]'."""
     parts = []
     for it in items:
         desc_short = shorten_desc(it["desc"])
         parts.append(f"{it['qty']}×{desc_short}@${it[price_key]:.0f}")
-    return " + ".join(parts) if parts else "(sin líneas)"
+    base = " + ".join(parts) if parts else "(sin líneas ext)"
+    if movil_items:
+        movil_total = sum(m["total"] for m in movil_items)
+        movil_desc  = "; ".join(m["desc"] for m in movil_items)
+        base += f"  [+MOVIL:${movil_total:.2f} — {movil_desc}]"
+    return base
 
 
 def shorten_desc(desc: str) -> str:
@@ -171,8 +208,9 @@ def shorten_desc(desc: str) -> str:
 def load_db_full(db_path: str):
     """
     Returns:
-      resumen: dict  canonical_code → {codigo, nombre, mes, mantt, recarga, cobro, n_ext}
-      detalle: dict  canonical_code → list of {tipo, cap, ubic, mantt, recarga}
+      resumen:  dict  code → {codigo, nombre, mes, mantt, recarga, cobro, n_ext, ano_recarga}
+      detalle:  dict  code → list of extintor rows {tipo, cap, ubic, mantt, recarga}
+      movil_db: dict  code → {desc, mantt, recarga}  (MOVILIZACIÓN rows only)
     """
     wb = openpyxl.load_workbook(db_path)
 
@@ -189,121 +227,180 @@ def load_db_full(db_path: str):
             "nombre": str(row[2]) if row[2] else "",
             "mes": str(row[3]).upper() if row[3] else "",
             "n_ext": row[4],
-            "mantt": float(row[5]) if row[5] is not None else None,
+            "mantt":   float(row[5]) if row[5] is not None else None,
             "recarga": float(row[6]) if row[6] is not None else None,
-            "cobro": float(row[7]) if row[7] is not None else None,
+            "cobro":   float(row[7]) if row[7] is not None else None,
             "ano_recarga": int(row[9]) if row[9] is not None else None,
         }
 
-    # DETALLE — extract canonical code from NOMBRE_LOCAL "K079 - BABAHOYO"
-    ws_det = wb["DETALLE"]
-    detalle = defaultdict(list)
+    # DETALLE — split extintor rows from MOVILIZACIÓN rows
+    ws_det   = wb["DETALLE"]
+    detalle  = defaultdict(list)
+    movil_db = {}
     for row in ws_det.iter_rows(min_row=2, values_only=True):
         nombre_local = row[1]
         if not nombre_local or not isinstance(nombre_local, str):
             continue
-        # Skip TOTALES rows
         if "TOTALES" in nombre_local.upper():
             continue
-        # Extract code: "K079 - BABAHOYO" → "K079"
         m = re.match(r'^([A-Z0-9]+)\s*[-–]', nombre_local.strip())
         if not m:
             continue
         canon = canonical_code(m.group(1))
-        detalle[canon].append({
-            "tipo": str(row[4]) if row[4] else "",
-            "cap":  str(row[5]) if row[5] else "",
-            "ubic": str(row[3]) if row[3] else "",
-            "mantt":   float(row[6]) if row[6] is not None else 0,
-            "recarga": float(row[7]) if row[7] is not None else 0,
-        })
+        tipo_row = str(row[4]).upper() if row[4] else ""
+        if tipo_row == "MOVILIZACIÓN":
+            movil_db[canon] = {
+                "desc":    str(row[3]) if row[3] else "",
+                "mantt":   float(row[6]) if row[6] is not None else 0,
+                "recarga": float(row[7]) if row[7] is not None else 0,
+            }
+        else:
+            detalle[canon].append({
+                "tipo":    str(row[4]) if row[4] else "",
+                "cap":     str(row[5]) if row[5] else "",
+                "ubic":    str(row[3]) if row[3] else "",
+                "mantt":   float(row[6]) if row[6] is not None else 0,
+                "recarga": float(row[7]) if row[7] is not None else 0,
+            })
 
-    return resumen, detalle
+    return resumen, detalle, movil_db
 
 
-def fmt_db_items(db_exts: list, tipo_cobro: str) -> str:
-    """Format DB extintores as '2×50lbCO2@$20 + 1×10lbPQS@$4'."""
-    if not db_exts:
+def _cap_short(cap: str, tipo: str) -> str:
+    """Normalize cap+tipo for comparison key, e.g. '10 LBS' + 'PQS' → '10lbPQS'."""
+    c = re.sub(r'\s+', '',
+               cap.replace(" LBS","lb").replace(" LB","lb")
+                  .replace(" GLNS","gln").replace(" GLN","gln")
+                  .replace(" KGS","kg").replace(" KG","kg"))
+    t = {"CO2":"CO2","PQS":"PQS","K":"K","HALOTRON":"HAL"}.get(tipo.upper(), tipo)
+    return f"{c}{t}"
+
+
+def fmt_db_items(db_exts: list, tipo_cobro: str, movil: dict = None) -> str:
+    """Format DB extintores (excl. MOVILIZACIÓN) as '1×10lbPQS@$4 ...' optionally appending movil."""
+    if not db_exts and not movil:
         return "(vacío en DB)"
     parts = []
     for e in db_exts:
-        cap_short = e["cap"].replace(" LBS", "lb").replace(" LB", "lb") \
-                            .replace(" GLNS", "gln").replace(" GLN", "gln") \
-                            .replace(" KGS", "kg").replace(" KG", "kg")
-        cap_short = re.sub(r'\s+', '', cap_short)
-        tipo_short = {"CO2": "CO2", "PQS": "PQS", "K": "K", "HALOTRON": "HAL"}.get(e["tipo"].upper(), e["tipo"])
+        cs = _cap_short(e["cap"], e["tipo"])
         price = e["recarga"] if tipo_cobro == "RECARGA" else e["mantt"]
-        parts.append(f"1×{cap_short}{tipo_short}@${price:.0f}")
-    return " + ".join(parts)
+        parts.append(f"1×{cs}@${price:.0f}")
+    base = " + ".join(parts) if parts else "(sin ext en DB)"
+    if movil and movil.get("mantt", 0) > 0:
+        mv = movil["recarga"] if tipo_cobro == "RECARGA" else movil["mantt"]
+        base += f"  [+MOVIL:${mv:.2f} — {movil['desc']}]"
+    return base
 
 
-def build_analysis(cot_items: list, db_exts: list, subtotal_cot: float,
-                   valor_db: float, tipo_cobro: str) -> str:
+def build_analysis(cot_items: list, cot_movil: list, db_exts: list, db_movil: dict,
+                   subtotal_cot: float, valor_db: float, tipo_cobro: str) -> tuple:
     """
-    Compare cotizacion line items vs DB extintores.
-    Returns a short analysis string.
+    Returns (analisis: str, recomendacion: str)
+    Compares cotización ext lines vs DB ext rows (viáticos separated).
     """
+    price_key   = "recarga" if tipo_cobro == "RECARGA" else "mantt"
+    movil_cot   = sum(m["total"] for m in cot_movil) if cot_movil else 0.0
+    movil_db_v  = (db_movil[price_key] if db_movil else 0.0) if db_movil else 0.0
+
+    sum_ext_cot = sum(it["qty"] * it["unit_price"] for it in cot_items)
+    sum_ext_db  = sum(e[price_key] for e in db_exts)
+
+    # If movil not detected in cot lines but subtotal > sum_ext, infer from difference
+    if movil_cot == 0 and movil_db_v > 0 and subtotal_cot:
+        inferred = round(subtotal_cot - sum_ext_cot, 2)
+        if abs(inferred - movil_db_v) < 1.0:
+            movil_cot = inferred
+
     n_cot = sum(it["qty"] for it in cot_items)
     n_db  = len(db_exts)
-    price_key = "recarga" if tipo_cobro == "RECARGA" else "mantt"
 
-    # Sum of cotizacion prices
-    sum_cot = sum(it["qty"] * it["unit_price"] for it in cot_items)
-    sum_db  = sum(e[price_key] for e in db_exts)
+    # Per-type counts
+    cot_by_type: dict = defaultdict(lambda: {"qty": 0, "unit": 0.0})
+    for it in cot_items:
+        t = shorten_desc(it["desc"])
+        cot_by_type[t]["qty"]  += it["qty"]
+        cot_by_type[t]["unit"]  = it["unit_price"]
 
-    parts = []
+    db_by_type: dict = defaultdict(lambda: {"qty": 0, "unit": 0.0})
+    for e in db_exts:
+        t = _cap_short(e["cap"], e["tipo"])
+        db_by_type[t]["qty"]  += 1
+        db_by_type[t]["unit"]  = e[price_key]
 
-    # Number difference
+    # Build extras / missing lists
+    all_types = set(cot_by_type) | set(db_by_type)
+    extras, missing, changed = [], [], []
+    for t in all_types:
+        cq = cot_by_type[t]["qty"]
+        dq = db_by_type[t]["qty"]
+        cu = cot_by_type[t]["unit"]
+        du = db_by_type[t]["unit"]
+        if cq > dq:
+            extras.append((t, cq - dq, cu))
+        elif dq > cq:
+            missing.append((t, dq - cq, du))
+        elif abs(cu - du) > 0.5 and cq > 0:
+            changed.append((t, cq, cu, du))
+
+    parts_a = []  # ANALISIS parts
+    parts_r = []  # RECOMENDACIÓN parts
+
+    # ── Viáticos comparison ────────────────────────────────────────────────
+    if movil_db_v > 0 and abs(movil_cot - movil_db_v) > 0.5:
+        parts_a.append(f"Viáticos COT=${movil_cot:.2f} vs DB=${movil_db_v:.2f}")
+        if movil_cot > 0:
+            parts_r.append(f"Actualizar viáticos en DB: ${movil_db_v:.2f}→${movil_cot:.2f}")
+        else:
+            parts_a.append("(viáticos no detectados en líneas COT, posible formato)")
+
+    # ── Extintor net comparison ────────────────────────────────────────────
+    net_diff = round(sum_ext_cot - sum_ext_db, 2)
+    if abs(net_diff) > 0.5:
+        sign = "+" if net_diff > 0 else ""
+        parts_a.append(
+            f"Extintores COT=${sum_ext_cot:.2f} vs DB=${sum_ext_db:.2f} "
+            f"(neto {sign}${net_diff:.2f})"
+        )
+
+    # ── Count diff ────────────────────────────────────────────────────────
     if n_cot != n_db:
-        diff_n = n_cot - n_db
-        parts.append(f"{'+'if diff_n>0 else ''}{diff_n} ext en COT vs DB ({n_cot} vs {n_db})")
+        parts_a.append(f"Cantidad: {n_cot} ext en COT vs {n_db} en DB")
 
-    # Price sum comparison (vs subtotal)
-    if abs(sum_cot - (subtotal_cot or 0)) > 0.5:
-        parts.append(f"⚠ suma líneas COT=${sum_cot:.2f} ≠ subtotal=${subtotal_cot:.2f}")
+    # ── Per-type details ──────────────────────────────────────────────────
+    for t, qty, unit in extras:
+        parts_a.append(f"COT tiene +{qty}×{t} que no está en DB (precio ${unit:.0f}/ext)")
+        parts_r.append(f"¿AGREGAR {qty}×{t} a BD? (${unit:.0f}/ext)")
+    for t, qty, unit in missing:
+        parts_a.append(f"DB tiene +{qty}×{t} que no aparece en COT (${unit:.0f}/ext)")
+        parts_r.append(f"¿RETIRAR {qty}×{t} de BD? (o verificar si fue omitido en COT)")
+    for t, qty, cu, du in changed:
+        parts_a.append(f"{qty}×{t}: precio COT=${cu:.0f} vs DB=${du:.0f}/ext")
+        parts_r.append(f"¿Actualizar precio {t} en BD: ${du:.0f}→${cu:.0f}/ext?")
 
-    # Possible explanation for large diffs
-    diff_abs = abs((subtotal_cot or 0) - valor_db)
-    if diff_abs > 0:
-        # Check if cot looks like a different number of each extinguisher type
-        cot_by_type = defaultdict(lambda: {"qty": 0, "unit": 0})
-        for it in cot_items:
-            t = shorten_desc(it["desc"])
-            cot_by_type[t]["qty"] += it["qty"]
-            cot_by_type[t]["unit"] = it["unit_price"]
+    # ── Large unexplained gap ─────────────────────────────────────────────
+    if not extras and not missing and not changed:
+        if abs(net_diff) > 0.5:
+            parts_a.append("Mismo número y tipo de extintores pero precio diferente")
+        elif abs(sum_ext_cot - (subtotal_cot or 0)) > 0.5 and movil_cot == 0:
+            unexp = round((subtotal_cot or 0) - sum_ext_cot, 2)
+            parts_a.append(
+                f"⚠ Subtotal ${subtotal_cot:.2f} incluye ${unexp:.2f} no identificado "
+                f"(viáticos u otro cargo sin línea reconocida)"
+            )
+            parts_r.append("Revisar cotización: hay cargo no identificado en subtotal")
 
-        db_by_type = defaultdict(int)
-        for e in db_exts:
-            cap_short = re.sub(r'\s+', '', e["cap"].replace(" LBS","lb").replace(" GLNS","gln").replace(" KGS","kg").replace(" LB","lb"))
-            tipo_s = {"CO2":"CO2","PQS":"PQS","K":"K","HALOTRON":"HAL"}.get(e["tipo"].upper(), e["tipo"])
-            db_by_type[f"{cap_short}{tipo_s}"] += 1
-
-        extras = []
-        for t, v in cot_by_type.items():
-            db_n = db_by_type.get(t, 0)
-            if v["qty"] > db_n:
-                extras.append(f"+{v['qty']-db_n}×{t}(@${v['unit']:.0f})")
-
-        missing = []
-        for t, db_n in db_by_type.items():
-            cot_n = cot_by_type.get(t, {}).get("qty", 0)
-            if db_n > cot_n:
-                missing.append(f"-{db_n-cot_n}×{t}")
-
-        if extras:
-            parts.append(f"Extra en COT: {', '.join(extras)}")
-        if missing:
-            parts.append(f"Falta en COT: {', '.join(missing)}")
-
-    return " | ".join(parts) if parts else f"Precio unitario distinto (${sum_cot/max(n_cot,1):.2f} vs ${valor_db/max(n_db,1):.2f}/ext)"
+    analisis = " | ".join(parts_a) if parts_a else "Sin diferencias por tipo (revisar precio unitario)"
+    recom    = " | ".join(parts_r) if parts_r else "—"
+    return analisis, recom
 
 
 # ─── MAIN ─────────────────────────────────────────────────────────────────────
 
 def main():
     print("Cargando base de datos...")
-    resumen, detalle = load_db_full(DB_PATH)
-    print(f"  {len(resumen)} locales en RESUMEN, {sum(len(v) for v in detalle.values())} filas en DETALLE")
+    resumen, detalle, movil_db = load_db_full(DB_PATH)
+    print(f"  {len(resumen)} locales en RESUMEN, {sum(len(v) for v in detalle.values())} filas en DETALLE, "
+          f"{len(movil_db)} con movilización")
 
     rows = []
 
@@ -353,34 +450,38 @@ def main():
                                  "", "", str(e)))
                 continue
 
-            parsed = parse_cotizacion(wb)
-            subtotal  = parsed["subtotal"]
-            cot_items = parsed["items"]
+            parsed     = parse_cotizacion(wb)
+            subtotal   = parsed["subtotal"]
+            cot_items  = parsed["items"]
+            cot_movil  = parsed["movil_items"]
 
             # DB lookup
             db_entry = resumen.get(local_code)
             if db_entry is None:
                 print(f" → SIN MATCH DB (subtotal={subtotal})")
                 rows.append(_row(mes_name, filename, local_code, "", subtotal, None, "",
-                                 None, "SIN_MATCH_DB", fmt_items(cot_items), "", ""))
+                                 None, "SIN_MATCH_DB",
+                                 fmt_items(cot_items, cot_movil), "", "", ""))
                 continue
 
-            nombre    = db_entry["nombre"]
-            db_exts   = detalle.get(local_code, [])
-            # If DB says AÑO_RECARGA=2026, this local does recarga in current ENE-SEP cycle
+            nombre   = db_entry["nombre"]
+            db_exts  = detalle.get(local_code, [])
+            db_movil = movil_db.get(local_code)
+
+            # Determine tipo (RECARGA vs MANTENIMIENTO)
             if db_entry.get("ano_recarga") == 2026 and mes_name not in RECARGA_MONTHS:
                 tipo = "RECARGA"
             else:
                 tipo = "RECARGA" if mes_name in RECARGA_MONTHS else "MANTENIMIENTO"
-            valor_db  = db_entry["recarga"] if tipo == "RECARGA" else db_entry["mantt"]
+            valor_db_v = db_entry["recarga"] if tipo == "RECARGA" else db_entry["mantt"]
 
             # Status
             if subtotal is None:
                 estado = "SIN_SUBTOTAL"; diff_pct = None
-            elif not valor_db:
+            elif not valor_db_v:
                 estado = "SIN_VALOR_DB"; diff_pct = None
             else:
-                diff_pct = abs(subtotal - valor_db) / valor_db * 100
+                diff_pct = abs(subtotal - valor_db_v) / valor_db_v * 100
                 if diff_pct <= 1.0:
                     estado = "OK"
                 elif tipo == "RECARGA" and db_entry["mantt"]:
@@ -391,20 +492,25 @@ def main():
 
             print(f" → {estado}" + (f" diff={diff_pct:.1f}%" if diff_pct else ""))
 
-            # Build detail strings only for non-OK rows
-            cot_det = db_det = analisis = ""
+            cot_det = db_det = analisis = recom = ""
             if estado in ("INCONSISTENCIA", "COT_DEBE_RECARGA"):
-                cot_det  = fmt_items(cot_items)
-                db_det   = fmt_db_items(db_exts, tipo)
-                analisis = build_analysis(cot_items, db_exts, subtotal, valor_db or 0, tipo)
+                cot_det = fmt_items(cot_items, cot_movil)
+                db_det  = fmt_db_items(db_exts, tipo, db_movil)
+                analisis, recom = build_analysis(
+                    cot_items, cot_movil, db_exts, db_movil,
+                    subtotal, valor_db_v or 0, tipo
+                )
                 if estado == "COT_DEBE_RECARGA":
-                    analisis = (f"Cotización usa precio MANTENIMIENTO (${subtotal}). "
-                                f"Debe ser RECARGA (${valor_db}). | {analisis}").rstrip(" |")
+                    analisis = (
+                        f"⚠ COT usa precio MANTENIMIENTO (${subtotal:.2f}). "
+                        f"Debería ser RECARGA (${valor_db_v:.2f}). | {analisis}"
+                    ).rstrip(" |")
+                    recom = f"Reemitir cotización como RECARGA por ${valor_db_v:.2f}"
 
             rows.append(_row(mes_name, filename, local_code, nombre,
-                             subtotal, valor_db, tipo,
+                             subtotal, valor_db_v, tipo,
                              round(diff_pct, 2) if diff_pct is not None else None,
-                             estado, cot_det, db_det, analisis))
+                             estado, cot_det, db_det, analisis, recom))
 
     # ─── EXCEL ────────────────────────────────────────────────────────────────
     print(f"\n{'='*60}\nGenerando Excel…")
@@ -438,15 +544,17 @@ def main():
 
 HEADERS = ["MES", "ARCHIVO", "LOCAL_CODE", "LOCAL_NOMBRE",
            "SUBTOTAL_COT", "VALOR_DB", "TIPO", "DIFERENCIA%",
-           "ESTADO", "COT_DETALLE", "DB_DETALLE", "ANALISIS"]
+           "ESTADO", "COT_DETALLE", "DB_DETALLE", "ANALISIS", "RECOMENDACIÓN"]
 
 
-def _row(mes, arch, code, nombre, subtot, val_db, tipo, diff, estado, cot_det, db_det, analisis):
+def _row(mes, arch, code, nombre, subtot, val_db, tipo, diff, estado,
+         cot_det, db_det, analisis, recom=""):
     return {
         "MES": mes, "ARCHIVO": arch, "LOCAL_CODE": code, "LOCAL_NOMBRE": nombre,
         "SUBTOTAL_COT": subtot, "VALOR_DB": val_db, "TIPO": tipo,
         "DIFERENCIA%": diff, "ESTADO": estado,
-        "COT_DETALLE": cot_det, "DB_DETALLE": db_det, "ANALISIS": analisis,
+        "COT_DETALLE": cot_det, "DB_DETALLE": db_det,
+        "ANALISIS": analisis, "RECOMENDACIÓN": recom,
     }
 
 
@@ -490,7 +598,7 @@ def _write_excel(rows: list):
             cell.alignment = Alignment(vertical="top", wrap_text=(ci >= 10))
 
     # Column widths
-    for ci, w in enumerate([10, 52, 12, 38, 12, 10, 14, 11, 18, 55, 55, 80], 1):
+    for ci, w in enumerate([10, 52, 12, 38, 12, 10, 14, 11, 18, 62, 62, 85, 70], 1):
         ws.column_dimensions[get_column_letter(ci)].width = w
     ws.row_dimensions[1].height = 28
     ws.freeze_panes = "A2"
