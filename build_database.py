@@ -39,7 +39,7 @@ OCT_TO_DEC = {"OCTUBRE", "NOVIEMBRE", "DICIEMBRE"}
 # Locales fuera de Guayaquil: movilización/viáticos extraídos de cotizaciones 2026
 # ckey → (descripción ruta, valor $)
 VIATICOS = {
-    ('K', 79):  ('GYE-BABAHOYO 75KM',         40.00),
+    ('K', 79):  ('GYE-BABAHOYO 75KM',         39.00),
     ('K', 65):  ('GYE-MILAGRO 50KM',           25.00),
     ('V', 75):  ('GYE-MACHALA',                 8.00),
     ('V', 79):  ('GYE-MILAGRO',                 8.00),
@@ -95,6 +95,13 @@ EXTINTOR_OVERRIDE = {
     ('K', 88):  [('CO2','50',1), ('CO2','5',3), ('PQS','20',1), ('PQS','10',2)],                    # Hipermarket Vía Daule recarga = $97.70
     ('K', 110): [('CO2','75',1), ('CO2','10',1), ('CO2','5',2), ('PQS','20',1), ('PQS','10',2)],    # City Mall PB recarga = $124.70
     ('B', 1):   [('CO2','50',1), ('CO2','20',1), ('PQS','10',3), ('PQS','5',2)],                    # Sports Bar
+}
+
+# Extintores con servicio mixto en el mismo mes: (tipo, cap) listados aquí reciben
+# solo MANTENIMIENTO aunque el mes sea de RECARGA (su recarga ya se hizo antes).
+# El resto de extintores del mismo local sigue el tipo de servicio normal.
+MIXED_SERVICE_MANTT = {
+    ('B', 1): {('CO2', '50')},   # B1 Sports Bar OCT: 50CO2 ya recargó; solo mantt
 }
 
 # Locales que ya no se atienden → eliminar por completo
@@ -657,8 +664,13 @@ for r in matriz_rows:
     cd  = CAP_DISPLAY.get(pk, f"{cap}")
 
     # COBRO = RECARGA (includes mantt). If price unknown, fall back to MANTT.
-    cobro      = cr if cr is not None else (cm if cm is not None else None)
-    cobro_tipo = "RECARGA (incl. mantt)" if cr is not None else ("MANTT" if cm is not None else "SIN PRECIO")
+    # Exception: mixed-service extintores get MANTT only.
+    if ckey in MIXED_SERVICE_MANTT and (tipo, cap) in MIXED_SERVICE_MANTT[ckey]:
+        cobro      = cm if cm is not None else None
+        cobro_tipo = "MANTT (parcial — recarga previa)"
+    else:
+        cobro      = cr if cr is not None else (cm if cm is not None else None)
+        cobro_tipo = "RECARGA (incl. mantt)" if cr is not None else ("MANTT" if cm is not None else "SIN PRECIO")
 
     # Años de recarga: override manual > R003/R008/R010 (mayo 2026) > regla general
     if ckey in ANO_OVERRIDE:

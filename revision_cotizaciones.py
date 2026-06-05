@@ -39,10 +39,16 @@ MONTH_FOLDERS = [
 RECARGA_MONTHS = {"OCTUBRE", "NOVIEMBRE", "DICIEMBRE"}
 
 # Cotizaciones que NO son mantenimiento/recarga sino VENTAS de extintores u otros
-# servicios → no deben contarse como inconsistencia. (mes, código canónico)
+# servicios → se omiten del reporte por completo. (mes, código canónico)
 VENTAS = {
     ("ENERO", "K79"),   # venta de extintores; mantenimiento real en JUNIO
     ("ABRIL", "K88"),   # venta; recarga real en OCTUBRE
+}
+
+# Archivos específicos a ignorar completamente (identificados por número de cotización).
+# Son servicios puntuales fuera del ciclo mantenimiento/recarga anual.
+SKIP_FILES = {
+    "COTIZACION1464",   # R10 servicio independiente; la cotización del ciclo es COTIZACION1463
 }
 
 
@@ -432,6 +438,13 @@ def main():
             filename  = entry["name"]
             file_path = entry["path_lower"]
             local_code = extract_code_from_filename(filename)
+
+            # Skip specific cotizaciones (servicios fuera del ciclo mantt/recarga)
+            cot_num_m = re.match(r'^(COTIZACION\d+)', filename, re.IGNORECASE)
+            if cot_num_m and cot_num_m.group(1).upper() in SKIP_FILES:
+                print(f"  [{filename}] → IGNORADO (fuera de ciclo)")
+                continue
+
             print(f"  [{filename}] → {local_code!r}", end="")
 
             # Download
@@ -462,15 +475,9 @@ def main():
             cot_items  = parsed["items"]
             cot_movil  = parsed["movil_items"]
 
-            # Cotización de VENTA / otro servicio → no es inconsistencia
+            # Cotización de VENTA → omitir completamente del reporte
             if (mes_name, local_code) in VENTAS:
-                print(f" → VENTA (subtotal={subtotal})")
-                rows.append(_row(mes_name, filename, local_code,
-                                 resumen.get(local_code, {}).get("nombre", ""),
-                                 subtotal, None, "VENTA", None, "VENTA",
-                                 fmt_items(cot_items, cot_movil), "",
-                                 "Cotización por venta de extintores / servicio, no mantenimiento",
-                                 "Informativo — no afecta la base de datos"))
+                print(f" → VENTA/omitido (subtotal={subtotal})")
                 continue
 
             # DB lookup
@@ -491,7 +498,10 @@ def main():
                 tipo = "RECARGA"
             else:
                 tipo = "RECARGA" if mes_name in RECARGA_MONTHS else "MANTENIMIENTO"
-            valor_db_v = db_entry["recarga"] if tipo == "RECARGA" else db_entry["mantt"]
+            # For RECARGA months use COBRO_ANUAL (handles mixed-service locals like B1
+            # where some extintores get MANTT while others get RECARGA in the same month).
+            # For MANTT months, COBRO_ANUAL = TOTAL_RECARGA ≠ TOTAL_MANTT, so keep mantt.
+            valor_db_v = db_entry["cobro"] if tipo == "RECARGA" else db_entry["mantt"]
 
             # Status
             if subtotal is None:
@@ -540,7 +550,6 @@ def main():
     inconsistencias = sum(1 for r in rows if r["ESTADO"] == "INCONSISTENCIA")
     cot_rec         = sum(1 for r in rows if r["ESTADO"] == "COT_DEBE_RECARGA")
     sin_match       = sum(1 for r in rows if r["ESTADO"] == "SIN_MATCH_DB")
-    ventas          = sum(1 for r in rows if r["ESTADO"] == "VENTA")
     errores         = sum(1 for r in rows if r["ESTADO"] == "ERROR")
 
     print(f"\n{'='*60}")
@@ -549,7 +558,6 @@ def main():
     print(f"  INCONSISTENCIAS  : {inconsistencias}")
     print(f"  COT_DEBE_RECARGA : {cot_rec}")
     print(f"  SIN MATCH DB     : {sin_match}")
-    print(f"  VENTAS           : {ventas}")
     print(f"  ERRORES          : {errores}")
 
     print("\nINCONSISTENCIAS:")
