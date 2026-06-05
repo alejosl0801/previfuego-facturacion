@@ -284,16 +284,15 @@
     <div class="card-body" id="cfg-body">
       <div class="form-row">
         <div class="form-group" style="flex:2">
-          <label>🟢 API Key Gemini — REQUERIDA (lee las fotos de las notas de entrega)</label>
-          <input type="password" id="geminiKey" placeholder="AIza..." />
+          <label>🟢 API Key Gemini — requerida para leer fotos de notas de entrega</label>
+          <input type="text" id="geminiKey" placeholder="AIza..." autocomplete="off" oninput="saveConfig()" />
         </div>
         <div class="form-group" style="flex:2">
-          <label>⚫ GitHub Token (guarda los registros del mes para que no se pierdan)</label>
-          <input type="password" id="ghToken" placeholder="ghp_..." />
+          <label>⚫ GitHub Token — respalda tus datos en la nube (opcional)</label>
+          <input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off" oninput="saveConfig()" />
         </div>
       </div>
-      <button class="btn btn-primary" onclick="saveConfig()">💾 Guardar configuración</button>
-      <span id="cfgStatus"></span>
+      <span id="cfgStatus" style="font-size:12px;color:#27ae60"></span>
     </div>
   </div>
 
@@ -471,18 +470,11 @@
       <span class="toggle" id="gh-toggle">▼</span>
     </div>
     <div class="card-body" id="gh-body">
-      <p style="font-size:13px;color:#555;margin-bottom:12px">
-        <strong>No tienes que guardar a mano.</strong> Cada nota que registras se guarda sola:
-        al instante en este navegador y, si pusiste el <strong>GitHub Token</strong> en Configuración,
-        también en la nube (<code>datos/[MES]-[ANIO].json</code>). Así puedes registrar 1 hoy y 30 mañana,
-        cerrar y volver cuando quieras — nada se pierde. Los botones de abajo son solo por si quieres
-        forzar el guardado o traer los datos manualmente.
+      <p style="font-size:13px;color:#555;margin-bottom:10px">
+        Todo se guarda automáticamente — al instante en este navegador, y si hay GitHub Token también en la nube.
+        Nunca necesitas guardar a mano.
       </p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <button class="btn btn-primary" onclick="ghGuardar()">💾 Guardar en GitHub</button>
-        <button class="btn btn-info" onclick="ghCargar()">📥 Cargar de GitHub</button>
-        <span id="ghStatus" style="font-size:13px;color:#555"></span>
-      </div>
+      <span id="ghStatus" style="font-size:12px;color:#27ae60"></span>
     </div>
   </div>
 
@@ -574,12 +566,14 @@ function loadConfig() {
 }
 
 function saveConfig() {
-  localStorage.setItem('geminiKey', document.getElementById('geminiKey').value.trim());
-  localStorage.setItem('ghToken', document.getElementById('ghToken').value.trim());
+  const gk = document.getElementById('geminiKey').value.trim();
+  const gt = document.getElementById('ghToken').value.trim();
+  if (gk) localStorage.setItem('geminiKey', gk);
+  if (gt) localStorage.setItem('ghToken', gt);
   const el = document.getElementById('cfgStatus');
-  el.textContent = ' ✅ Guardado';
-  el.style.color = 'green';
-  setTimeout(() => el.textContent = '', 2000);
+  el.textContent = '✅ Guardado permanentemente en este navegador';
+  clearTimeout(saveConfig._t);
+  saveConfig._t = setTimeout(() => el.textContent = '', 3000);
 }
 
 function getGhToken() {
@@ -783,8 +777,7 @@ function empezarMes() {
     : (cotizaciones.length ? `Tienes ${cotizaciones.length} nota(s) en memoria. ` : '');
   showStatus('loadStatus', 'ok',
     `✅ Trabajando en <strong>${mesLbl} ${anio}</strong>. ${extra}` +
-    `Agrega notas de entrega con foto cuando quieras (1 o muchas, varios días) — se guardan solas. ` +
-    `Si trabajas en otra compu, usa 📥 "Cargar registros guardados" para traerlas de la nube.`);
+    `Agrega fotos de notas de entrega cuando quieras — todo se guarda automáticamente.`);
 }
 
 // Normaliza la categoría a 'MANGES' (presupuestado) o 'MANT' (extra fuera de presupuesto).
@@ -1160,14 +1153,8 @@ function autosave() {
 async function ghGuardar(silent = false) {
   const token = getGhToken();
   const st = document.getElementById('ghStatus');
-  if (!token) {
-    if (!silent && st) st.textContent = '⚠️ Configura GitHub Token para respaldar en la nube (por ahora se guarda en este navegador)';
-    return;
-  }
-  if (!cotizaciones.length) {
-    if (!silent && st) st.textContent = '⚠️ No hay registros aún';
-    return;
-  }
+  if (!token) return;
+  if (!cotizaciones.length) return;
 
   const path = ghFilePath();
   const payload = buildPayload();
@@ -1216,41 +1203,71 @@ async function ghGuardar(silent = false) {
 
 async function ghCargar() {
   const token = getGhToken();
+
+  // No token → try localStorage
   if (!token) {
-    document.getElementById('ghStatus').textContent = '⚠️ Configura GitHub Token primero';
+    const ok = localRestore();
+    if (ok) {
+      renderTabla(); renderEmpresaFacturas(); enableGenerarBtns();
+      document.getElementById('cardFotos').style.display = '';
+      document.getElementById('cardTabla').style.display = '';
+      document.getElementById('cardFacturas').style.display = '';
+      document.getElementById('cardGenerar').style.display = '';
+      showStatus('loadStatus', 'ok',
+        `✅ Recuperados ${cotizaciones.length} registro(s) de este navegador. ` +
+        `<small>Para respaldar en la nube agrega un GitHub Token en Configuración.</small>`);
+    } else {
+      showStatus('loadStatus', 'error',
+        `⚠️ No hay registros guardados en este navegador para este mes. ` +
+        `Para cargar desde la nube, configura un GitHub Token en Configuración.`);
+    }
     return;
   }
 
   const path = ghFilePath();
-  document.getElementById('ghStatus').textContent = '⏳ Cargando...';
+  showStatus('loadStatus', 'ok', '⏳ Cargando desde la nube...');
   try {
     const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
       headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
     });
-    if (!r.ok) throw new Error(`No encontrado: ${path}`);
+    if (!r.ok) {
+      // Fallback to localStorage
+      const ok = localRestore();
+      if (ok) {
+        renderTabla(); renderEmpresaFacturas(); enableGenerarBtns();
+        document.getElementById('cardFotos').style.display = '';
+        document.getElementById('cardTabla').style.display = '';
+        document.getElementById('cardFacturas').style.display = '';
+        document.getElementById('cardGenerar').style.display = '';
+        showStatus('loadStatus', 'ok',
+          `✅ Recuperados ${cotizaciones.length} registro(s) de este navegador (aún no hay datos en la nube para este mes).`);
+      } else {
+        showStatus('loadStatus', 'error', `⚠️ No hay registros guardados para este mes (ni nube ni navegador).`);
+      }
+      return;
+    }
     const data = await r.json();
     const json = JSON.parse(decodeURIComponent(escape(atob(data.content))));
 
-    // Restore session
     facturaMap = json.facturaMap || {};
+    visitaStatus = json.visitaStatus || {};
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
       empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
       notaEntrega: c.notaEntrega || ''
     }));
 
-    renderTabla();
-    renderEmpresaFacturas();
+    renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan();
     document.getElementById('cardFotos').style.display = '';
     document.getElementById('cardTabla').style.display = '';
     document.getElementById('cardFacturas').style.display = '';
     document.getElementById('cardGenerar').style.display = '';
-    enableGenerarBtns();
 
-    document.getElementById('ghStatus').innerHTML =
-      `<span style="color:green">✅ Cargado: ${cotizaciones.length} registros (guardado ${new Date(json.savedAt).toLocaleString()})</span>`;
+    showStatus('loadStatus', 'ok',
+      `✅ Cargados ${cotizaciones.length} registros de la nube (${new Date(json.savedAt).toLocaleString()}).`);
+    document.getElementById('ghStatus').textContent = '';
   } catch (e) {
-    document.getElementById('ghStatus').innerHTML = `<span style="color:red">❌ ${e.message}</span>`;
+    showStatus('loadStatus', 'error', `❌ Error cargando: ${e.message}`);
   }
 }
 
@@ -1268,7 +1285,7 @@ function log(msg, type='') {
 // ─── PLAN DEL MES & NOTAS DE ENTREGA ─────────────────────────────────────────
 let planMes = [];
 let visitaStatus = {};
-const RAW_BASE = 'https://raw.githubusercontent.com/alejosl0801/previfuego-facturacion/main';
+const RAW_BASE = '';
 
 const NE_TEMPLATE_MAP = {
   'INT FOOD SERVICES': 'INT',
@@ -1287,7 +1304,7 @@ async function cargarPlan() {
     '<p style="color:#999;font-size:13px">Cargando base de datos…</p>';
 
   try {
-    const resp = await fetch(`${RAW_BASE}/BASE_DATOS_KFC.xlsx?t=${Date.now()}`);
+    const resp = await fetch(`BASE_DATOS_KFC.xlsx?t=${Date.now()}`);
     const buf  = await resp.arrayBuffer();
     const wb   = XLSX.read(buf, { type: 'array' });
 
@@ -1432,7 +1449,7 @@ async function generarNELocal(codigo, neNum) {
   if (!local) { log(`Local ${codigo} no encontrado en el plan`, 'error'); return; }
 
   const tplKey = NE_TEMPLATE_MAP[local.empresa?.hoja] || 'INT';
-  const tplUrl = `${RAW_BASE}/formatos/ne/${tplKey}.xlsx`;
+  const tplUrl = `formatos/ne/${tplKey}.xlsx`;
 
   try {
     log(`Generando NE #${neNum} para ${codigo}…`);
