@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Previfuego – Facturación KFC</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --rojo: #c0392b;
@@ -405,6 +406,12 @@
           <h3>FORMATO FACTURACIÓN</h3>
           <p>Una hoja por empresa<br>Resumen con # factura</p>
           <button class="btn btn-success btn-sm" onclick="generarFormatoFact()" disabled id="btn3">Generar</button>
+        </div>
+        <div class="output-card" id="out4">
+          <div class="icon">📜</div>
+          <h3>CERTIFICADOS PDF</h3>
+          <p>Un PDF por local MANGES<br>Formato Previfuego/Pyroshield</p>
+          <button class="btn btn-success btn-sm" onclick="generarCertificados()" disabled id="btn4">Generar</button>
         </div>
       </div>
       <div style="margin-top:16px">
@@ -1362,6 +1369,232 @@ function generarFormatoFact() {
   markOutput('out3');
 }
 
+// ─── CERTIFICADOS PDF ─────────────────────────────────────────────────────────
+async function generarCertificados() {
+  log('Generando Certificados PDF...');
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    log('⚠️ jsPDF no cargado — verifica conexión a internet', 'error');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+
+  // Fetch logo from backend repo (public)
+  let LOGO_B64 = null;
+  try {
+    const resp = await fetch('https://raw.githubusercontent.com/alejosl0801/previfuego-backend/main/logo.js');
+    const txt = await resp.text();
+    const m = txt.match(/var LOGO_B64="([^"]+)"/);
+    if (m) LOGO_B64 = m[1];
+  } catch(e) { console.warn('Logo no disponible:', e); }
+
+  const mesVal = document.getElementById('selMes').value; // "03 MARZO"
+  const anio   = document.getElementById('selAnio').value;
+  const mesNum = mesVal.substring(0, 2);   // "03"
+  const ULGM   = `${mesNum}/${anio}`;
+  const PROXM  = `${mesNum}/${parseInt(anio) + 1}`;
+
+  const mangesCots = cotizaciones.filter(c => c.category === 'MANGES');
+  if (!mangesCots.length) {
+    log('⚠️ No hay registros MANGES para certificar', 'warn'); return;
+  }
+
+  let count = 0;
+  for (const cot of mangesCots) {
+    const ML = 15, PW = 210, CW = 180;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    let y = 9;
+
+    // ── Fondo y bordes ──────────────────────────────────────────────────────
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, PW, 297, 'F');
+    doc.setFillColor(192, 57, 43);
+    doc.rect(0, 0, 4, 297, 'F');   // franja izquierda roja
+    doc.rect(0, 0, PW, 7, 'F');    // barra superior roja
+
+    // ── Logo ────────────────────────────────────────────────────────────────
+    if (LOGO_B64) {
+      try { doc.addImage('data:image/png;base64,' + LOGO_B64, 'PNG', ML, y, 24, 24); }
+      catch(e) { /* logo skip */ }
+    }
+
+    // ── Número de certificado (top-right) ───────────────────────────────────
+    const CERT_NUM = `${cot.localCode}-MANT EXTINTORES-${anio}`;
+    doc.setFontSize(7); doc.setTextColor(150, 150, 150);
+    doc.text(CERT_NUM, PW - 5, 12, { align: 'right' });
+
+    // ── Encabezado empresa ──────────────────────────────────────────────────
+    const HX = ML + 27, HW = PW - HX - 12;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(22);
+    doc.setTextColor(192, 57, 43);
+    doc.text('PREVIFUEGO', HX + HW / 2, y + 9, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.text('SEGURIDAD INDUSTRIAL Y CONTRA INCENDIOS', HX + HW / 2, y + 15, { align: 'center' });
+    doc.setLineWidth(0.4); doc.setDrawColor(192, 57, 43);
+    doc.line(HX, y + 16, HX + HW, y + 16);
+
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+    doc.setTextColor(80, 80, 80);
+    ['Extintores PQS · CO₂ · Tipo K · Agua',
+     'Sistemas hidráulicos y automáticos',
+     'Señalética · Lámparas de emergencia',
+     'RUC: 0952773976001'
+    ].forEach((s, i) => doc.text(s, HX + HW / 2, y + 21 + i * 4, { align: 'center' }));
+
+    y = 44;
+
+    // ── Título certificado ──────────────────────────────────────────────────
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+    doc.setTextColor(192, 57, 43);
+    doc.text('CERTIFICADO DE INSPECCIÓN Y MANTENIMIENTO', PW / 2, y, { align: 'center' });
+    doc.setLineWidth(0.5); doc.setDrawColor(192, 57, 43);
+    doc.line(ML + 8, y + 1.5, PW - ML - 8, y + 1.5);
+    y += 6;
+    doc.text('DE EXTINTORES PORTÁTILES', PW / 2, y, { align: 'center' });
+    doc.line(ML + 24, y + 1.5, PW - ML - 24, y + 1.5);
+    y += 8;
+
+    // ── Bloque de datos del cliente ──────────────────────────────────────────
+    doc.setFillColor(248, 248, 248); doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
+    doc.rect(ML, y, CW, 26, 'FD');
+
+    const campos = [
+      ['EMPRESA:',  (cot.empresa?.empresa || 'INT FOOD SERVICES CORP SA').toUpperCase()],
+      ['MARCA:',    (cot.empresa?.marca || '').toUpperCase()],
+      ['LOCAL:',    (cot.localName || cot.localCode).toUpperCase()],
+      ['CIUDAD:',   (cot.ciudad || '').toUpperCase()],
+    ];
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(80, 80, 80);
+    campos.forEach(([lbl, val], i) => {
+      const cy = y + 6 + i * 5.5;
+      doc.text(lbl, ML + 3, cy);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
+      doc.text(val, ML + 24, cy);
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(80, 80, 80);
+    });
+    // NE top-right
+    doc.setTextColor(192, 57, 43); doc.setFontSize(9);
+    doc.text(`N.E.: ${cot.notaEntrega || '—'}`, PW - ML - 3, y + 6, { align: 'right' });
+    doc.setFontSize(7.5); doc.setTextColor(100, 100, 100); doc.setFont('helvetica', 'normal');
+    doc.text(`C.C.: ${cot.cc || ''}`, PW - ML - 3, y + 12, { align: 'right' });
+    y += 30;
+
+    // ── Párrafo principal ────────────────────────────────────────────────────
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(50, 50, 50);
+    const mainPar = 'Los extintores detallados se encuentran operativos de acuerdo con la norma NFPA10 y normativa ecuatoriana vigente. Cada extintor cuenta con sus respectivos precintos y seguros metálicos, etiqueta de control de carga, accesorios en buen estado y agente extintor en óptimas condiciones, garantizando su funcionamiento con vigencia de un (1) año a partir de su último mantenimiento.';
+    const parLines = doc.splitTextToSize(mainPar, CW);
+    doc.text(parLines, ML, y);
+    y += parLines.length * 4.5 + 5;
+
+    // ── COMPRENDE ────────────────────────────────────────────────────────────
+    doc.setFillColor(192, 57, 43);
+    doc.rect(ML, y, CW, 8, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255);
+    doc.text('COMPRENDE:', ML + CW / 2, y + 5.5, { align: 'center' });
+    y += 8;
+
+    const comprende = [
+      'REVISIÓN INTEGRAL DE LOS CILINDROS', 'INSPECCIÓN DE CABEZALES',
+      'INSPECCIÓN DE CORNETAS / MANGUERAS', 'PESAJE / TARA',
+      'MANTENIMIENTO PREVENTIVO-CORRECTIVO', 'RECARGA DEL AGENTE EXTINTOR'
+    ];
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(40, 40, 40);
+    comprende.forEach((item, i) => {
+      const col = i % 2, row = Math.floor(i / 2);
+      const ix = ML + col * (CW / 2) + 6;
+      const iy = y + row * 6 + 5;
+      doc.setFillColor(192, 57, 43);
+      doc.rect(ix - 4, iy - 3, 2.5, 2.5, 'F');
+      doc.setTextColor(40, 40, 40);
+      doc.text(item, ix, iy);
+    });
+    y += 3 * 6 + 5;
+
+    // ── Tabla de extintores ──────────────────────────────────────────────────
+    const cws = [18, 36, 28, 50, 48];
+    const cxs = [ML];
+    for (let i = 1; i < cws.length; i++) cxs.push(cxs[i - 1] + cws[i - 1]);
+    const rH = 9;
+
+    doc.setFillColor(192, 57, 43);
+    doc.rect(ML, y, CW, rH, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(255, 255, 255);
+    ['CANT.', 'CAPACIDAD', 'TIPO', 'ÚLTIMO MANT.', 'PRÓXIMO MANT.'].forEach((h, i) => {
+      doc.text(h, cxs[i] + cws[i] / 2, y + rH - 2.8, { align: 'center', maxWidth: cws[i] - 2 });
+    });
+    y += rH;
+
+    // Agrupar extintores por tipo+capacidad
+    const extMap = {};
+    (cot.items || []).forEach(it => {
+      const k = `${it.tipo}|${it.capacidad}`;
+      if (!extMap[k]) extMap[k] = { tipo: it.tipo || '—', cap: it.capacidad || '—', cnt: 0 };
+      extMap[k].cnt += (it.qty || 1);
+    });
+    const grps = Object.values(extMap);
+    if (!grps.length) grps.push({ tipo: 'PQS', cap: '—', cnt: 1 });
+
+    grps.forEach((g, r) => {
+      const ry = y + r * rH;
+      doc.setFillColor(r % 2 === 0 ? 255 : 248, r % 2 === 0 ? 255 : 248, r % 2 === 0 ? 255 : 248);
+      doc.rect(ML, ry, CW, rH, 'F');
+      doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.2);
+      doc.line(ML, ry + rH, ML + CW, ry + rH);
+
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(40, 40, 40);
+      doc.text(String(g.cnt), cxs[0] + cws[0] / 2, ry + rH - 2.8, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.text(g.cap, cxs[1] + cws[1] / 2, ry + rH - 2.8, { align: 'center' });
+      doc.setTextColor(192, 57, 43); doc.setFont('helvetica', 'bold');
+      doc.text(g.tipo, cxs[2] + cws[2] / 2, ry + rH - 2.8, { align: 'center' });
+      doc.setTextColor(40, 40, 40); doc.setFont('helvetica', 'normal');
+      doc.text(ULGM, cxs[3] + cws[3] / 2, ry + rH - 2.8, { align: 'center' });
+      doc.text(PROXM, cxs[4] + cws[4] / 2, ry + rH - 2.8, { align: 'center' });
+    });
+    y += grps.length * rH + 7;
+
+    // ── Garantía ─────────────────────────────────────────────────────────────
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(110, 110, 110);
+    const gLines = doc.splitTextToSize(
+      'PREVIFUEGO / PYROSHIELD garantiza la calidad de sus trabajos conforme a la norma NFPA 10 y la normativa ecuatoriana vigente, con responsabilidad civil por el período indicado.',
+      CW);
+    doc.text(gLines, ML, y);
+    y += gLines.length * 4 + 9;
+
+    // ── Bloque de autorización ───────────────────────────────────────────────
+    doc.setLineWidth(0.5); doc.setDrawColor(192, 57, 43);
+    doc.line(ML, y, ML + CW, y);
+    y += 5;
+    doc.setFillColor(253, 251, 251); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3);
+    doc.rect(ML, y, CW, 32, 'FD');
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(80, 80, 80);
+    doc.text('AUTORIZADO POR:', ML + 5, y + 8);
+    doc.setFontSize(13); doc.setTextColor(30, 30, 30);
+    doc.text('Alejandro Lopez', ML + 5, y + 17);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(100, 100, 100);
+    doc.text('Jefe de Operaciones  —  Previfuego / Pyroshield', ML + 5, y + 24);
+    doc.text('RUC: 0952773976001', ML + 5, y + 30);
+
+    // ── Pie de página ────────────────────────────────────────────────────────
+    doc.setFillColor(40, 44, 52);
+    doc.rect(0, 285, PW, 12, 'F');
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(200, 200, 200);
+    doc.text('Previfuego / Pyroshield  ·  Guayaquil, Ecuador  ·  RUC: 0952773976001', PW / 2, 292, { align: 'center' });
+
+    doc.save(`CERT-${cot.localCode}-${anio}.pdf`);
+    count++;
+    log(`  📜 ${cot.localCode} — ${cot.localName || cot.localCode}`, 'ok');
+
+    // Pausa entre descargas para evitar bloqueos del navegador
+    await new Promise(r => setTimeout(r, 350));
+  }
+
+  log(`✅ ${count} certificado(s) generado(s)`, 'ok');
+  markOutput('out4');
+}
+
 // ─── UI HELPERS ───────────────────────────────────────────────────────────────
 function showStatus(elId, type, msg) {
   const el = document.getElementById(elId);
@@ -1380,7 +1613,7 @@ function setStep(n) {
 }
 
 function enableGenerarBtns() {
-  ['btn1','btn2','btn3','btnGenerarTodo'].forEach(id => {
+  ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => {
     document.getElementById(id).disabled = false;
   });
   setStep(4);
