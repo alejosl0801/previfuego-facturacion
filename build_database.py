@@ -62,6 +62,55 @@ VIATICOS = {
 # (su recarga ya ocurrió en el ciclo OCT2025-SEP2026)
 RECARGA_2026_OVERRIDE = {('R', 3), ('R', 8), ('R', 10)}
 
+# ── Correcciones manuales (revisión cotizaciones 2026) ─────────────────────────
+# El usuario confirmó el inventario real de extintores por local.
+# ckey → lista de (tipo, capacidad, cantidad). Reemplaza lo que venga de MATRIZ.
+EXTINTOR_OVERRIDE = {
+    # ── ENERO ──
+    ('K', 25):  [('CO2','75',1), ('CO2','10',1), ('PQS','10',3)],                                  # Mobil Durán      = $46
+    ('K', 154): [('CO2','50',1), ('CO2','5',3), ('PQS','20',1), ('PQS','10',3), ('TIPO K','2.5',1)], # Pascuales       = $54
+    ('K', 76):  [('CO2','50',1), ('CO2','5',2), ('PQS','10',4)],                                    # Parque Centenario= $40
+    ('K', 105): [('CO2','75',1), ('CO2','5',1), ('PQS','20',1), ('PQS','10',1)],                    # Hiper Market    = $44
+    # ── FEBRERO ──
+    ('K', 45):  [('CO2','50',1), ('CO2','5',1), ('PQS','20',3), ('PQS','10',6)],                    # Boyacá          = $70
+    # ── MARZO ──
+    ('K', 75):  [('CO2','50',1), ('CO2','10',1), ('PQS','20',1), ('PQS','10',2)],                   # Mobil Kennedy   = $40
+    ('K', 94):  [('CO2','50',1), ('CO2','10',1), ('CO2','5',2), ('PQS','10',1)],                    # Outlet Durán    = $32
+    ('M', 11):  [('CO2','75',1), ('PQS','10',2), ('CO2','5',1), ('TIPO K','2.5',1)],                # Mall del Sur    = $48
+    ('K', 145): [('CO2','50',1), ('CO2','5',3), ('PQS','20',1), ('PQS','10',2), ('TIPO K','2.5',1)],# Aki San Eduardo = $50
+    ('M', 37):  [('CO2','50',1), ('CO2','5',2), ('PQS','10',4), ('TIPO K','2.5',1)],                # 9 de Octubre    = $48
+    # ── MAYO ──  (R004: recarga fue mayo 2025, mantenimiento mayo 2026 → valor MANTT)
+    ('R', 4):   [('CO2','50',2), ('CO2','5',3), ('PQS','10',2), ('TIPO K','2.5',1)],                # San Marino mantt= $62
+    ('R', 10):  [('CO2','75',1), ('CO2','5',4), ('CO2','10',1), ('PQS','20',2), ('PQS','10',10), ('TIPO K','2.5',2)],  # Orellana (recarga+mantt mayo 2026)
+    ('K', 96):  [('CO2','50',2), ('CO2','5',4), ('PQS','20',2), ('PQS','10',3), ('TIPO K','2.5',1)],# Portete         = $84
+    # ── JUNIO ──
+    ('F', 3):   [('CO2','50',1), ('CO2','5',1), ('PQS','10',2), ('TIPO K','2.5',1)],                # Dolce Incontro AER = $38
+    ('J', 8):   [('CO2','75',1), ('PQS','10',2)],                                                   # Terminal        = $38
+    ('K', 83):  [('CO2','75',1), ('CO2','5',2), ('PQS','20',2), ('PQS','10',1)],                    # Mucho Lote      = $54
+    ('K', 79):  [('CO2','50',1), ('CO2','10',2), ('PQS','10',2)],                                   # Babahoyo (mes real JUNIO) ext = $36 + viáticos
+    # ── JULIO ──
+    ('K', 162): [('CO2','50',1), ('CO2','5',3), ('PQS','20',1), ('PQS','10',2), ('TIPO K','2.5',1)],# Daule Estación  = $50
+    ('K', 171): [('CO2','50',1), ('CO2','10',1), ('PQS','10',2), ('TIPO K','2.5',1)],               # Shell Abu Dabi  = $40
+    # ── OCTUBRE (recarga) ──
+    ('K', 88):  [('CO2','50',1), ('CO2','5',3), ('PQS','20',1), ('PQS','10',2)],                    # Hipermarket Vía Daule recarga = $97.70
+    ('K', 110): [('CO2','75',1), ('CO2','10',1), ('CO2','5',2), ('PQS','20',1), ('PQS','10',2)],    # City Mall PB recarga = $124.70
+    ('B', 1):   [('CO2','50',1), ('CO2','20',1), ('PQS','10',3), ('PQS','5',2)],                    # Sports Bar
+}
+
+# Locales que ya no se atienden → eliminar por completo
+DELETE_LOCALS = {('K', 124)}   # Gran Aki Loja – ya no corresponde
+
+# Mes de servicio corregido (cotización en otra fecha era una venta, no mantenimiento)
+MES_OVERRIDE = {
+    ('K', 79): 'JUNIO',     # cotización ENERO = venta; mantenimiento real JUNIO
+    ('K', 88): 'OCTUBRE',   # cotización ABRIL = venta; recarga real OCTUBRE
+}
+
+# Años de recarga especiales (ckey → (AÑO_ULT_RECARGA, AÑO_RECARGA))
+ANO_OVERRIDE = {
+    ('R', 4): (2025, 2028),   # recargó mayo 2025, próxima recarga mayo 2028 (2026 = mantenimiento)
+}
+
 # ── Pricing ───────────────────────────────────────────────────────────────────
 
 MANTT = {
@@ -452,7 +501,7 @@ print(f"H068 rows in MATRIZ: {len(h068_in_mat)} (expected 0 – already part of 
 SHARED_CN = {('CN', 4), ('CN', 16), ('CN', 31), ('CN', 37)}
 pres_expected = set(
     k for k in presupuesto_map
-    if k not in (G042_KEY, H068_KEY) and k not in SHARED_CN
+    if k not in (G042_KEY, H068_KEY) and k not in SHARED_CN and k not in DELETE_LOCALS
 )
 mat_keys_now = set(r["ckey"] for r in matriz_rows)
 proy_by_key = {}
@@ -517,6 +566,40 @@ for r in matriz_rows:
         overrides += 1
 print(f"\nMES overridden from PROYECCIÓN: {overrides} rows")
 
+# (e) Correcciones manuales según revisión de cotizaciones 2026 ────────────────
+print("\n=== Aplicando correcciones manuales (cotizaciones 2026) ===")
+
+# Eliminar locales que ya no se atienden
+before = len(matriz_rows)
+matriz_rows = [r for r in matriz_rows if r["ckey"] not in DELETE_LOCALS]
+print(f"Locales eliminados {sorted(DELETE_LOCALS)}: {before - len(matriz_rows)} filas removidas")
+
+# Reemplazar listas de extintores corregidas
+for ckey, spec in EXTINTOR_OVERRIDE.items():
+    existing = [r for r in matriz_rows if r["ckey"] == ckey]
+    ubic   = existing[0]["ubic"]   if existing else fmt_code(*ckey)
+    cc_raw = existing[0]["cc_raw"] if existing else fmt_code(*ckey)
+    mes    = MES_OVERRIDE.get(ckey) or (existing[0]["mes"] if existing else "")
+    matriz_rows = [r for r in matriz_rows if r["ckey"] != ckey]
+    for tipo, cap, qty in spec:
+        for _ in range(qty):
+            matriz_rows.append({
+                "ckey": ckey, "cc_raw": cc_raw, "mes": mes, "ubic": ubic,
+                "tipo": tipo, "cap": cap, "año_ult": "", "año_prox": "",
+            })
+    total_mantt = sum(MANTT.get((t, c), 0) * q for t, c, q in spec)
+    n_ext = sum(q for _, _, q in spec)
+    flag = "" if existing else "  [NUEVO - no estaba en MATRIZ]"
+    print(f"  {fmt_code(*ckey)}: {n_ext} ext, mantt=${total_mantt:.2f}, mes={mes}{flag}")
+
+# Aplicar mes corregido a locales NO incluidos en EXTINTOR_OVERRIDE
+for ckey, mes in MES_OVERRIDE.items():
+    if ckey in EXTINTOR_OVERRIDE:
+        continue
+    for r in matriz_rows:
+        if r["ckey"] == ckey:
+            r["mes"] = mes
+
 # Final unique locals
 final_keys = set(r["ckey"] for r in matriz_rows)
 print(f"\nFinal unique locals: {len(final_keys)}")
@@ -577,12 +660,15 @@ for r in matriz_rows:
     cobro      = cr if cr is not None else (cm if cm is not None else None)
     cobro_tipo = "RECARGA (incl. mantt)" if cr is not None else ("MANTT" if cm is not None else "SIN PRECIO")
 
-    # R003/R008/R010 hicieron recarga en el ciclo OCT2025-SEP2026 (mayo 2026)
-    if ckey in RECARGA_2026_OVERRIDE:
+    # Años de recarga: override manual > R003/R008/R010 (mayo 2026) > regla general
+    if ckey in ANO_OVERRIDE:
+        ano_ult_rec, ano_rec = ANO_OVERRIDE[ckey]
+    elif ckey in RECARGA_2026_OVERRIDE:
         ano_rec = 2026
+        ano_ult_rec = ano_rec - 3
     else:
         ano_rec = 2026 if mes in OCT_TO_DEC else 2027
-    ano_ult_rec = ano_rec - 3
+        ano_ult_rec = ano_rec - 3
 
     marca  = get_marca(ckey)
     nombre = get_nombre_local(ckey)
@@ -712,7 +798,7 @@ for b, c in sorted(bc.items(), key=lambda x: -x[1]):
 SHARED_CN = set(SHARED_BS_CN.values())   # {('CN',4),('CN',16),('CN',31),('CN',37)}
 pres_expected = set(
     k for k in presupuesto_map
-    if k not in (G042_KEY, H068_KEY) and k not in SHARED_CN
+    if k not in (G042_KEY, H068_KEY) and k not in SHARED_CN and k not in DELETE_LOCALS
 )
 final_codes   = set(r["_ckey"] for r in final_rows)
 missing_from_final = pres_expected - final_codes

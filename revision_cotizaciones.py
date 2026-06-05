@@ -38,6 +38,13 @@ MONTH_FOLDERS = [
 
 RECARGA_MONTHS = {"OCTUBRE", "NOVIEMBRE", "DICIEMBRE"}
 
+# Cotizaciones que NO son mantenimiento/recarga sino VENTAS de extintores u otros
+# servicios → no deben contarse como inconsistencia. (mes, código canónico)
+VENTAS = {
+    ("ENERO", "K79"),   # venta de extintores; mantenimiento real en JUNIO
+    ("ABRIL", "K88"),   # venta; recarga real en OCTUBRE
+}
+
 
 # ─── CODE NORMALISATION ──────────────────────────────────────────────────────
 
@@ -455,6 +462,17 @@ def main():
             cot_items  = parsed["items"]
             cot_movil  = parsed["movil_items"]
 
+            # Cotización de VENTA / otro servicio → no es inconsistencia
+            if (mes_name, local_code) in VENTAS:
+                print(f" → VENTA (subtotal={subtotal})")
+                rows.append(_row(mes_name, filename, local_code,
+                                 resumen.get(local_code, {}).get("nombre", ""),
+                                 subtotal, None, "VENTA", None, "VENTA",
+                                 fmt_items(cot_items, cot_movil), "",
+                                 "Cotización por venta de extintores / servicio, no mantenimiento",
+                                 "Informativo — no afecta la base de datos"))
+                continue
+
             # DB lookup
             db_entry = resumen.get(local_code)
             if db_entry is None:
@@ -522,6 +540,7 @@ def main():
     inconsistencias = sum(1 for r in rows if r["ESTADO"] == "INCONSISTENCIA")
     cot_rec         = sum(1 for r in rows if r["ESTADO"] == "COT_DEBE_RECARGA")
     sin_match       = sum(1 for r in rows if r["ESTADO"] == "SIN_MATCH_DB")
+    ventas          = sum(1 for r in rows if r["ESTADO"] == "VENTA")
     errores         = sum(1 for r in rows if r["ESTADO"] == "ERROR")
 
     print(f"\n{'='*60}")
@@ -530,6 +549,7 @@ def main():
     print(f"  INCONSISTENCIAS  : {inconsistencias}")
     print(f"  COT_DEBE_RECARGA : {cot_rec}")
     print(f"  SIN MATCH DB     : {sin_match}")
+    print(f"  VENTAS           : {ventas}")
     print(f"  ERRORES          : {errores}")
 
     print("\nINCONSISTENCIAS:")
@@ -580,6 +600,7 @@ def _write_excel(rows: list):
     fill_inc   = PatternFill("solid", fgColor="FFC7CE")
     fill_rec   = PatternFill("solid", fgColor="F4B942")
     fill_warn  = PatternFill("solid", fgColor="FFEB9C")
+    fill_venta = PatternFill("solid", fgColor="BDD7EE")
     fill_err   = PatternFill("solid", fgColor="D9D9D9")
 
     for r in rows:
@@ -589,6 +610,7 @@ def _write_excel(rows: list):
         fill = (fill_ok  if est == "OK"            else
                 fill_inc if est == "INCONSISTENCIA" else
                 fill_rec if est == "COT_DEBE_RECARGA" else
+                fill_venta if est == "VENTA" else
                 fill_warn if est in ("SIN_MATCH_DB","SIN_SUBTOTAL","SIN_VALOR_DB") else
                 fill_err)
         for ci in range(1, len(HEADERS) + 1):
