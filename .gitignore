@@ -1,2 +1,3 @@
 __pycache__/
 .cotizaciones_cache/
+.dropbox_creds.json
