@@ -1396,7 +1396,11 @@ Si no encuentras un campo, usa "" o 0.`
     } catch(e) {
       console.warn('Gemini error:', file.name, e);
       errores++;
+      document.getElementById('fotoStatus').textContent =
+        `⚠️ Error en ${file.name}: ${e.message}`;
     }
+    // Pausa entre fotos para no exceder el límite de tasa de Gemini
+    if (files.length > 1) await new Promise(res => setTimeout(res, 1500));
   }
 
   document.getElementById('fotoStatus').textContent =
@@ -1406,28 +1410,39 @@ Si no encuentras un campo, usa "" o 0.`
   autosave();   // guarda las notas recién registradas
 }
 
-async function callGemini(apiKey, base64, mimeType, prompt) {
-  const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: mimeType, data: base64 } }
-          ]
-        }]
-      })
+async function callGemini(apiKey, base64, mimeType, prompt, retries = 4) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: mimeType, data: base64 } }
+            ]
+          }]
+        })
+      }
+    );
+    const data = await r.json();
+    if (r.status === 429) {
+      if (attempt < retries) {
+        const wait = 5000 * Math.pow(2, attempt); // 5s, 10s, 20s, 40s
+        document.getElementById('fotoStatus').textContent =
+          `⏳ Límite Gemini — esperando ${wait/1000}s antes de reintentar (intento ${attempt+1}/${retries})…`;
+        await new Promise(res => setTimeout(res, wait));
+        continue;
+      }
     }
-  );
-  const data = await r.json();
-  if (!r.ok || !data.candidates?.[0]?.content?.parts?.[0]?.text) {
-    const msg = data.error?.message || `HTTP ${r.status}`;
-    throw new Error(`Gemini: ${msg}`);
+    if (!r.ok || !data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      const msg = data.error?.message || `HTTP ${r.status}`;
+      throw new Error(`Gemini: ${msg}`);
+    }
+    return data.candidates[0].content.parts[0].text;
   }
-  return data.candidates[0].content.parts[0].text;
 }
 
 function fileToBase64(file) {
