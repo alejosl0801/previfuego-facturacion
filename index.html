@@ -380,6 +380,30 @@
   body.dark .acc-row.sel { background: #2d1f1e; }
   body.dark .acc-row-desc { color: #ccc; }
   body.dark .nov-btn { background: #1f2227; border-color: #3a3f47; color: #bbb; }
+
+  /* ── Responsive móvil ── */
+  @media (max-width: 600px) {
+    .container { padding: 0 8px; }
+    header { padding: 10px 14px; gap: 8px; }
+    .nav-tab { font-size: 11px; padding: 6px 10px; }
+    .local-card-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .local-card-header > div:last-child {
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+    .local-card-header > div:first-child {
+      width: 100%;
+    }
+    .plan-stats { flex-direction: column; gap: 8px; }
+    .hdr-right { gap: 6px; }
+    .month-sel select { min-width: 70px; font-size: 12px; }
+    .cert-foto-btns { flex-direction: column; }
+  }
 </style>
 </head>
 <body>
@@ -1211,7 +1235,7 @@ Analiza esta nota de entrega/servicio y extrae TODOS los datos posibles.
 
 CAMPOS A EXTRAER:
 1. notaEntrega: número de nota (4-5 dígitos, busca "N°", "No.", "NOTA DE ENTREGA")
-2. localCode: código del local (K02, K105, M35, T032, V091, BS04, etc.)
+2. localCode: código del local (K02, K105, M35, T032, V091, BS04, KN01, KN21, etc.)
 3. empresa: nombre de la empresa cliente (ej: "INT FOOD SERVICES CORP")
 4. ciudad: ciudad donde está el local
 5. localNombre: nombre/dirección del local
