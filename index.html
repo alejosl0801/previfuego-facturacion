@@ -600,7 +600,7 @@
             <div style="font-size:36px;margin-bottom:8px;">📊</div>
             <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS KFC</div>
             <div style="font-size:12px;color:#666;margin-bottom:14px;">
-              197 locales · 906 extintores<br>
+              210 locales · 968 extintores<br>
               2 hojas: Detalle, Resumen Locales<br>
               Precios MANTT y RECARGA por extintor
             </div>
@@ -2470,6 +2470,10 @@ function abrirCertModal(codigo) {
     if (prev) { prev.src=''; prev.classList.remove('show'); }
     if (card) card.classList.remove('has-foto');
   });
+  // Ocultar foto de cilindro CO₂ si el local no tiene CO2
+  const tieneCO2 = local.extintores.some(e => (e.tipo||'').toUpperCase() === 'CO2');
+  const cilCard = document.getElementById('certFotoCard_cilindro');
+  if (cilCard) cilCard.style.display = tieneCO2 ? '' : 'none';
   // Preseleccionar tipo de servicio
   const tipoVal = local.esRecarga ? 'recarga' : 'mantenimiento';
   document.querySelectorAll('input[name="certTipoServ"]').forEach(r => { r.checked = (r.value === tipoVal); });
