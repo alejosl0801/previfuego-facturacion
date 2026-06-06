@@ -1551,13 +1551,23 @@ async function cargarPlan() {
     const wsDet  = wb.Sheets['DETALLE'];
     const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
 
+    // Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
+    // Ej: "BS04"→"BS004", "CN31"→"BS031"
+    const CN_TO_BS_MAP = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
+    function normCode(raw) {
+      const m = String(raw).match(/^([A-Z]+)(\d+)/);
+      if (!m) return raw;
+      const n = m[1] + String(parseInt(m[2])).padStart(3, '0');
+      return CN_TO_BS_MAP[n] || n;
+    }
+
     // Build extintor map by local code
     const extMap = {};
     detalle.slice(1).forEach(r => {
       if (!r[1] || r[2] !== mesNom) return;
-      const m = String(r[1]).match(/^([A-Z0-9]+)/);
+      const m = String(r[1]).match(/^([A-Z]+\d+)/);
       if (!m) return;
-      const cod = m[1];
+      const cod = normCode(m[1]);
       if (!extMap[cod]) extMap[cod] = [];
       extMap[cod].push({ tipo: r[4], cap: r[5], costoMantt: r[6], precioRec: r[7], anioRec: r[9] });
     });
