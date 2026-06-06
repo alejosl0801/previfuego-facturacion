@@ -691,6 +691,37 @@
 
 </div>
 
+<!-- EDIT EXTINTORES MODAL -->
+<div id="editExtModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:12px;padding:22px;max-width:560px;width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="color:#f39c12;font-size:14px;margin:0;font-weight:800">✏️ Editar extintores — <span id="editExtTitle"></span></h3>
+      <button onclick="cerrarEditExtModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;line-height:1;padding:0 4px">✕</button>
+    </div>
+    <div style="font-size:12px;color:#888;margin-bottom:12px">
+      Los cambios se guardan en este navegador y sobreescriben los datos de la base de datos para este local.
+      <button onclick="resetEditExt()" style="margin-left:8px;background:#e74c3c;color:white;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer">🗑️ Restaurar BD</button>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px" id="editExtTable">
+      <thead>
+        <tr style="background:#f5f5f5;font-size:11px;text-transform:uppercase;color:#666">
+          <th style="padding:6px 8px;text-align:left;border:1px solid #ddd">Tipo</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #ddd">Cap.</th>
+          <th style="padding:6px 8px;text-align:right;border:1px solid #ddd">$ Mantt</th>
+          <th style="padding:6px 8px;text-align:right;border:1px solid #ddd">$ Recarga</th>
+          <th style="padding:6px 8px;border:1px solid #ddd"></th>
+        </tr>
+      </thead>
+      <tbody id="editExtBody"></tbody>
+    </table>
+    <button onclick="editExtAgregarFila()" style="margin-top:10px;background:#27ae60;color:white;border:none;border-radius:5px;padding:6px 14px;font-size:12px;cursor:pointer">+ Agregar extintor</button>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button onclick="cerrarEditExtModal()" style="background:#bbb;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer">Cancelar</button>
+      <button onclick="guardarEditExt()" style="background:#f39c12;color:white;border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- CERT MODAL (3 pasos) -->
 <div id="certModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;">
   <div style="background:white;border-radius:12px;padding:22px;max-width:480px;width:93%;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
@@ -825,6 +856,9 @@ const EMPRESAS_MAP = {
 
 let cotizaciones = []; // array of parsed cotizacion objects
 let facturaMap = {};   // { hojaKey: { factManges: 'XXXX', factMant: 'YYYY' } }
+
+// Overrides de extintores por local (persisten en localStorage)
+let extOverrides = JSON.parse(localStorage.getItem('extOverrides') || '{}');
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 function loadConfig() {
@@ -1543,6 +1577,7 @@ function log(msg, type='') {
 // ─── PLAN DEL MES & NOTAS DE ENTREGA ─────────────────────────────────────────
 let planMes = [];
 let visitaStatus = {};
+let extMapBD = {}; // copia del extMap del Excel, para poder restaurar overrides
 const RAW_BASE = '';
 
 const NE_TEMPLATE_MAP = {
@@ -1598,6 +1633,8 @@ async function cargarPlan() {
       extMap[cod].push({ tipo: r[4], cap: r[5], costoMantt: r[6], precioRec: r[7], anioRec: r[9] });
     });
 
+    extMapBD = extMap; // guardar referencia para restaurar desde modal
+
     planMes = resumen.slice(1)
       .filter(r => r[0] && r[3] === mesNom)
       .map(r => {
@@ -1616,7 +1653,7 @@ async function cargarPlan() {
           anioRec,
           esRecarga,
           empresa: getEmpresa(cod),
-          extintores: extMap[cod] || [],
+          extintores: extOverrides[cod] || extMap[cod] || [],
         };
       });
 
@@ -1706,7 +1743,11 @@ function renderPlan() {
           </div>
         </div>
         <div class="local-card-body" id="lbody-${local.codigo}">
-          <div style="margin-bottom:6px">${extList || '<em style="color:#e74c3c">⚠️ Sin extintores en la base de datos</em>'}</div>
+          <div style="margin-bottom:6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
+            <div style="flex:1;min-width:0">${extList || '<em style="color:#e74c3c">⚠️ Sin extintores en la base de datos</em>'}</div>
+            ${isAdmin ? `<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#f39c12;color:white;flex-shrink:0"
+              onclick="abrirEditExtModal('${local.codigo}')">✏️ Editar exts</button>` : ''}
+          </div>
           <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;align-items:center">
             ${tipoServ}
             <span>Subtotal: <strong>$${local.cobro.toFixed(2)}</strong></span>
@@ -1821,6 +1862,106 @@ async function renderCertsList() {
 function toggleLocalCard(codigo) {
   const card = document.getElementById(`lcard-${codigo}`);
   if (card) card.classList.toggle('open');
+}
+
+// ─── EDIT EXTINTORES MODAL ─────────────────────────────────────────────────────
+let _editExtCodigo = null;
+let _editExtOriginal = []; // copia de extMap para poder restaurar
+
+function abrirEditExtModal(codigo) {
+  _editExtCodigo = codigo;
+  const local = planMes.find(l => l.codigo === codigo);
+  if (!local) return;
+  document.getElementById('editExtTitle').textContent = `${codigo} — ${local.nombre}`;
+  _editExtOriginal = (extMapBD[codigo] || []).slice(); // datos originales del Excel
+  _renderEditExtRows(extOverrides[codigo] || extMapBD[codigo] || local.extintores);
+  const modal = document.getElementById('editExtModal');
+  modal.style.display = 'flex';
+}
+
+function cerrarEditExtModal() {
+  document.getElementById('editExtModal').style.display = 'none';
+  _editExtCodigo = null;
+}
+
+function _renderEditExtRows(rows) {
+  const tbody = document.getElementById('editExtBody');
+  tbody.innerHTML = rows.map((e, i) => `
+    <tr id="editExtRow-${i}">
+      <td style="padding:4px 6px;border:1px solid #ddd">
+        <select style="width:100%;font-size:12px;padding:2px">
+          ${(() => {
+            const TIPOS = ['PQS','CO2','AGUA','HCFC','K'];
+            const cur = (e.tipo||'').toUpperCase();
+            const opts = TIPOS.map(t => `<option value="${t}" ${cur===t?'selected':''}>${t}</option>`);
+            if (cur && !TIPOS.includes(cur)) opts.push(`<option value="${cur}" selected>${cur}</option>`);
+            return opts.join('');
+          })()}
+        </select>
+      </td>
+      <td style="padding:4px 6px;border:1px solid #ddd">
+        <input type="text" value="${e.cap||''}" style="width:80px;font-size:12px;padding:2px" />
+      </td>
+      <td style="padding:4px 6px;border:1px solid #ddd;text-align:right">
+        <input type="number" value="${e.costoMantt||0}" step="0.01" style="width:70px;font-size:12px;padding:2px;text-align:right" />
+      </td>
+      <td style="padding:4px 6px;border:1px solid #ddd;text-align:right">
+        <input type="number" value="${e.precioRec||0}" step="0.01" style="width:70px;font-size:12px;padding:2px;text-align:right" />
+      </td>
+      <td style="padding:4px 6px;border:1px solid #ddd;text-align:center">
+        <button onclick="editExtEliminarFila(${i})" style="background:#e74c3c;color:white;border:none;border-radius:3px;padding:2px 6px;font-size:11px;cursor:pointer">✕</button>
+      </td>
+    </tr>`).join('');
+}
+
+function _leerFilasEditExt() {
+  const rows = document.querySelectorAll('#editExtBody tr');
+  return Array.from(rows).map(tr => {
+    const cells = tr.querySelectorAll('td');
+    return {
+      tipo:      cells[0].querySelector('select').value.trim().toUpperCase(),
+      cap:       cells[1].querySelector('input').value.trim().toUpperCase(),
+      costoMantt: parseFloat(cells[2].querySelector('input').value) || 0,
+      precioRec:  parseFloat(cells[3].querySelector('input').value) || 0,
+    };
+  }).filter(e => e.tipo);
+}
+
+function editExtAgregarFila() {
+  const current = _leerFilasEditExt();
+  current.push({ tipo: 'PQS', cap: '10LBS', costoMantt: 0, precioRec: 0 });
+  _renderEditExtRows(current);
+}
+
+function editExtEliminarFila(idx) {
+  const current = _leerFilasEditExt();
+  current.splice(idx, 1);
+  _renderEditExtRows(current);
+}
+
+function guardarEditExt() {
+  if (!_editExtCodigo) return;
+  const rows = _leerFilasEditExt();
+  extOverrides[_editExtCodigo] = rows;
+  localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
+  // Actualizar el local en planMes para reflejo inmediato
+  const local = planMes.find(l => l.codigo === _editExtCodigo);
+  if (local) local.extintores = rows;
+  cerrarEditExtModal();
+  renderPlan();
+  log(`✅ Extintores de ${_editExtCodigo} actualizados (${rows.length} exts)`, 'ok');
+}
+
+function resetEditExt() {
+  if (!_editExtCodigo) return;
+  if (!confirm(`¿Restaurar extintores de ${_editExtCodigo} desde la base de datos?`)) return;
+  delete extOverrides[_editExtCodigo];
+  localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
+  const local = planMes.find(l => l.codigo === _editExtCodigo);
+  if (local) local.extintores = _editExtOriginal.slice();
+  cerrarEditExtModal();
+  renderPlan();
+  log(`🔄 Extintores de ${_editExtCodigo} restaurados desde la BD`, 'ok');
 }
 
 function toggleVisita(codigo) {
