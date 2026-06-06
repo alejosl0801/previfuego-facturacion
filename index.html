@@ -796,8 +796,7 @@ const EMPRESAS_MAP = {
   'E':    { empresa:'ESPAÑOL SA',                             marca:'ESPAÑOL',            ruc:'',              hoja:'ESPAÑOL' },
   'R':    { empresa:'CASA RES SA',                            marca:'CASA RES',           ruc:'',              hoja:'CASA RES' },
   'H':    { empresa:'HELADERIAS SA',                          marca:'HELADERIAS',         ruc:'',              hoja:'HELADERIAS' },
-  'KO':   { empresa:'SUSHICORP SAS',                         marca:'KOBE',               ruc:'1792256267001', hoja:'SUSHICORP' },
-  'NO':   { empresa:'SUSHICORP SAS',                         marca:'NOE',                ruc:'1792256267001', hoja:'SUSHICORP' },
+  'KN':   { empresa:'SUSHICORP SAS',                         marca:'KOBE / NOE',         ruc:'1792256267001', hoja:'SUSHICORP' },
 };
 
 let cotizaciones = []; // array of parsed cotizacion objects
@@ -854,7 +853,7 @@ function costCenter(localCode) {
 function getEmpresa(localCode) {
   const code = localCode.toUpperCase();
   // Try multi-char prefixes first (longest match)
-  const prefixes = ['CJNC','GUSG','ILCI','AMCA','ESPE','JV','BS','DI','CA','KO','NO','K','M','T','V','I','G','J','A','B','E','F','H','R','CN'];
+  const prefixes = ['CJNC','GUSG','ILCI','AMCA','ESPE','JV','BS','DI','CA','KN','K','M','T','V','I','G','J','A','B','E','F','H','R','CN'];
   for (const p of prefixes) {
     if (code.startsWith(p)) return EMPRESAS_MAP[p] || null;
   }
