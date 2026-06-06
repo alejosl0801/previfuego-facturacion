@@ -1577,7 +1577,7 @@ async function cargarPlan() {
     planMes = resumen.slice(1)
       .filter(r => r[0] && r[3] === mesNom)
       .map(r => {
-        const cod = String(r[0]);
+        const cod = normCode(String(r[0]));
         const anioRec = parseInt(r[9]) || 9999;
         const esRecarga = parseInt(anio) === anioRec;
         return {
