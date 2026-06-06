@@ -1693,23 +1693,23 @@ function renderPlan() {
   }
 
   // Separar pendientes y visitados
-  const pendientes = visibles.filter(({ local }) => (visitaStatus[local.codigo] || 'pendiente') !== 'visitado');
-  const visitados  = visibles.filter(({ local }) => (visitaStatus[local.codigo] || 'pendiente') === 'visitado');
+  const grpPendientes = visibles.filter(({ local }) => (visitaStatus[local.codigo] || 'pendiente') !== 'visitado');
+  const grpVisitados  = visibles.filter(({ local }) => (visitaStatus[local.codigo] || 'pendiente') === 'visitado');
 
   let html = '';
 
-  if (pendientes.length) {
+  if (grpPendientes.length) {
     html += `<div style="font-size:12px;font-weight:700;color:#e74c3c;text-transform:uppercase;letter-spacing:0.5px;padding:6px 4px;margin-bottom:4px;border-bottom:2px solid #e74c3c">
-      🔴 PENDIENTES (${pendientes.length})
+      🔴 PENDIENTES (${grpPendientes.length})
     </div>`;
-    html += pendientes.map(buildCard).join('');
+    html += grpPendientes.map(buildCard).join('');
   }
 
-  if (visitados.length) {
+  if (grpVisitados.length) {
     html += `<div style="font-size:12px;font-weight:700;color:#27ae60;text-transform:uppercase;letter-spacing:0.5px;padding:6px 4px;margin:12px 0 4px;border-bottom:2px solid #27ae60">
-      ✅ VISITADOS (${visitados.length})
+      ✅ VISITADOS (${grpVisitados.length})
     </div>`;
-    html += visitados.map(buildCard).join('');
+    html += grpVisitados.map(buildCard).join('');
   }
 
   cont.innerHTML = html;
