@@ -495,6 +495,10 @@
         <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial Cert.</label>
         <input type="number" id="cotInicial" value="1500" min="1" style="width:90px;padding:5px" onchange="renderPlan();autosave()" />
       </div>
+      <div class="admin-only">
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial Cotización</label>
+        <input type="number" id="cotInicial" value="1" min="1" style="width:90px;padding:5px" onchange="renderPlan()" />
+      </div>
       <div id="planStats" style="font-size:13px;color:#555;font-weight:600"></div>
     </div>
     <div id="loadStatus"></div>
@@ -1419,6 +1423,10 @@ async function callGemini(apiKey, base64, mimeType, prompt) {
     }
   );
   const data = await r.json();
+  if (!r.ok || !data.candidates?.[0]?.content?.parts?.[0]?.text) {
+    const msg = data.error?.message || `HTTP ${r.status}`;
+    throw new Error(`Gemini: ${msg}`);
+  }
   return data.candidates[0].content.parts[0].text;
 }
 
@@ -1702,15 +1710,17 @@ async function cargarPlan() {
         const cod = normCode(String(r[0]));
         const anioRec = parseInt(r[9]) || 9999;
         const esRecarga = parseInt(anio) === anioRec;
+        const totalMantt   = parseFloat(r[5]) || 0;
+        const totalRecarga = parseFloat(r[6]) || 0;
         return {
           codigo: cod,
           marca: r[1],
           nombre: String(r[2] || cod),
           mes: r[3],
           nExt: r[4] || 0,
-          totalMantt: parseFloat(r[5]) || 0,
-          totalRecarga: parseFloat(r[6]) || 0,
-          cobro: parseFloat(r[7]) || 0,
+          totalMantt,
+          totalRecarga,
+          cobro: esRecarga ? totalRecarga : totalMantt,
           anioRec,
           esRecarga,
           empresa: getEmpresa(cod),
@@ -2174,84 +2184,86 @@ function getMesLabel() {
 
 function generarDetalle() {
   log('Generando DETALLE FACT MENSUAL...');
-  const wb = XLSX.utils.book_new();
 
-  // ── MANGES sheet ──────────────────────────────────────────────────────────
-  const mangesRows = [
-    ['DATOS DE LA EMPRESA', null, null, null, null,
-     'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null, null,
-     'DETALLE DE COSTOS', null, null, null, null],
-    ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO',
-     'EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R',
-     'JEFE DE OPERACIONES QUE AUTORIZA',
-     'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
-  ];
+  // Agrupar cotizaciones por empresa (hoja)
+  const porEmpresa = {};
+  cotizaciones.forEach(c => {
+    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+    if (!porEmpresa[hoja]) porEmpresa[hoja] = [];
+    porEmpresa[hoja].push(c);
+  });
 
-  const mangesCots = cotizaciones.filter(c => c.category === 'MANGES');
-  mangesCots.forEach(c => {
-    const emp = c.empresa || {};
-    const extItems = c.items.filter(i => i.isExtintor);
-    // First row: with empresa info + totals
-    const first = extItems[0];
-    mangesRows.push([
-      emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
-      c.localCode,
-      null,
-      first ? first.qty : 1,
-      first ? first.tipo : '-',
-      first ? first.capacidad : '-',
-      'M', null,
-      first ? first.unitPrice : 0,
-      c.subtotal, c.iva, c.total,
-      c.notaEntrega || ''
-    ]);
-    // Remaining items
-    for (let i = 1; i < extItems.length; i++) {
-      const item = extItems[i];
+  for (const [hoja, cots] of Object.entries(porEmpresa)) {
+    const wb = XLSX.utils.book_new();
+
+    // ── MANGES sheet ────────────────────────────────────────────────────────
+    const mangesRows = [
+      ['DATOS DE LA EMPRESA', null, null, null, null,
+       'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null, null,
+       'DETALLE DE COSTOS', null, null, null, null],
+      ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO',
+       'EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R',
+       'JEFE DE OPERACIONES QUE AUTORIZA',
+       'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
+    ];
+    const mangesCots = cots.filter(c => c.category === 'MANGES');
+    mangesCots.forEach(c => {
+      const emp = c.empresa || {};
+      const extItems = c.items.filter(i => i.isExtintor);
+      const first = extItems[0];
       mangesRows.push([
-        null, null, null, null, null, null,
-        item.qty, item.tipo, item.capacidad, 'M', null,
-        item.unitPrice, null, null, null, null
+        emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
+        c.localCode, null,
+        first ? first.qty : 1,
+        first ? first.tipo : '-',
+        first ? first.capacidad : '-',
+        'M', null,
+        first ? first.unitPrice : 0,
+        c.subtotal, c.iva, c.total, c.notaEntrega || ''
       ]);
-    }
-  });
+      for (let i = 1; i < extItems.length; i++) {
+        const item = extItems[i];
+        mangesRows.push([
+          null, null, null, null, null, null,
+          item.qty, item.tipo, item.capacidad, 'M', null,
+          item.unitPrice, null, null, null, null
+        ]);
+      }
+    });
+    const wsManges = XLSX.utils.aoa_to_sheet(mangesRows);
+    wsManges['!cols'] = [15,20,20,12,12,25,8,8,10,4,20,8,8,8,8,10].map(w => ({ wpx: w * 6 }));
+    XLSX.utils.book_append_sheet(wb, wsManges, 'MANGES');
 
-  const wsManges = XLSX.utils.aoa_to_sheet(mangesRows);
-  wsManges['!cols'] = [15,20,20,12,12,25,8,8,10,4,20,8,8,8,8,10].map(w => ({ wpx: w * 6 }));
-  XLSX.utils.book_append_sheet(wb, wsManges, 'MANGES');
-  log(`  MANGES: ${mangesCots.length} locales`, 'ok');
+    // ── MANT sheet ──────────────────────────────────────────────────────────
+    const mantRows = [
+      ['DATOS DE LA EMPRESA', null, null, null, null,
+       'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null,
+       'DETALLE DE COSTOS', null, null, null, null, 'OBSERVACION', null],
+      ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO',
+       'EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD',
+       'JEFE DE OPERACIONES QUE AUTORIZA',
+       'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA', null, null]
+    ];
+    const mantCots = cots.filter(c => c.category === 'MANT');
+    mantCots.forEach(c => {
+      const emp = c.empresa || {};
+      mantRows.push([
+        emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
+        c.localCode, c.descripcionFact,
+        '-', '-', '-', null,
+        c.subtotal, c.subtotal, c.iva, c.total,
+        c.notaEntrega || '',
+        c.observacion || 'SOLICITADO POR EL LOCAL', null
+      ]);
+    });
+    const wsMant = XLSX.utils.aoa_to_sheet(mantRows);
+    XLSX.utils.book_append_sheet(wb, wsMant, 'MANT');
 
-  // ── MANT sheet ───────────────────────────────────────────────────────────
-  const mantRows = [
-    ['DATOS DE LA EMPRESA', null, null, null, null,
-     'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null,
-     'DETALLE DE COSTOS', null, null, null, null, 'OBSERVACION', null],
-    ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO',
-     'EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD',
-     'JEFE DE OPERACIONES QUE AUTORIZA',
-     'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA', null, null]
-  ];
+    const nombreArchivo = `DETALLE FACT MENSUAL ${getMesLabel()} - ${hoja}.xlsx`;
+    XLSX.writeFile(wb, nombreArchivo);
+    log(`  ✅ ${nombreArchivo} (MANGES: ${mangesCots.length}, MANT: ${mantCots.length})`, 'ok');
+  }
 
-  const mantCots = cotizaciones.filter(c => c.category === 'MANT');
-  mantCots.forEach(c => {
-    const emp = c.empresa || {};
-    mantRows.push([
-      emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
-      c.localCode,
-      c.descripcionFact,
-      '-', '-', '-', null,
-      c.subtotal, c.subtotal, c.iva, c.total,
-      c.notaEntrega || '',
-      c.observacion || 'SOLICITADO POR EL LOCAL', null
-    ]);
-  });
-
-  const wsMant = XLSX.utils.aoa_to_sheet(mantRows);
-  XLSX.utils.book_append_sheet(wb, wsMant, 'MANT');
-  log(`  MANT: ${mantCots.length} locales`, 'ok');
-
-  XLSX.writeFile(wb, `DETALLE FACT MENSUAL ${getMesLabel()}.xlsx`);
-  log('✅ DETALLE FACT MENSUAL descargado', 'ok');
   markOutput('out1');
 }
 
@@ -2667,7 +2679,7 @@ async function hacerPDF(opts) {
     bloqueAutorizacion(y2);
   }
 
-  doc.save(fileName || 'CERT-'+localCode+'-'+anio+'.pdf');
+  doc.save(fileName || ('CERT-'+localCode+'-'+anio+'.pdf'));
   return doc;
 }
 
@@ -2951,7 +2963,7 @@ async function subirCertGitHub(localCode, anio, mesVal, doc, fileName) {
     headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
   });
   if (check.ok) { const d = await check.json(); sha = d.sha; }
-  const body = { message: `cert: ${localCode} ${mes}-${anio}`, content, branch: GH_BRANCH };
+  const body = { message: `cert: ${fileName}`, content, branch: GH_BRANCH };
   if (sha) body.sha = sha;
   await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
     method: 'PUT',
