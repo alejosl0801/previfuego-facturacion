@@ -1601,6 +1601,16 @@ async function ghCargar() {
     const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
       headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
     });
+    if (r.status === 401) {
+      // Token inválido/expirado — limpiarlo para no reintentar
+      localStorage.removeItem('ghToken');
+      document.getElementById('ghToken').value = '';
+      const st = document.getElementById('ghStatus');
+      if (st) { st.textContent = '⚠️ Token de GitHub inválido o expirado — ingresa uno nuevo en Configuración'; st.style.color = '#e74c3c'; }
+      const ok = localRestore();
+      if (ok) { renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan(); }
+      return;
+    }
     if (!r.ok) {
       // Fallback to localStorage
       const ok = localRestore();
