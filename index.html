@@ -492,7 +492,7 @@
         <input type="number" id="neInicial" value="6700" min="1" style="width:90px;padding:5px" onchange="renderPlan();autosave()" />
       </div>
       <div class="admin-only">
-        <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial Cotiz.</label>
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial Cert.</label>
         <input type="number" id="cotInicial" value="1500" min="1" style="width:90px;padding:5px" onchange="renderPlan();autosave()" />
       </div>
       <div id="planStats" style="font-size:13px;color:#555;font-weight:600"></div>
@@ -1800,7 +1800,7 @@ function renderPlan() {
             </button>${btnNE}
             <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
               onclick="event.stopPropagation();abrirCertModal('${local.codigo}',${cotNum})">
-              📜 Cert #${cotNum}
+              📜 Certificado #${cotNum}
             </button>
           </div>
         </div>
@@ -2689,7 +2689,7 @@ async function generarCertificados() {
     });
     const dispCode = certDisplayCode(cot.localCode);
     const cotNum   = cotBase + i;
-    const certNum  = `COTIZACION${cotNum}`;
+    const certNum  = `CERT. N° ${cotNum}`;
     const fileName = `COTIZACION${cotNum} ${dispCode} ${cot.localName||cot.localCode}.pdf`;
     await hacerPDF({
       localNom:  cot.localName||cot.localCode,
@@ -2914,7 +2914,7 @@ async function generarCertLocal() {
   const localLabel = local.nombre.replace(local.codigo + ' - ', '');
   const dispCode   = certDisplayCode(local.codigo);
   const cotNum     = certModalCotNum;
-  const certNum    = `COTIZACION${cotNum}`;
+  const certNum    = `CERT. N° ${cotNum}`;
   const fileName   = `COTIZACION${cotNum} ${dispCode} ${localLabel}.pdf`;
 
   const doc = await hacerPDF({
