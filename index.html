@@ -1828,6 +1828,11 @@ async function generarNELocal(codigo, neNum) {
     const fechaStr = `${today.getDate()} DE ${MNAMES[today.getMonth()]} DEL ${today.getFullYear()}`;
     ws['I10'] = { t:'s', v: fechaStr };
 
+    // ── Company name & RUC (from empresa data, overrides hardcoded template) ──
+    const emp = local.empresa || {};
+    if (emp.empresa) ws['B10'] = { t:'s', v: emp.empresa };
+    if (emp.ruc)     ws['L11'] = { t:'s', v: emp.ruc };
+
     // ── Service type ─────────────────────────────────────────────────────────
     ws['C13'] = { t:'s', v: local.esRecarga ? 'RECARGA' : 'MANTENIMIENTO' };
 
