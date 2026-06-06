@@ -467,6 +467,10 @@
         <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial NE</label>
         <input type="number" id="neInicial" value="6700" min="1" style="width:90px;padding:5px" onchange="renderPlan()" />
       </div>
+      <div class="admin-only">
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial Cotización</label>
+        <input type="number" id="cotInicial" value="1" min="1" style="width:90px;padding:5px" onchange="renderPlan()" />
+      </div>
       <div id="planStats" style="font-size:13px;color:#555;font-weight:600"></div>
     </div>
     <div id="loadStatus"></div>
@@ -1369,7 +1373,8 @@ function buildPayload() {
     })),
     facturaMap,
     visitaStatus,
-    neInicial: parseInt(document.getElementById('neInicial')?.value) || 6700
+    neInicial:  parseInt(document.getElementById('neInicial')?.value)  || 6700,
+    cotInicial: parseInt(document.getElementById('cotInicial')?.value) || 1
   };
 }
 
@@ -1392,6 +1397,10 @@ function localRestore() {
     if (json.neInicial) {
       const inp = document.getElementById('neInicial');
       if (inp) inp.value = json.neInicial;
+    }
+    if (json.cotInicial) {
+      const inp = document.getElementById('cotInicial');
+      if (inp) inp.value = json.cotInicial;
     }
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
@@ -1626,10 +1635,11 @@ function renderPlan() {
 
   // Filtro de búsqueda
   const q = (document.getElementById('planSearch')?.value || '').toUpperCase().trim();
-  const neBase = parseInt(document.getElementById('neInicial')?.value) || 6700;
+  const neBase  = parseInt(document.getElementById('neInicial')?.value)  || 6700;
+  const cotBase = parseInt(document.getElementById('cotInicial')?.value) || 1;
 
   const visibles = planMes
-    .map((local, idx) => ({ local, neNum: neBase + idx }))
+    .map((local, idx) => ({ local, neNum: neBase + idx, cotNum: cotBase + idx }))
     .filter(({ local }) => !q ||
       local.codigo.toUpperCase().includes(q) ||
       String(local.nombre).toUpperCase().includes(q) ||
@@ -1640,7 +1650,7 @@ function renderPlan() {
     return;
   }
 
-  function buildCard({ local, neNum }) {
+  function buildCard({ local, neNum, cotNum }) {
     const status     = visitaStatus[local.codigo] || 'pendiente';
     const isVisitado = status === 'visitado';
     const iva        = parseFloat((local.cobro * 0.15).toFixed(2));
@@ -1676,7 +1686,7 @@ function renderPlan() {
               ${isVisitado ? '↩ Pendiente' : '✅ Visitado'}
             </button>${btnNE}
             <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
-              onclick="event.stopPropagation();abrirCertModal('${local.codigo}')">
+              onclick="event.stopPropagation();abrirCertModal('${local.codigo}',${cotNum})">
               📜 Generar Certificado
             </button>
           </div>
@@ -1938,84 +1948,86 @@ function getMesLabel() {
 
 function generarDetalle() {
   log('Generando DETALLE FACT MENSUAL...');
-  const wb = XLSX.utils.book_new();
 
-  // ── MANGES sheet ──────────────────────────────────────────────────────────
-  const mangesRows = [
-    ['DATOS DE LA EMPRESA', null, null, null, null,
-     'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null, null,
-     'DETALLE DE COSTOS', null, null, null, null],
-    ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO',
-     'EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R',
-     'JEFE DE OPERACIONES QUE AUTORIZA',
-     'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
-  ];
+  // Agrupar cotizaciones por empresa (hoja)
+  const porEmpresa = {};
+  cotizaciones.forEach(c => {
+    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+    if (!porEmpresa[hoja]) porEmpresa[hoja] = [];
+    porEmpresa[hoja].push(c);
+  });
 
-  const mangesCots = cotizaciones.filter(c => c.category === 'MANGES');
-  mangesCots.forEach(c => {
-    const emp = c.empresa || {};
-    const extItems = c.items.filter(i => i.isExtintor);
-    // First row: with empresa info + totals
-    const first = extItems[0];
-    mangesRows.push([
-      emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
-      c.localCode,
-      null,
-      first ? first.qty : 1,
-      first ? first.tipo : '-',
-      first ? first.capacidad : '-',
-      'M', null,
-      first ? first.unitPrice : 0,
-      c.subtotal, c.iva, c.total,
-      c.notaEntrega || ''
-    ]);
-    // Remaining items
-    for (let i = 1; i < extItems.length; i++) {
-      const item = extItems[i];
+  for (const [hoja, cots] of Object.entries(porEmpresa)) {
+    const wb = XLSX.utils.book_new();
+
+    // ── MANGES sheet ────────────────────────────────────────────────────────
+    const mangesRows = [
+      ['DATOS DE LA EMPRESA', null, null, null, null,
+       'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null, null,
+       'DETALLE DE COSTOS', null, null, null, null],
+      ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO',
+       'EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R',
+       'JEFE DE OPERACIONES QUE AUTORIZA',
+       'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
+    ];
+    const mangesCots = cots.filter(c => c.category === 'MANGES');
+    mangesCots.forEach(c => {
+      const emp = c.empresa || {};
+      const extItems = c.items.filter(i => i.isExtintor);
+      const first = extItems[0];
       mangesRows.push([
-        null, null, null, null, null, null,
-        item.qty, item.tipo, item.capacidad, 'M', null,
-        item.unitPrice, null, null, null, null
+        emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
+        c.localCode, null,
+        first ? first.qty : 1,
+        first ? first.tipo : '-',
+        first ? first.capacidad : '-',
+        'M', null,
+        first ? first.unitPrice : 0,
+        c.subtotal, c.iva, c.total, c.notaEntrega || ''
       ]);
-    }
-  });
+      for (let i = 1; i < extItems.length; i++) {
+        const item = extItems[i];
+        mangesRows.push([
+          null, null, null, null, null, null,
+          item.qty, item.tipo, item.capacidad, 'M', null,
+          item.unitPrice, null, null, null, null
+        ]);
+      }
+    });
+    const wsManges = XLSX.utils.aoa_to_sheet(mangesRows);
+    wsManges['!cols'] = [15,20,20,12,12,25,8,8,10,4,20,8,8,8,8,10].map(w => ({ wpx: w * 6 }));
+    XLSX.utils.book_append_sheet(wb, wsManges, 'MANGES');
 
-  const wsManges = XLSX.utils.aoa_to_sheet(mangesRows);
-  wsManges['!cols'] = [15,20,20,12,12,25,8,8,10,4,20,8,8,8,8,10].map(w => ({ wpx: w * 6 }));
-  XLSX.utils.book_append_sheet(wb, wsManges, 'MANGES');
-  log(`  MANGES: ${mangesCots.length} locales`, 'ok');
+    // ── MANT sheet ──────────────────────────────────────────────────────────
+    const mantRows = [
+      ['DATOS DE LA EMPRESA', null, null, null, null,
+       'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null,
+       'DETALLE DE COSTOS', null, null, null, null, 'OBSERVACION', null],
+      ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO',
+       'EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD',
+       'JEFE DE OPERACIONES QUE AUTORIZA',
+       'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA', null, null]
+    ];
+    const mantCots = cots.filter(c => c.category === 'MANT');
+    mantCots.forEach(c => {
+      const emp = c.empresa || {};
+      mantRows.push([
+        emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
+        c.localCode, c.descripcionFact,
+        '-', '-', '-', null,
+        c.subtotal, c.subtotal, c.iva, c.total,
+        c.notaEntrega || '',
+        c.observacion || 'SOLICITADO POR EL LOCAL', null
+      ]);
+    });
+    const wsMant = XLSX.utils.aoa_to_sheet(mantRows);
+    XLSX.utils.book_append_sheet(wb, wsMant, 'MANT');
 
-  // ── MANT sheet ───────────────────────────────────────────────────────────
-  const mantRows = [
-    ['DATOS DE LA EMPRESA', null, null, null, null,
-     'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null,
-     'DETALLE DE COSTOS', null, null, null, null, 'OBSERVACION', null],
-    ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO',
-     'EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD',
-     'JEFE DE OPERACIONES QUE AUTORIZA',
-     'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA', null, null]
-  ];
+    const nombreArchivo = `DETALLE FACT MENSUAL ${getMesLabel()} - ${hoja}.xlsx`;
+    XLSX.writeFile(wb, nombreArchivo);
+    log(`  ✅ ${nombreArchivo} (MANGES: ${mangesCots.length}, MANT: ${mantCots.length})`, 'ok');
+  }
 
-  const mantCots = cotizaciones.filter(c => c.category === 'MANT');
-  mantCots.forEach(c => {
-    const emp = c.empresa || {};
-    mantRows.push([
-      emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
-      c.localCode,
-      c.descripcionFact,
-      '-', '-', '-', null,
-      c.subtotal, c.subtotal, c.iva, c.total,
-      c.notaEntrega || '',
-      c.observacion || 'SOLICITADO POR EL LOCAL', null
-    ]);
-  });
-
-  const wsMant = XLSX.utils.aoa_to_sheet(mantRows);
-  XLSX.utils.book_append_sheet(wb, wsMant, 'MANT');
-  log(`  MANT: ${mantCots.length} locales`, 'ok');
-
-  XLSX.writeFile(wb, `DETALLE FACT MENSUAL ${getMesLabel()}.xlsx`);
-  log('✅ DETALLE FACT MENSUAL descargado', 'ok');
   markOutput('out1');
 }
 
@@ -2131,6 +2143,7 @@ function generarFormatoFact() {
 
 // ─── CERTIFICADOS PDF ─────────────────────────────────────────────────────────
 let certModalCodigo = null;
+let certModalCotNum = 1;
 let certFotos = {};       // { antes: File, despues: File, cilindro: File }
 let certHayNovedades = false;
 let certAccsSelected = new Set();  // indices into ACCESSORIES
@@ -2168,7 +2181,7 @@ async function fetchLogo() {
 }
 
 async function hacerPDF(opts) {
-  const { localNom, puntNom, localCode, exts, FB64, ACCS, certNum, MA, MAS, anio } = opts;
+  const { localNom, puntNom, localCode, exts, FB64, ACCS, certNum, MA, MAS, anio, fileName } = opts;
   if (!window.jspdf || !window.jspdf.jsPDF) { alert('jsPDF no cargado'); return; }
   const { jsPDF } = window.jspdf;
   const LOGO_B64 = await fetchLogo();
@@ -2423,7 +2436,7 @@ async function hacerPDF(opts) {
     bloqueAutorizacion(y2);
   }
 
-  doc.save('CERT-'+localCode+'-'+anio+'.pdf');
+  doc.save(fileName || ('CERT-'+localCode+'-'+anio+'.pdf'));
   return doc;
 }
 
@@ -2460,10 +2473,11 @@ async function generarCertificados() {
   markOutput('out4');
 }
 
-function abrirCertModal(codigo) {
+function abrirCertModal(codigo, cotNum) {
   const local = planMes.find(l=>l.codigo===codigo);
   if (!local) return;
   certModalCodigo = codigo;
+  certModalCotNum = cotNum || 1;
   certFotos = {}; certHayNovedades = false; certAccsSelected = new Set();
   document.getElementById('certModalTitle').textContent =
     codigo+' — '+local.nombre.replace(codigo+' - ','');
@@ -2660,8 +2674,12 @@ async function generarCertLocal() {
     ? [...certAccsSelected].map(i => ({ desc: ACCESSORIES[i].desc }))
     : [];
 
+  const localNom    = local.nombre.replace(local.codigo+' - ','');
+  const displayCode = (local.marca || '').replace(/\s+/g,'') + local.codigo;
+  const fileName    = `COTIZACION${certModalCotNum} ${displayCode} ${localNom}.pdf`;
+
   const doc = await hacerPDF({
-    localNom:  local.nombre.replace(local.codigo+' - ',''),
+    localNom,
     puntNom:   local.nombre,
     localCode: local.codigo,
     exts: local.extintores.map(e=>({tipo:e.tipo,cap:e.cap})),
@@ -2672,19 +2690,21 @@ async function generarCertLocal() {
     MAS: mesNum+'/'+(parseInt(anio)+1),
     anio,
     tipoServ: tipoServSel,
+    fileName,
   });
 
-  try { if (doc) await subirCertGitHub(local.codigo, anio, mesVal, doc); } catch(e) { console.warn('subirCert:', e); }
+  try { if (doc) await subirCertGitHub(fileName, mesVal, doc); } catch(e) { console.warn('subirCert:', e); }
 
   cerrarCertModal();
 }
 
-// Sube el PDF del certificado a GitHub: certificados/[MES]-[ANIO]/CERT-[CODIGO]-[ANIO].pdf
-async function subirCertGitHub(localCode, anio, mesVal, doc) {
+// Sube el PDF del certificado a GitHub: certificados/[MES]-[ANIO]/[fileName]
+async function subirCertGitHub(fileName, mesVal, doc) {
   const token = getGhToken();
   if (!token) return;
-  const mes = MESES_NOMBRE[mesVal];
-  const path = `certificados/${mes}-${anio}/CERT-${localCode}-${anio}.pdf`;
+  const anio = document.getElementById('selAnio').value;
+  const mes  = MESES_NOMBRE[mesVal];
+  const path = `certificados/${mes}-${anio}/${fileName}`;
   // jsPDF → base64 (sin el prefijo data:)
   const content = doc.output('datauristring').split(',')[1];
   let sha = null;
@@ -2692,7 +2712,7 @@ async function subirCertGitHub(localCode, anio, mesVal, doc) {
     headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
   });
   if (check.ok) { const d = await check.json(); sha = d.sha; }
-  const body = { message: `cert: ${localCode} ${mes}-${anio}`, content, branch: GH_BRANCH };
+  const body = { message: `cert: ${fileName}`, content, branch: GH_BRANCH };
   if (sha) body.sha = sha;
   await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
     method: 'PUT',
