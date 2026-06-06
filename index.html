@@ -489,7 +489,11 @@
     <div class="plan-stats">
       <div class="admin-only">
         <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial NE</label>
-        <input type="number" id="neInicial" value="6700" min="1" style="width:90px;padding:5px" onchange="renderPlan()" />
+        <input type="number" id="neInicial" value="6700" min="1" style="width:90px;padding:5px" onchange="renderPlan();autosave()" />
+      </div>
+      <div class="admin-only">
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial Cotiz.</label>
+        <input type="number" id="cotInicial" value="1500" min="1" style="width:90px;padding:5px" onchange="renderPlan();autosave()" />
       </div>
       <div id="planStats" style="font-size:13px;color:#555;font-weight:600"></div>
     </div>
@@ -819,6 +823,14 @@
 </div>
 
 <script>
+// Desregistrar cualquier Service Worker obsoleto (evita errores de Cache API)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(r => r.unregister());
+  });
+  caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+}
+
 // ─── DATOS GLOBALES ───────────────────────────────────────────────────────────
 const MESES_NOMBRE = {
   '01 ENERO':'ENERO','02 FEBRERO':'FEBRERO','03 MARZO':'MARZO',
@@ -1427,7 +1439,9 @@ function buildPayload() {
     })),
     facturaMap,
     visitaStatus,
-    neInicial: parseInt(document.getElementById('neInicial')?.value) || 6700
+    extOverrides,
+    neInicial:  parseInt(document.getElementById('neInicial')?.value)  || 6700,
+    cotInicial: parseInt(document.getElementById('cotInicial')?.value) || 1500
   };
 }
 
@@ -1445,11 +1459,19 @@ function localRestore() {
     const raw = localStorage.getItem(lsKey());
     if (!raw) return false;
     const json = JSON.parse(raw);
-    facturaMap = json.facturaMap || {};
+    facturaMap   = json.facturaMap   || {};
     visitaStatus = json.visitaStatus || {};
+    if (json.extOverrides) {
+      extOverrides = json.extOverrides;
+      localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
+    }
     if (json.neInicial) {
       const inp = document.getElementById('neInicial');
       if (inp) inp.value = json.neInicial;
+    }
+    if (json.cotInicial) {
+      const inp = document.getElementById('cotInicial');
+      if (inp) inp.value = json.cotInicial;
     }
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
@@ -1473,7 +1495,6 @@ async function ghGuardar(silent = false) {
   const token = getGhToken();
   const st = document.getElementById('ghStatus');
   if (!token) return;
-  if (!cotizaciones.length) return;
 
   const path = ghFilePath();
   const payload = buildPayload();
@@ -1491,8 +1512,9 @@ async function ghGuardar(silent = false) {
     }
 
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+    const notasTxt = cotizaciones.length ? ` · ${cotizaciones.length} notas` : '';
     const body = {
-      message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio} (${cotizaciones.length} notas)`,
+      message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio}${notasTxt}`,
       content,
       branch: GH_BRANCH
     };
@@ -1510,7 +1532,7 @@ async function ghGuardar(silent = false) {
 
     if (r.ok) {
       if (st) st.innerHTML =
-        `<span style="color:green">✅ Guardado en la nube (${cotizaciones.length} notas) · ${new Date().toLocaleTimeString()}</span>`;
+        `<span style="color:green">✅ Guardado en la nube${notasTxt} · ${new Date().toLocaleTimeString()}</span>`;
     } else {
       const err = await r.json();
       throw new Error(err.message || r.status);
@@ -1546,13 +1568,23 @@ async function ghCargar() {
     const data = await r.json();
     const json = JSON.parse(decodeURIComponent(escape(atob(data.content))));
 
-    facturaMap = json.facturaMap || {};
-    visitaStatus = json.visitaStatus || {};
+    facturaMap    = json.facturaMap    || {};
+    visitaStatus  = json.visitaStatus  || {};
+    extOverrides  = json.extOverrides  || {};
+    localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
       empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
       notaEntrega: c.notaEntrega || ''
     }));
+    if (json.neInicial) {
+      const inp = document.getElementById('neInicial');
+      if (inp) inp.value = json.neInicial;
+    }
+    if (json.cotInicial) {
+      const inp = document.getElementById('cotInicial');
+      if (inp) inp.value = json.cotInicial;
+    }
 
     renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan();
     const gs = document.getElementById('ghStatus');
@@ -1687,10 +1719,11 @@ function renderPlan() {
 
   // Filtro de búsqueda
   const q = (document.getElementById('planSearch')?.value || '').toUpperCase().trim();
-  const neBase = parseInt(document.getElementById('neInicial')?.value) || 6700;
+  const neBase  = parseInt(document.getElementById('neInicial')?.value)  || 6700;
+  const cotBase = parseInt(document.getElementById('cotInicial')?.value) || 1500;
 
   const visibles = planMes
-    .map((local, idx) => ({ local, neNum: neBase + idx }))
+    .map((local, idx) => ({ local, neNum: neBase + idx, cotNum: cotBase + idx }))
     .filter(({ local }) => !q ||
       local.codigo.toUpperCase().includes(q) ||
       String(local.nombre).toUpperCase().includes(q) ||
@@ -1701,7 +1734,7 @@ function renderPlan() {
     return;
   }
 
-  function buildCard({ local, neNum }) {
+  function buildCard({ local, neNum, cotNum }) {
     const status     = visitaStatus[local.codigo] || 'pendiente';
     const isVisitado = status === 'visitado';
     const iva        = parseFloat((local.cobro * 0.15).toFixed(2));
@@ -1737,8 +1770,8 @@ function renderPlan() {
               ${isVisitado ? '↩ Pendiente' : '✅ Visitado'}
             </button>${btnNE}
             <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
-              onclick="event.stopPropagation();abrirCertModal('${local.codigo}')">
-              📜 Generar Certificado
+              onclick="event.stopPropagation();abrirCertModal('${local.codigo}',${cotNum})">
+              📜 Cert #${cotNum}
             </button>
           </div>
         </div>
@@ -1944,11 +1977,11 @@ function guardarEditExt() {
   const rows = _leerFilasEditExt();
   extOverrides[_editExtCodigo] = rows;
   localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
-  // Actualizar el local en planMes para reflejo inmediato
   const local = planMes.find(l => l.codigo === _editExtCodigo);
   if (local) local.extintores = rows;
   cerrarEditExtModal();
   renderPlan();
+  autosave();
   log(`✅ Extintores de ${_editExtCodigo} actualizados (${rows.length} exts)`, 'ok');
 }
 
@@ -1961,6 +1994,7 @@ function resetEditExt() {
   if (local) local.extintores = _editExtOriginal.slice();
   cerrarEditExtModal();
   renderPlan();
+  autosave();
   log(`🔄 Extintores de ${_editExtCodigo} restaurados desde la BD`, 'ok');
 }
 
@@ -2296,10 +2330,18 @@ function generarFormatoFact() {
 
 // ─── CERTIFICADOS PDF ─────────────────────────────────────────────────────────
 let certModalCodigo = null;
+let certModalCotNum = 0;   // número de cotización para el cert activo
 let certFotos = {};       // { antes: File, despues: File, cilindro: File }
 let certHayNovedades = false;
 let certAccsSelected = new Set();  // indices into ACCESSORIES
 let sigCtx = null, sigDrawing = false;
+
+// Reconstruye el código de display: K76→KFCK76, G49→GUSG49, resto igual
+function certDisplayCode(cod) {
+  if (/^K\d/.test(cod)) return 'KFCK' + cod.slice(1);
+  if (/^G\d/.test(cod)) return 'GUSG' + cod.slice(1);
+  return cod;
+}
 
 const ACCESSORIES = [
   { desc: 'Abrazadera plástica',   precio: 1.50 },
@@ -2333,7 +2375,7 @@ async function fetchLogo() {
 }
 
 async function hacerPDF(opts) {
-  const { localNom, puntNom, localCode, exts, FB64, ACCS, certNum, MA, MAS, anio } = opts;
+  const { localNom, puntNom, localCode, exts, FB64, ACCS, certNum, MA, MAS, anio, fileName } = opts;
   if (!window.jspdf || !window.jspdf.jsPDF) { alert('jsPDF no cargado'); return; }
   const { jsPDF } = window.jspdf;
   const LOGO_B64 = await fetchLogo();
@@ -2588,7 +2630,7 @@ async function hacerPDF(opts) {
     bloqueAutorizacion(y2);
   }
 
-  doc.save('CERT-'+localCode+'-'+anio+'.pdf');
+  doc.save(fileName || 'CERT-'+localCode+'-'+anio+'.pdf');
   return doc;
 }
 
@@ -2601,18 +2643,24 @@ async function generarCertificados() {
   const anio   = document.getElementById('selAnio').value;
   const mesNum = mesVal.substring(0,2);
 
+  const cotBase = parseInt(document.getElementById('cotInicial')?.value) || 1500;
   let count = 0;
-  for (const cot of mangesCots) {
+  for (const [i, cot] of mangesCots.entries()) {
     const exts = [];
-    (cot.items||[]).filter(i=>i.isExtintor).forEach(i => {
-      for (let q=0;q<(i.qty||1);q++) exts.push({tipo:i.tipo, cap:i.capacidad||i.cap||'—'});
+    (cot.items||[]).filter(it=>it.isExtintor).forEach(it => {
+      for (let q=0;q<(it.qty||1);q++) exts.push({tipo:it.tipo, cap:it.capacidad||it.cap||'—'});
     });
+    const dispCode = certDisplayCode(cot.localCode);
+    const cotNum   = cotBase + i;
+    const certNum  = `COTIZACION${cotNum}`;
+    const fileName = `COTIZACION${cotNum} ${dispCode} ${cot.localName||cot.localCode}.pdf`;
     await hacerPDF({
       localNom:  cot.localName||cot.localCode,
       puntNom:   cot.ciudad||cot.localName||'',
       localCode: cot.localCode,
       exts, FB64:{}, ACCS:[],
-      certNum:   cot.localCode+'-MANT EXTINTORES-'+anio,
+      certNum,
+      fileName,
       MA:  mesNum+'/'+anio,
       MAS: mesNum+'/'+(parseInt(anio)+1),
       anio,
@@ -2625,10 +2673,11 @@ async function generarCertificados() {
   markOutput('out4');
 }
 
-function abrirCertModal(codigo) {
+function abrirCertModal(codigo, cotNum) {
   const local = planMes.find(l=>l.codigo===codigo);
   if (!local) return;
   certModalCodigo = codigo;
+  certModalCotNum = cotNum || (parseInt(document.getElementById('cotInicial')?.value) || 1500);
   certFotos = {}; certHayNovedades = false; certAccsSelected = new Set();
   document.getElementById('certModalTitle').textContent =
     codigo+' — '+local.nombre.replace(codigo+' - ','');
@@ -2825,31 +2874,39 @@ async function generarCertLocal() {
     ? [...certAccsSelected].map(i => ({ desc: ACCESSORIES[i].desc }))
     : [];
 
+  const localLabel = local.nombre.replace(local.codigo + ' - ', '');
+  const dispCode   = certDisplayCode(local.codigo);
+  const cotNum     = certModalCotNum;
+  const certNum    = `COTIZACION${cotNum}`;
+  const fileName   = `COTIZACION${cotNum} ${dispCode} ${localLabel}.pdf`;
+
   const doc = await hacerPDF({
-    localNom:  local.nombre.replace(local.codigo+' - ',''),
+    localNom:  localLabel,
     puntNom:   local.nombre,
     localCode: local.codigo,
     exts: local.extintores.map(e=>({tipo:e.tipo,cap:e.cap})),
     FB64,
     ACCS: ACCS_SEL,
-    certNum: local.codigo+'-'+tipoLabel+' EXTINTORES-'+anio,
+    certNum,
+    fileName,
     MA:  mesNum+'/'+anio,
     MAS: mesNum+'/'+(parseInt(anio)+1),
     anio,
     tipoServ: tipoServSel,
   });
 
-  try { if (doc) await subirCertGitHub(local.codigo, anio, mesVal, doc); } catch(e) { console.warn('subirCert:', e); }
+  try { if (doc) await subirCertGitHub(local.codigo, anio, mesVal, doc, fileName); } catch(e) { console.warn('subirCert:', e); }
 
   cerrarCertModal();
 }
 
-// Sube el PDF del certificado a GitHub: certificados/[MES]-[ANIO]/CERT-[CODIGO]-[ANIO].pdf
-async function subirCertGitHub(localCode, anio, mesVal, doc) {
+// Sube el PDF del certificado a GitHub: certificados/[MES]-[ANIO]/COTIZACION{num} {CODE} {LOCAL}.pdf
+async function subirCertGitHub(localCode, anio, mesVal, doc, fileName) {
   const token = getGhToken();
   if (!token) return;
   const mes = MESES_NOMBRE[mesVal];
-  const path = `certificados/${mes}-${anio}/CERT-${localCode}-${anio}.pdf`;
+  const name = fileName || `CERT-${localCode}-${anio}.pdf`;
+  const path = `certificados/${mes}-${anio}/${name}`;
   // jsPDF → base64 (sin el prefijo data:)
   const content = doc.output('datauristring').split(',')[1];
   let sha = null;
@@ -2912,9 +2969,15 @@ function init() {
 
   const hoy = new Date();
   const mesActual = String(hoy.getMonth() + 1).padStart(2, '0');
+  const mesNum    = parseInt(mesActual);
   const selMes = document.getElementById('selMes');
   const opt = Array.from(selMes.options).find(o => o.value.startsWith(mesActual));
   if (opt) selMes.value = opt.value;
+
+  // Auto-calcular número inicial de cotización: base 1200 + mes*50 (sólo si no hay valor guardado)
+  const cotInicialAuto = 1200 + mesNum * 50;
+  const cotInicialInp  = document.getElementById('cotInicial');
+  if (cotInicialInp) cotInicialInp.value = cotInicialAuto; // se sobreescribe si hay sesión guardada
   const anioActual = String(hoy.getFullYear());
   const selAnio = document.getElementById('selAnio');
   if (Array.from(selAnio.options).some(o => o.value === anioActual)) selAnio.value = anioActual;
