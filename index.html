@@ -619,21 +619,34 @@
   <!-- ════════════ SECCIÓN: BASE DE DATOS (admin) ════════════ -->
   <div class="app-section admin-only" id="sec-bd" style="display:none">
     <div class="section-title">🗄️ Base de Datos</div>
-    <div class="section-desc">Consulta y descarga la base de datos consolidada de extintores del Grupo KFC.</div>
+    <div class="section-desc">Consulta y descarga las bases de datos consolidadas de extintores.</div>
 
     <div class="card">
       <div class="card-body">
-        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-          <div style="background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px;padding:20px;flex:1;min-width:240px;text-align:center;">
-            <div style="font-size:36px;margin-bottom:8px;">📊</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:stretch">
+          <div style="background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px;padding:20px;flex:1;min-width:220px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:8px;">📊</div>
             <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS KFC</div>
             <div style="font-size:12px;color:#666;margin-bottom:14px;">
-              210 locales · 968 extintores<br>
-              2 hojas: Detalle, Resumen Locales<br>
-              Precios MANTT y RECARGA por extintor
+              197 locales · 906 extintores<br>
+              KFC · GUS · CINNABON · BASKIN · IL CAPPO<br>
+              SHEMLON · TROPIBURGER · JUAN VALDEZ · otros
             </div>
             <a href="BASE_DATOS_KFC.xlsx" download="BASE_DATOS_KFC.xlsx"
                style="display:inline-block;background:#1F4E79;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
+              ⬇️ Descargar Excel
+            </a>
+          </div>
+          <div style="background:#f5f0ff;border:1px solid #c8a8f0;border-radius:8px;padding:20px;flex:1;min-width:220px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:8px;">🍣</div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS SUSHICORP</div>
+            <div style="font-size:12px;color:#666;margin-bottom:14px;">
+              13 locales · 62 extintores<br>
+              KOBE · NOE (KN01–KN13)<br>
+              Misma estructura: RESUMEN + DETALLE
+            </div>
+            <a href="BASE_DATOS_SUSHICORP.xlsx" download="BASE_DATOS_SUSHICORP.xlsx"
+               style="display:inline-block;background:#6c3483;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
               ⬇️ Descargar Excel
             </a>
           </div>
@@ -1105,6 +1118,12 @@ function applyPerfil() {
 
 // ─── CAMBIO DE MES ────────────────────────────────────────────────────────────
 function onMonthChange() {
+  // Recalcular cotInicial por defecto según el nuevo mes (solo si no hay sesión guardada para ese mes)
+  const mesVal = document.getElementById('selMes').value;
+  const mesNum = parseInt(mesVal.substring(0, 2));
+  const cotInicialInp = document.getElementById('cotInicial');
+  if (cotInicialInp) cotInicialInp.value = 1200 + mesNum * 50;
+
   if (!cotizaciones.length) localRestore();
   cargarPlan();
   renderTabla();
@@ -1627,48 +1646,58 @@ async function cargarPlan() {
   const anio    = document.getElementById('selAnio').value;
 
   document.getElementById('planContainer').innerHTML =
-    '<p style="color:#999;font-size:13px">Cargando base de datos…</p>';
+    '<p style="color:#999;font-size:13px">Cargando bases de datos…</p>';
+
+  // Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
+  const CN_TO_BS_MAP = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
+  function normCode(raw) {
+    const m = String(raw).match(/^([A-Z]+)(\d+)/);
+    if (!m) return raw;
+    const n = m[1] + String(parseInt(m[2])).padStart(3, '0');
+    return CN_TO_BS_MAP[n] || n;
+  }
+
+  // Extrae resumen + detalle de un workbook y los acumula en los arrays dados
+  function parseWB(wb, resumenArr, extMap) {
+    const wsRes = wb.Sheets['RESUMEN_LOCALES'];
+    const wsDet = wb.Sheets['DETALLE'];
+    if (wsRes) {
+      const rows = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
+      rows.slice(1).forEach(r => {
+        if (r[0] && !String(r[0]).toUpperCase().startsWith('GRAN')) resumenArr.push(r);
+      });
+    }
+    if (wsDet) {
+      const rows = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
+      rows.slice(1).forEach(r => {
+        if (!r[1] || r[2] !== mesNom) return;
+        const mx = String(r[1]).match(/^([A-Z]+\d+)/);
+        if (!mx) return;
+        const cod = normCode(mx[1]);
+        if (!extMap[cod]) extMap[cod] = [];
+        extMap[cod].push({ tipo: r[4], cap: r[5], costoMantt: r[6], precioRec: r[7], anioRec: r[9] });
+      });
+    }
+  }
 
   try {
-    const resp = await fetch(`BASE_DATOS_KFC.xlsx?t=${Date.now()}`);
-    const buf  = await resp.arrayBuffer();
-    const wb   = XLSX.read(buf, { type: 'array' });
+    const t = Date.now();
+    // Cargar ambos Excel en paralelo; SUSHICORP puede no existir → se ignora el error
+    const [bufKFC, bufSUS] = await Promise.all([
+      fetch(`BASE_DATOS_KFC.xlsx?t=${t}`).then(r => r.arrayBuffer()),
+      fetch(`BASE_DATOS_SUSHICORP.xlsx?t=${t}`).then(r => r.arrayBuffer()).catch(() => null),
+    ]);
 
-    // RESUMEN: CÓDIGO, MARCA, NOMBRE_LOCAL, MES_SERVICIO, N_EXTINTORES,
-    //          TOTAL_MANTT, TOTAL_RECARGA, COBRO_ANUAL, AÑO_ULT_RECARGA, AÑO_RECARGA
-    const wsRes = wb.Sheets['RESUMEN_LOCALES'];
-    const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
+    const resumenAll = [];
+    const extMap     = {};
 
-    // DETALLE: MARCA, NOMBRE_LOCAL, MES_SERVICIO, UBICACIÓN, TIPO, CAPACIDAD,
-    //          COSTO_MANTT, PRECIO_RECARGA, AÑO_ULT_RECARGA, AÑO_RECARGA
-    const wsDet  = wb.Sheets['DETALLE'];
-    const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
+    parseWB(XLSX.read(bufKFC, { type: 'array' }), resumenAll, extMap);
+    if (bufSUS) parseWB(XLSX.read(bufSUS, { type: 'array' }), resumenAll, extMap);
 
-    // Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
-    // Ej: "BS04"→"BS004", "CN31"→"BS031"
-    const CN_TO_BS_MAP = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
-    function normCode(raw) {
-      const m = String(raw).match(/^([A-Z]+)(\d+)/);
-      if (!m) return raw;
-      const n = m[1] + String(parseInt(m[2])).padStart(3, '0');
-      return CN_TO_BS_MAP[n] || n;
-    }
+    extMapBD = extMap;
 
-    // Build extintor map by local code
-    const extMap = {};
-    detalle.slice(1).forEach(r => {
-      if (!r[1] || r[2] !== mesNom) return;
-      const m = String(r[1]).match(/^([A-Z]+\d+)/);
-      if (!m) return;
-      const cod = normCode(m[1]);
-      if (!extMap[cod]) extMap[cod] = [];
-      extMap[cod].push({ tipo: r[4], cap: r[5], costoMantt: r[6], precioRec: r[7], anioRec: r[9] });
-    });
-
-    extMapBD = extMap; // guardar referencia para restaurar desde modal
-
-    planMes = resumen.slice(1)
-      .filter(r => r[0] && r[3] === mesNom)
+    planMes = resumenAll
+      .filter(r => r[3] === mesNom)
       .map(r => {
         const cod = normCode(String(r[0]));
         const anioRec = parseInt(r[9]) || 9999;
@@ -1823,14 +1852,22 @@ function renderBD() {
     cont.innerHTML = '<p style="color:#999;font-size:13px">Sin locales para este mes.</p>';
     return;
   }
-  let html = `<table><thead><tr>
+  const totalExt = planMes.reduce((s, l) => s + (l.nExt || 0), 0);
+  const totalCobro = planMes.reduce((s, l) => s + l.cobro, 0);
+  let html = `<div style="font-size:12px;color:#555;margin-bottom:8px">
+    <strong>${planMes.length}</strong> locales · <strong>${totalExt}</strong> extintores ·
+    Total cobro: <strong>$${totalCobro.toFixed(2)}</strong>
+  </div>`;
+  html += `<table><thead><tr>
     <th>Código</th><th>Local</th><th>Marca</th><th>Extintores</th>
     <th>Servicio</th><th>Cobro</th></tr></thead><tbody>`;
   html += planMes.map(l => {
     const ext = l.extintores.map(e => `${e.tipo} ${e.cap}`).join(', ');
     const serv = l.esRecarga ? `RECARGA ${l.anioRec}` : 'MANTENIMIENTO';
-    return `<tr>
-      <td><strong>${l.codigo}</strong></td>
+    const isSushi = l.codigo.startsWith('KN');
+    const rowBg = isSushi ? 'background:#fdf5ff' : '';
+    return `<tr style="${rowBg}">
+      <td><strong>${l.codigo}</strong>${isSushi ? ' <span style="font-size:9px;background:#6c3483;color:white;border-radius:3px;padding:1px 4px">SUSHI</span>' : ''}</td>
       <td>${l.nombre.replace(l.codigo+' - ','')}</td>
       <td>${l.marca}</td>
       <td style="font-size:11px">${ext || '—'}</td>
