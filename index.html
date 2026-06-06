@@ -5,14 +5,27 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <script>
-// Auto-reload si el browser tiene versión vieja en caché
-(function(){
-  var ESTA_VERSION = 'v20260606-005';
-  var VER_URL = 'https://raw.githubusercontent.com/alejosl0801/previfuego-facturacion/main/version.txt?t=' + Date.now();
-  fetch(VER_URL).then(function(r){ return r.text(); }).then(function(v){
-    if(v.trim() !== ESTA_VERSION) { location.reload(true); }
-  }).catch(function(){});
-})();
+// Registrar Service Worker para garantizar siempre la versión más nueva
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/previfuego-facturacion/sw.js')
+    .then(function(reg) {
+      // Si hay una nueva versión esperando, activarla de inmediato
+      if (reg.waiting) { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); }
+      reg.addEventListener('updatefound', function() {
+        var nuevo = reg.installing;
+        nuevo.addEventListener('statechange', function() {
+          if (nuevo.state === 'installed' && navigator.serviceWorker.controller) {
+            location.reload(true);
+          }
+        });
+      });
+    });
+  // Recargar cuando el SW toma control (primera instalación)
+  var refrescado = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (!refrescado) { refrescado = true; location.reload(true); }
+  });
+}
 </script>
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
