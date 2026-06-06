@@ -1593,15 +1593,17 @@ async function cargarPlan() {
         const cod = normCode(String(r[0]));
         const anioRec = parseInt(r[9]) || 9999;
         const esRecarga = parseInt(anio) === anioRec;
+        const totalMantt   = parseFloat(r[5]) || 0;
+        const totalRecarga = parseFloat(r[6]) || 0;
         return {
           codigo: cod,
           marca: r[1],
           nombre: String(r[2] || cod),
           mes: r[3],
           nExt: r[4] || 0,
-          totalMantt: parseFloat(r[5]) || 0,
-          totalRecarga: parseFloat(r[6]) || 0,
-          cobro: parseFloat(r[7]) || 0,
+          totalMantt,
+          totalRecarga,
+          cobro: esRecarga ? totalRecarga : totalMantt,
           anioRec,
           esRecarga,
           empresa: getEmpresa(cod),
