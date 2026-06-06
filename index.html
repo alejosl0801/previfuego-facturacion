@@ -1828,10 +1828,14 @@ async function generarNELocal(codigo, neNum) {
     const fechaStr = `${today.getDate()} DE ${MNAMES[today.getMonth()]} DEL ${today.getFullYear()}`;
     ws['I10'] = { t:'s', v: fechaStr };
 
-    // ── Company name & RUC (from empresa data, overrides hardcoded template) ──
+    // ── Company name & RUC: only override when using a dedicated template ──
+    // INT fallback keeps "INT FOOD SERVICES" since KFC/GUS/CN/BS/I all bill via INT
     const emp = local.empresa || {};
-    if (emp.empresa) ws['B10'] = { t:'s', v: emp.empresa };
-    if (emp.ruc)     ws['L11'] = { t:'s', v: emp.ruc };
+    const hasOwnTemplate = emp.hoja && NE_TEMPLATE_MAP[emp.hoja] && NE_TEMPLATE_MAP[emp.hoja] !== 'INT';
+    if (hasOwnTemplate) {
+      if (emp.empresa) ws['B10'] = { t:'s', v: emp.empresa };
+      if (emp.ruc)     ws['L11'] = { t:'s', v: emp.ruc };
+    }
 
     // ── Service type ─────────────────────────────────────────────────────────
     ws['C13'] = { t:'s', v: local.esRecarga ? 'RECARGA' : 'MANTENIMIENTO' };
