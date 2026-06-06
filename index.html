@@ -1628,11 +1628,11 @@ function renderPlan() {
     return;
   }
 
-  const html = visibles.map(({ local, neNum }) => {
+  function buildCard({ local, neNum }) {
     const status     = visitaStatus[local.codigo] || 'pendiente';
     const isVisitado = status === 'visitado';
     const iva        = parseFloat((local.cobro * 0.15).toFixed(2));
-    const total      = parseFloat((local.cobro + iva).toFixed(2));
+    const totalCobro = parseFloat((local.cobro + iva).toFixed(2));
     const localLabel = local.nombre.replace(local.codigo + ' - ', '');
     const extList    = local.extintores
       .map(e => `<code style="font-size:11px;background:#f5f5f5;padding:1px 4px;border-radius:3px">${e.tipo} ${e.cap}</code>`)
@@ -1641,7 +1641,6 @@ function renderPlan() {
       ? `<span style="color:#8e44ad;font-weight:600">⟳ RECARGA ${local.anioRec}</span>`
       : `<span style="color:#2980b9;font-weight:600">🔧 MANTENIMIENTO</span>`;
 
-    // Botón NE solo para admin; Certificado para ambos
     const btnNE = isAdmin ? `
             <button class="btn btn-sm btn-info" style="font-size:11px;padding:3px 8px;white-space:nowrap"
               onclick="event.stopPropagation();generarNELocal('${local.codigo}',${neNum})">
@@ -1671,17 +1670,37 @@ function renderPlan() {
           </div>
         </div>
         <div class="local-card-body" id="lbody-${local.codigo}">
-          <div style="margin-bottom:6px">${extList || '<em>Sin extintores registrados</em>'}</div>
+          <div style="margin-bottom:6px">${extList || '<em style="color:#e74c3c">⚠️ Sin extintores en la base de datos</em>'}</div>
           <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;align-items:center">
             ${tipoServ}
             <span>Subtotal: <strong>$${local.cobro.toFixed(2)}</strong></span>
             <span>IVA 15%: <strong>$${iva.toFixed(2)}</strong></span>
-            <span>Total: <strong>$${total.toFixed(2)}</strong></span>
+            <span>Total: <strong>$${totalCobro.toFixed(2)}</strong></span>
             ${isAdmin ? `<span style="color:#888">NE asignado: <strong>#${neNum}</strong></span>` : ''}
           </div>
         </div>
       </div>`;
-  }).join('');
+  }
+
+  // Separar pendientes y visitados
+  const pendientes = visibles.filter(({ local }) => (visitaStatus[local.codigo] || 'pendiente') !== 'visitado');
+  const visitados  = visibles.filter(({ local }) => (visitaStatus[local.codigo] || 'pendiente') === 'visitado');
+
+  let html = '';
+
+  if (pendientes.length) {
+    html += `<div style="font-size:12px;font-weight:700;color:#e74c3c;text-transform:uppercase;letter-spacing:0.5px;padding:6px 4px;margin-bottom:4px;border-bottom:2px solid #e74c3c">
+      🔴 PENDIENTES (${pendientes.length})
+    </div>`;
+    html += pendientes.map(buildCard).join('');
+  }
+
+  if (visitados.length) {
+    html += `<div style="font-size:12px;font-weight:700;color:#27ae60;text-transform:uppercase;letter-spacing:0.5px;padding:6px 4px;margin:12px 0 4px;border-bottom:2px solid #27ae60">
+      ✅ VISITADOS (${visitados.length})
+    </div>`;
+    html += visitados.map(buildCard).join('');
+  }
 
   cont.innerHTML = html;
 }
@@ -2554,9 +2573,25 @@ function certSetNovedades(hayNov) {
 function renderAccCatalog() {
   const cat = document.getElementById('accCatalog');
   if (!cat) return;
-  cat.innerHTML = ACCESSORIES.map((a, i) => `
-    <div class="acc-row ${certAccsSelected.has(i)?'sel':''}" onclick="certToggleAcc(${i})">
-      <input type="checkbox" ${certAccsSelected.has(i)?'checked':''} onclick="event.stopPropagation();certToggleAcc(${i})" />
+
+  // Determinar tipos de extintores que tiene el local actual
+  const local = planMes.find(l => l.codigo === certModalCodigo);
+  const tipos = new Set((local?.extintores || []).map(e => (e.tipo||'').toUpperCase()));
+  const tienePQS   = tipos.has('PQS') || tipos.size === 0;   // si no hay datos, mostrar todo
+  const tieneCO2   = tipos.has('CO2') || tipos.size === 0;
+  const tieneTIPOK = tipos.has('TIPO K') || tipos.size === 0;
+
+  // Filtrar accesorios relevantes al tipo de extintor
+  const relevant = ACCESSORIES.map((a, i) => ({ ...a, i })).filter(a => {
+    const d = a.desc.toUpperCase();
+    if (d.includes('CO') && (d.includes('CORNETA') || d.includes('MANGUERA CO'))) return tieneCO2;
+    if (d.includes('PQS') || d.includes('MANÓMETRO') || d.includes('MANOMETRO')) return tienePQS || tieneTIPOK;
+    return true; // accesorios genéricos siempre visibles
+  });
+
+  cat.innerHTML = relevant.map(a => `
+    <div class="acc-row ${certAccsSelected.has(a.i)?'sel':''}" onclick="certToggleAcc(${a.i})">
+      <input type="checkbox" ${certAccsSelected.has(a.i)?'checked':''} onclick="event.stopPropagation();certToggleAcc(${a.i})" />
       <span class="acc-row-desc">${a.desc}</span>
       <span class="acc-row-price">$${a.precio.toFixed(2)}</span>
     </div>`).join('');
