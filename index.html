@@ -1334,6 +1334,10 @@ async function callGemini(apiKey, base64, mimeType, prompt) {
     }
   );
   const data = await r.json();
+  if (!r.ok || !data.candidates?.[0]?.content?.parts?.[0]?.text) {
+    const msg = data.error?.message || `HTTP ${r.status}`;
+    throw new Error(`Gemini: ${msg}`);
+  }
   return data.candidates[0].content.parts[0].text;
 }
 
