@@ -5,26 +5,17 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <script>
-// Registrar Service Worker para garantizar siempre la versión más nueva
+// Versión: v20260606-010
+console.log('%c PREVIFUEGO v20260606-010 ', 'background:#c0392b;color:white;font-size:14px;font-weight:bold');
+// Forzar URL con timestamp para evitar caché de CDN
+(function(){
+  if (!/[?&]v=/.test(location.search)) {
+    location.replace(location.pathname + '?v=20260606010');
+  }
+})();
+// Registrar Service Worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/previfuego-facturacion/sw.js')
-    .then(function(reg) {
-      // Si hay una nueva versión esperando, activarla de inmediato
-      if (reg.waiting) { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); }
-      reg.addEventListener('updatefound', function() {
-        var nuevo = reg.installing;
-        nuevo.addEventListener('statechange', function() {
-          if (nuevo.state === 'installed' && navigator.serviceWorker.controller) {
-            location.reload(true);
-          }
-        });
-      });
-    });
-  // Recargar cuando el SW toma control (primera instalación)
-  var refrescado = false;
-  navigator.serviceWorker.addEventListener('controllerchange', function() {
-    if (!refrescado) { refrescado = true; location.reload(true); }
-  });
+  navigator.serviceWorker.register('/previfuego-facturacion/sw.js');
 }
 </script>
 <meta http-equiv="Expires" content="0">
