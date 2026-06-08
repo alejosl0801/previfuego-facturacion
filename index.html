@@ -1048,7 +1048,7 @@ function parseCotizacion(arrayBuffer, filename) {
   }
 
   // Determine overall service category
-  const hasOnlyMaint = items.every(i => i.serviceType === 'MANTENIMIENTO');
+  const hasOnlyMaint = items.length > 0 && items.every(i => i.serviceType === 'MANTENIMIENTO');
   const category = hasOnlyMaint ? 'MANGES' : 'MANT';
 
   // Description for FORMATO_FACTURACIÓN
@@ -1292,7 +1292,9 @@ function renderEmpresaFacturas() {
 }
 
 // ─── LEER FOTOS NE ────────────────────────────────────────────────────────────
+let _leerFotosEnProgreso = false;
 async function leerFotosNE() {
+  if (_leerFotosEnProgreso) return;   // evita doble clic / race condition
   const geminiKey = localStorage.getItem('geminiKey') || document.getElementById('geminiKey').value.trim();
   if (!geminiKey) {
     document.getElementById('fotoStatus').textContent = '⚠️ Necesitas API Key de Gemini en Configuración';
@@ -1305,12 +1307,13 @@ async function leerFotosNE() {
     return;
   }
 
+  _leerFotosEnProgreso = true;
   document.getElementById('fotoStatus').textContent = '🤖 Procesando fotos con Gemini...';
   let procesadas = 0, errores = 0;
 
   for (const file of files) {
-    const base64 = await fileToBase64(file);
     try {
+      const base64 = await fileToBase64(file);
       const result = await callGemini(geminiKey, base64, file.type,
         `Eres un asistente de facturación de extintores de Previfuego (Ecuador).
 Analiza esta nota de entrega/servicio y extrae TODOS los datos posibles.
@@ -1346,7 +1349,7 @@ Si no encuentras un campo, usa "" o 0.`
         json = JSON.parse(result.replace(/```json|```/g, '').trim());
       } catch(pe) {
         const m = result.match(/\{[\s\S]*\}/);
-        if (m) json = JSON.parse(m[0]);
+        if (m) { try { json = JSON.parse(m[0]); } catch(e2) { throw pe; } }
         else throw pe;
       }
 
@@ -1421,6 +1424,7 @@ Si no encuentras un campo, usa "" o 0.`
 
   if (cotizaciones.length) enableGenerarBtns();
   autosave();   // guarda las notas recién registradas
+  _leerFotosEnProgreso = false;
 }
 
 async function callGemini(apiKey, base64, mimeType, prompt, retries = 4) {
@@ -1463,7 +1467,7 @@ async function callGemini(apiKey, base64, mimeType, prompt, retries = 4) {
 function fileToBase64(file) {
   return new Promise((res, rej) => {
     const reader = new FileReader();
-    reader.onload = e => res(e.target.result.split(',')[1]);
+    reader.onload = e => res((e.target?.result || '').split(',')[1] || '');
     reader.onerror = rej;
     reader.readAsDataURL(file);
   });
@@ -1695,7 +1699,7 @@ async function cargarPlan() {
     if (wsDet) {
       const rows = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
       rows.slice(1).forEach(r => {
-        if (!r[1] || r[2] !== mesNom) return;
+        if (!r[1] || String(r[2] || '').trim() !== mesNom) return;
         const mx = String(r[1]).match(/^([A-Z]+\d+)/);
         if (!mx) return;
         const cod = normCode(mx[1]);
@@ -2125,7 +2129,7 @@ async function generarNELocal(codigo, neNum) {
       if (i >= 11) return; // max 11 item rows (14-24)
       const r = 14 + i;
       const desc  = tipoExtDescripcion(item.tipo, item.cap);
-      const lineT = item.qty * item.price;
+      const lineT = parseFloat((item.qty * item.price).toFixed(2));
       subtotalCalc += lineT;
       ws[`A${r}`] = { t:'n', v: item.qty };
       ws[`B${r}`] = { t:'n', v: item.qty };
@@ -2317,9 +2321,9 @@ function generarDistribucion() {
       ]);
     });
 
-    const totSub = data.items.reduce((s,c) => s + c.subtotal, 0);
-    const totIva = data.items.reduce((s,c) => s + c.iva, 0);
-    const totTot = data.items.reduce((s,c) => s + c.total, 0);
+    const totSub = parseFloat(data.items.reduce((s,c) => s + c.subtotal, 0).toFixed(2));
+    const totIva = parseFloat(data.items.reduce((s,c) => s + c.iva, 0).toFixed(2));
+    const totTot = parseFloat(data.items.reduce((s,c) => s + c.total, 0).toFixed(2));
     rows.push([null, 'TOTAL:', totSub, totIva, totTot]);
 
     const sheetName = ('FACT ' + factNum).slice(0, 31);
@@ -2375,9 +2379,9 @@ function generarFormatoFact() {
       ]);
     });
 
-    const totSub = data.items.reduce((s,c) => s + c.subtotal, 0);
-    const totIva = data.items.reduce((s,c) => s + c.iva, 0);
-    const totTot = data.items.reduce((s,c) => s + c.total, 0);
+    const totSub = parseFloat(data.items.reduce((s,c) => s + c.subtotal, 0).toFixed(2));
+    const totIva = parseFloat(data.items.reduce((s,c) => s + c.iva, 0).toFixed(2));
+    const totTot = parseFloat(data.items.reduce((s,c) => s + c.total, 0).toFixed(2));
     rows.push([null, 'TOTALES', null, totSub, totIva, totTot, null]);
 
     const ws = XLSX.utils.aoa_to_sheet(rows);
@@ -2722,6 +2726,7 @@ async function generarCertificados() {
     const dispCode = certDisplayCode(cot.localCode);
     const cotNum   = cotBase + i;
     const certNum  = `CERT. N° ${cotNum}`;
+    try {
     const fileName = sanitizeFileName(`COTIZACION${cotNum} ${dispCode} ${cot.localName||cot.localCode}.pdf`);
     await hacerPDF({
       localNom:  cot.localName||cot.localCode,
@@ -2734,8 +2739,12 @@ async function generarCertificados() {
       MAS: mesNum+'/'+(parseInt(anio)+1),
       anio,
     });
-    count++;
-    log('  📜 '+cot.localCode+' — '+(cot.localName||cot.localCode),'ok');
+      count++;
+      log('  📜 '+cot.localCode+' — '+(cot.localName||cot.localCode),'ok');
+    } catch(e) {
+      console.warn('Cert error:', cot.localCode, e);
+      log('  ❌ Error en '+cot.localCode+': '+e.message,'error');
+    }
     await new Promise(r=>setTimeout(r,300));
   }
   log('✅ '+count+' certificado(s) generado(s)','ok');
@@ -2859,6 +2868,7 @@ function initSignatureCanvas() {
 function clearSignature() {
   if (!sigCtx) return;
   const c = document.getElementById('sigCanvas');
+  if (!c) return;
   sigCtx.fillStyle = '#fff'; sigCtx.fillRect(0, 0, c.width, c.height);
 }
 
@@ -2912,7 +2922,7 @@ function certToggleAcc(i) {
 }
 
 function updateAccTotal() {
-  const total = [...certAccsSelected].reduce((s,i) => s + ACCESSORIES[i].precio, 0);
+  const total = parseFloat([...certAccsSelected].reduce((s,i) => s + ACCESSORIES[i].precio, 0).toFixed(2));
   const el = document.getElementById('accTotal');
   if (el) el.textContent = `Total accesorios: $${total.toFixed(2)}`;
 }
