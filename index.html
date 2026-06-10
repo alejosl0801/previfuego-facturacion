@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // Versión: v20260610-007
-const _VER = '20260610009';
+const _VER = '20260610010';
 // Mata SW viejo + limpia cachés + redirige con timestamp para romper CDN cache
 (function(){
   // Timestamp por minuto → URL siempre nueva al primer acceso tras deploy
@@ -2296,44 +2296,46 @@ function normTipo(tipo) {
   return t || '-';
 }
 
-const _XB = { style: 'thin', color: { rgb: 'BDBDBD' } };
+const _XB  = { style: 'thin',   color: { rgb: 'BDBDBD' } };
 const _XBM = { style: 'medium', color: { rgb: '888888' } };
+const _BG  = { indexed: 64 }; // required by xlsx-js-style for solid fills
+
 const XSTYLE = {
   TITLE: {
-    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 12, name: 'Calibri' },
-    fill: { fgColor: { rgb: '1F4E79' }, patternType: 'solid' },
+    font:      { bold: true, color: { rgb: 'FFFFFF' }, sz: 12, name: 'Calibri' },
+    fill:      { patternType: 'solid', fgColor: { rgb: '1F4E79' }, bgColor: _BG },
     alignment: { horizontal: 'center', vertical: 'center' },
-    border: { top: _XBM, bottom: _XBM, left: _XBM, right: _XBM }
+    border:    { top: _XBM, bottom: _XBM, left: _XBM, right: _XBM }
   },
   SEC: {
-    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 9, name: 'Calibri' },
-    fill: { fgColor: { rgb: '2E75B6' }, patternType: 'solid' },
+    font:      { bold: true, color: { rgb: 'FFFFFF' }, sz: 9, name: 'Calibri' },
+    fill:      { patternType: 'solid', fgColor: { rgb: '2E75B6' }, bgColor: _BG },
     alignment: { horizontal: 'center', vertical: 'center' },
-    border: { top: _XB, bottom: _XB, left: _XB, right: _XB }
+    border:    { top: _XB, bottom: _XB, left: _XB, right: _XB }
   },
   HDR: {
-    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 9, name: 'Calibri' },
-    fill: { fgColor: { rgb: 'C0392B' }, patternType: 'solid' },
+    font:      { bold: true, color: { rgb: 'FFFFFF' }, sz: 9, name: 'Calibri' },
+    fill:      { patternType: 'solid', fgColor: { rgb: 'C0392B' }, bgColor: _BG },
     alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-    border: { top: _XB, bottom: { style: 'medium', color: { rgb: '922B21' } }, left: _XB, right: _XB }
+    border:    { top: _XB, bottom: { style: 'medium', color: { rgb: '922B21' } }, left: _XB, right: _XB }
   },
   DATA: {
-    font: { sz: 9, name: 'Calibri' },
-    fill: { fgColor: { rgb: 'FFFFFF' }, patternType: 'solid' },
+    font:      { sz: 9, name: 'Calibri' },
+    fill:      { patternType: 'solid', fgColor: { rgb: 'FFFFFF' }, bgColor: _BG },
     alignment: { vertical: 'center' },
-    border: { top: _XB, bottom: _XB, left: _XB, right: _XB }
+    border:    { top: _XB, bottom: _XB, left: _XB, right: _XB }
   },
   ALT: {
-    font: { sz: 9, name: 'Calibri' },
-    fill: { fgColor: { rgb: 'EBF5FB' }, patternType: 'solid' },
+    font:      { sz: 9, name: 'Calibri' },
+    fill:      { patternType: 'solid', fgColor: { rgb: 'EBF5FB' }, bgColor: _BG },
     alignment: { vertical: 'center' },
-    border: { top: _XB, bottom: _XB, left: _XB, right: _XB }
+    border:    { top: _XB, bottom: _XB, left: _XB, right: _XB }
   },
   TOT: {
-    font: { bold: true, sz: 9, name: 'Calibri' },
-    fill: { fgColor: { rgb: 'FEF9E7' }, patternType: 'solid' },
+    font:      { bold: true, sz: 9, name: 'Calibri' },
+    fill:      { patternType: 'solid', fgColor: { rgb: 'FEF9E7' }, bgColor: _BG },
     alignment: { vertical: 'center' },
-    border: { top: { style: 'medium', color: { rgb: 'F0B400' } }, bottom: { style: 'medium', color: { rgb: 'F0B400' } }, left: _XB, right: _XB }
+    border:    { top: { style: 'medium', color: { rgb: 'F0B400' } }, bottom: { style: 'medium', color: { rgb: 'F0B400' } }, left: _XB, right: _XB }
   },
   MONEY: '"$"#,##0.00',
 };
@@ -2343,29 +2345,28 @@ function xsApply(ws, rows, opts = {}) {
   const nc = Math.max(...rows.map(r => r.length));
   let dataIdx = 0;
   for (let ri = 0; ri < nr; ri++) {
-    const rowLen = rows[ri].length;
     for (let ci = 0; ci < nc; ci++) {
       const ref = XLSX.utils.encode_cell({ r: ri, c: ci });
-      if (!ws[ref]) ws[ref] = { t: 'z', v: '' };
+      if (!ws[ref]) ws[ref] = { t: 's', v: '' };
       let s;
-      if (ri === opts.titleRow) s = XSTYLE.TITLE;
-      else if (ri === opts.secRow) s = XSTYLE.SEC;
-      else if (ri === opts.hdrRow) s = XSTYLE.HDR;
-      else if (opts.totalRows?.includes(ri)) s = XSTYLE.TOT;
-      else { s = dataIdx % 2 === 0 ? XSTYLE.DATA : XSTYLE.ALT; }
+      if      (ri === opts.titleRow)             s = XSTYLE.TITLE;
+      else if (ri === opts.secRow)               s = XSTYLE.SEC;
+      else if (ri === opts.hdrRow)               s = XSTYLE.HDR;
+      else if (opts.totalRows?.includes(ri))     s = XSTYLE.TOT;
+      else    s = dataIdx % 2 === 0 ? XSTYLE.DATA : XSTYLE.ALT;
       ws[ref].s = JSON.parse(JSON.stringify(s));
-      if (opts.moneyCols?.includes(ci) && ws[ref].t === 'n') {
+      if (opts.moneyCols?.includes(ci) && (ws[ref].t === 'n' || ws[ref].f)) {
         ws[ref].s.numFmt = XSTYLE.MONEY;
       }
     }
-    const isData = ri !== opts.titleRow && ri !== opts.secRow && ri !== opts.hdrRow && !opts.totalRows?.includes(ri);
-    if (isData) dataIdx++;
+    const notHdr = ri !== opts.titleRow && ri !== opts.secRow && ri !== opts.hdrRow && !opts.totalRows?.includes(ri);
+    if (notHdr) dataIdx++;
   }
   ws['!rows'] = rows.map((_, ri) => ({
-    hpt: ri === opts.titleRow ? 22 : ri === opts.secRow ? 18 : ri === opts.hdrRow ? 36 : opts.totalRows?.includes(ri) ? 18 : 15
+    hpt: ri === opts.titleRow ? 22 : ri === opts.secRow ? 18 : ri === opts.hdrRow ? 34 : opts.totalRows?.includes(ri) ? 18 : 15
   }));
   if (opts.merges) ws['!merges'] = opts.merges;
-  if (opts.freezeRows) ws['!freeze'] = { xSplit: 0, ySplit: opts.freezeRows, topLeftCell: XLSX.utils.encode_cell({ r: opts.freezeRows, c: 0 }) };
+  if (opts.freezeRows) ws['!freeze'] = { xSplit: 0, ySplit: opts.freezeRows };
 }
 
 function getMesLabel() {
