@@ -1,0 +1,3183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<script>
+// Versión: v20260610-007
+const _VER = '20260610007';
+// Mata SW viejo + limpia cachés + redirige con timestamp para romper CDN cache
+(function(){
+  // Timestamp por minuto → URL siempre nueva al primer acceso tras deploy
+  var _ts = Math.floor(Date.now() / 60000);
+  function _go() {
+    var v = (location.search.match(/[?&]v=([^&]*)/) || [])[1];
+    var t = (location.search.match(/[?&]t=([^&]*)/) || [])[1];
+    // Si la versión no coincide O el timestamp es viejo (>10 min), redirigir
+    if (v !== _VER || !t || (_ts - parseInt(t,10)) > 10) {
+      location.replace(location.pathname + '?v=' + _VER + '&t=' + _ts);
+    }
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs){
+      if (regs.length) {
+        caches.keys().then(function(ks){ ks.forEach(function(k){ caches.delete(k); }); });
+        Promise.all(regs.map(function(r){ return r.unregister(); })).then(_go);
+      } else { _go(); }
+    }).catch(_go);
+  } else { _go(); }
+})();
+})();
+</script>
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Previfuego – Facturación KFC</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --rojo: #c0392b;
+    --rojo-oscuro: #922b21;
+    --gris: #f5f5f5;
+    --gris-borde: #ddd;
+    --texto: #222;
+    --verde: #27ae60;
+    --azul: #2980b9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f0f0; color: var(--texto); }
+
+  header {
+    background: var(--rojo);
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  header .logo { font-size: 28px; font-weight: 900; letter-spacing: -1px; }
+  header .subtitle { font-size: 13px; opacity: 0.85; }
+
+  .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+
+  .card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .card-header {
+    background: var(--gris);
+    border-bottom: 1px solid var(--gris-borde);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .card-header h2 { font-size: 14px; font-weight: 700; color: var(--rojo); }
+  .card-header .toggle { font-size: 18px; color: #999; }
+  .card-body { padding: 20px; }
+  .card-body.hidden { display: none; }
+
+  .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 200px; }
+  label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+  input, select, textarea {
+    border: 1px solid var(--gris-borde);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    width: 100%;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--rojo); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary { background: var(--rojo); color: white; }
+  .btn-primary:hover { background: var(--rojo-oscuro); }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+  .btn-success { background: var(--verde); color: white; }
+  .btn-success:hover { background: #1e8449; }
+  .btn-info { background: var(--azul); color: white; }
+  .btn-info:hover { background: #1f6fa5; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-warning { background: #e67e22; color: white; }
+  .btn-warning:hover { background: #ca6f1e; }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .status-ok { background: #d5f5e3; color: #1e8449; border: 1px solid #a9dfbf; }
+  .status-error { background: #fdecea; color: #c0392b; border: 1px solid #f1948a; }
+  .status-info { background: #d6eaf8; color: #1a5276; border: 1px solid #85c1e9; }
+  .status-warn { background: #fef9e7; color: #b7950b; border: 1px solid #f9e79f; }
+
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(0,0,0,0.1);
+    border-top-color: var(--rojo);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--rojo); color: white; padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+  td { padding: 6px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  tr:hover td { background: #fafafa; }
+  tr.manges td { background: #eafaf1; }
+  tr.mant td { background: #eaf4fb; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-manges { background: #d5f5e3; color: #1e8449; }
+  .badge-mant { background: #d6eaf8; color: #1a5276; }
+
+  td input { padding: 4px 6px; font-size: 12px; width: 100%; }
+
+  .progress-steps { display: flex; gap: 0; margin-bottom: 24px; }
+  .step {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eee;
+    border-right: 2px solid white;
+    color: #999;
+    transition: all 0.2s;
+  }
+  .step:last-child { border-right: none; }
+  .step.active { background: var(--rojo); color: white; }
+  .step.done { background: var(--verde); color: white; }
+  .step .num { font-size: 18px; font-weight: 900; display: block; }
+
+  .empresa-section {
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .empresa-header {
+    background: #f8f8f8;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--gris-borde);
+  }
+  .empresa-nombre { font-weight: 700; font-size: 14px; }
+  .empresa-facturas { display: flex; gap: 12px; align-items: center; }
+  .fact-input-group { display: flex; align-items: center; gap: 6px; }
+  .fact-input-group label { font-size: 11px; white-space: nowrap; color: #666; }
+  .fact-input-group input { width: 110px; }
+
+  /* ── Panel de Control ── */
+  .local-card { border:1px solid #ddd; border-radius:8px; margin-bottom:8px; overflow:hidden; }
+  .local-card.visitado { border-left:4px solid #27ae60; }
+  .local-card.pendiente { border-left:4px solid #e74c3c; }
+  .local-card-header {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:9px 14px; background:#f9f9f9; cursor:pointer; gap:8px;
+  }
+  .local-card-header:hover { background:#f0f0f0; }
+  .local-card-body {
+    padding:8px 14px 10px; background:#fff;
+    font-size:12px; color:#555; display:none; border-top:1px solid #eee;
+  }
+  .local-card.open .local-card-body { display:block; }
+  .badge-pendiente { background:#e74c3c; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px; white-space:nowrap; }
+  .badge-visitado  { background:#27ae60; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px; white-space:nowrap; }
+  .plan-stats { display:flex; gap:16px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
+
+  .outputs { display: flex; gap: 12px; flex-wrap: wrap; }
+  .output-card {
+    flex: 1;
+    min-width: 200px;
+    border: 2px dashed var(--gris-borde);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .output-card.ready { border-color: var(--verde); background: #f0fff4; }
+  .output-card .icon { font-size: 32px; margin-bottom: 8px; }
+  .output-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .output-card p { font-size: 11px; color: #666; margin-bottom: 12px; }
+
+  .log-box {
+    background: #1a1a1a;
+    color: #00ff88;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 12px;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 12px;
+  }
+  .log-line { margin-bottom: 2px; }
+  .log-err { color: #ff6b6b; }
+  .log-warn { color: #ffd93d; }
+  .log-ok { color: #6bcb77; }
+
+  /* ── Navegación por secciones ── */
+  header {
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    justify-content: space-between;
+  }
+  .hdr-left { display: flex; flex-direction: column; }
+  .nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; justify-content: center; }
+  .nav-tab {
+    background: rgba(255,255,255,0.12);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .nav-tab:hover { background: rgba(255,255,255,0.25); }
+  .nav-tab.active { background: white; color: var(--rojo); }
+  .hdr-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .month-sel { display: flex; gap: 6px; }
+  .month-sel select {
+    padding: 6px 8px; border-radius: 5px; border: none;
+    font-size: 13px; font-weight: 600; width: auto; min-width: 90px;
+  }
+  .profile-toggle { display: flex; background: rgba(0,0,0,0.18); border-radius: 6px; padding: 3px; }
+  .prof-btn {
+    background: transparent; color: white; border: none;
+    padding: 6px 12px; border-radius: 4px; font-size: 12px;
+    font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .prof-btn.active { background: white; color: var(--rojo); }
+  .icon-btn {
+    background: rgba(255,255,255,0.15); color: white; border: none;
+    width: 34px; height: 34px; border-radius: 6px; cursor: pointer; font-size: 16px;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.3); }
+
+  .app-section { animation: fadeIn 0.2s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .section-title { font-size: 18px; font-weight: 800; color: var(--rojo); margin-bottom: 4px; }
+  .section-desc { font-size: 13px; color: #777; margin-bottom: 18px; }
+
+  .search-box {
+    width: 100%; padding: 10px 14px; font-size: 14px;
+    border: 2px solid var(--gris-borde); border-radius: 8px; margin-bottom: 14px;
+  }
+  .search-box:focus { outline: none; border-color: var(--rojo); }
+
+  /* ── Modo oscuro ── */
+  body.dark { background: #15171a; color: #e6e6e6; }
+  body.dark .card, body.dark .local-card { background: #1f2227; border-color: #333; }
+  body.dark .card-header, body.dark .local-card-header { background: #262a30; border-color: #333; }
+  body.dark .local-card-header:hover { background: #2d323a; }
+  body.dark .card-header h2 { color: #ff7b6b; }
+  body.dark .local-card-body { background: #1f2227; color: #bbb; border-color: #333; }
+  body.dark input, body.dark select, body.dark textarea {
+    background: #262a30; color: #e6e6e6; border-color: #3a3f47;
+  }
+  body.dark .search-box { background: #262a30; color: #e6e6e6; }
+  body.dark td { border-color: #2d2d2d; }
+  body.dark tr:hover td { background: #262a30; }
+  body.dark tr.manges td { background: #1c2e22; }
+  body.dark tr.mant td { background: #1c2733; }
+  body.dark .section-title { color: #ff7b6b; }
+  body.dark code { background: #2d323a !important; color: #d6d6d6; }
+
+  /* ── Selector de Perfil ── */
+  #profileSelector {
+    position: fixed; inset: 0;
+    background: linear-gradient(160deg, #fff 0%, #f4f4f4 100%);
+    z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 28px; padding: 32px;
+  }
+  .psel-header { text-align: center; }
+  .psel-logo-img { width: 90px; height: 90px; object-fit: contain; margin-bottom: 8px; }
+  .psel-logo-text { font-size: 56px; margin-bottom: 8px; display: block; }
+  .psel-app-name { font-size: 26px; font-weight: 900; color: #1a1a1a; letter-spacing: -0.5px; }
+  .psel-quien { font-size: 15px; color: #c0392b; font-weight: 700; margin-top: 8px; }
+  .psel-cards { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 340px; }
+  .psel-card {
+    display: flex; align-items: center; gap: 14px;
+    background: white; border: 1.5px solid #e5e5e5; border-radius: 12px;
+    padding: 16px 18px; cursor: pointer; transition: all 0.18s;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  }
+  .psel-card:hover { border-color: #c0392b; box-shadow: 0 4px 16px rgba(192,57,43,0.18); transform: translateX(4px); }
+  .psel-card:active { transform: translateX(6px) scale(0.99); }
+  .psel-icon { font-size: 36px; flex-shrink: 0; }
+  .psel-info { flex: 1; }
+  .psel-name { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+  .psel-role { font-size: 12px; color: #999; margin-top: 2px; }
+  .psel-arrow { font-size: 28px; color: #c0392b; font-weight: 900; flex-shrink: 0; line-height: 1; }
+  body.dark #profileSelector { background: linear-gradient(160deg, #15171a 0%, #1a1d22 100%); }
+  body.dark .psel-card { background: #1f2227; border-color: #333; }
+  body.dark .psel-card:hover { border-color: #c0392b; }
+  body.dark .psel-name { color: #e6e6e6; }
+  body.dark .psel-role { color: #777; }
+  body.dark .psel-app-name { color: #e6e6e6; }
+
+  /* ── Indicador de perfil en header ── */
+  .perfil-indicator {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,0,0,0.18); border-radius: 6px;
+    padding: 6px 12px; font-size: 12px; font-weight: 600;
+    color: white; white-space: nowrap; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .perfil-indicator:hover { background: rgba(0,0,0,0.32); }
+  .perfil-chip { font-size: 10px; opacity: 0.7; }
+
+  /* ── Cert modal pasos ── */
+  .cert-steps { display: flex; gap: 0; margin-bottom: 18px; border-radius: 6px; overflow: hidden; }
+  .cert-step-ind {
+    flex: 1; text-align: center; padding: 7px 4px;
+    font-size: 11px; font-weight: 700; background: #eee; color: #999;
+    border-right: 2px solid white;
+  }
+  .cert-step-ind:last-child { border-right: none; }
+  .cert-step-ind.active { background: #9e1212; color: white; }
+  .cert-step-ind.done { background: #27ae60; color: white; }
+  .cert-foto-card {
+    border: 2px dashed #ddd; border-radius: 8px; padding: 10px;
+    margin-bottom: 8px; transition: border-color 0.2s;
+  }
+  .cert-foto-card.has-foto { border-color: #27ae60; border-style: solid; }
+  .cert-foto-label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .cert-foto-preview { width: 100%; height: 90px; object-fit: cover; border-radius: 4px; display: none; margin-bottom: 6px; }
+  .cert-foto-preview.show { display: block; }
+  .cert-foto-btns { display: flex; gap: 6px; }
+  .cert-foto-btn { flex: 1; padding: 8px 4px; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .cert-foto-btn.cam { background: #2980b9; color: white; }
+  .cert-foto-btn.gal { background: #7f8c8d; color: white; }
+  .cert-firma-wrap { border: 1.5px solid #ddd; border-radius: 8px; overflow: hidden; background: #fafafa; margin-bottom: 10px; }
+  #sigCanvas { display: block; touch-action: none; cursor: crosshair; width: 100%; }
+  .cert-firma-nota { font-size: 11px; color: #aaa; text-align: center; margin-top: 4px; }
+  .acc-catalog { border: 1px solid #e8e8e8; border-radius: 8px; overflow: hidden; max-height: 250px; overflow-y: auto; }
+  .acc-row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: background 0.1s; }
+  .acc-row:last-child { border-bottom: none; }
+  .acc-row:hover { background: #fafafa; }
+  .acc-row.sel { background: #fef0ee; }
+  .acc-row input[type=checkbox] { width: 15px; height: 15px; accent-color: #9e1212; flex-shrink: 0; }
+  .acc-row-desc { flex: 1; font-size: 13px; color: #333; }
+  .acc-row-price { font-size: 12px; font-weight: 700; color: #27ae60; white-space: nowrap; }
+  .acc-total-bar { padding: 10px 14px; font-size: 13px; font-weight: 700; color: #9e1212; text-align: right; background: #fafafa; border-top: 2px solid #eee; }
+  .cert-novedades-toggle { display: flex; gap: 6px; margin-bottom: 12px; }
+  .nov-btn { flex: 1; padding: 9px; border: 1.5px solid #ddd; border-radius: 6px; background: white; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; transition: all 0.15s; }
+  .nov-btn.active-bad { border-color: #c0392b; background: #fdecea; color: #c0392b; }
+  .nov-btn.active-ok  { border-color: #27ae60; background: #eafaf1; color: #27ae60; }
+  body.dark .cert-foto-card { border-color: #3a3f47; }
+  body.dark .cert-firma-wrap { border-color: #3a3f47; background: #262a30; }
+  body.dark .acc-catalog { border-color: #333; }
+  body.dark .acc-row { border-color: #2d2d2d; }
+  body.dark .acc-row:hover { background: #262a30; }
+  body.dark .acc-row.sel { background: #2d1f1e; }
+  body.dark .acc-row-desc { color: #ccc; }
+  body.dark .nov-btn { background: #1f2227; border-color: #3a3f47; color: #bbb; }
+
+  /* ── Responsive móvil ── */
+  @media (max-width: 600px) {
+    .container { padding: 0 8px; }
+    header { padding: 10px 14px; gap: 8px; }
+    .nav-tab { font-size: 11px; padding: 6px 10px; }
+    .local-card-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .local-card-header > div:last-child {
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+    .local-card-header > div:first-child {
+      width: 100%;
+    }
+    .plan-stats { flex-direction: column; gap: 8px; }
+    .hdr-right { gap: 6px; }
+    .month-sel select { min-width: 70px; font-size: 12px; }
+    .cert-foto-btns { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════ SELECTOR DE PERFIL ════════════ -->
+<div id="profileSelector">
+  <div class="psel-header">
+    <img id="pselLogo" class="psel-logo-img" style="display:none" alt="Logo" />
+    <span id="pselLogoFallback" class="psel-logo-text">🔥</span>
+    <div class="psel-app-name">Previfuego</div>
+    <div class="psel-quien">¿Quién eres?</div>
+  </div>
+  <div class="psel-cards">
+    <div class="psel-card" onclick="elegirPerfil('admin')">
+      <div class="psel-icon">👤</div>
+      <div class="psel-info">
+        <div class="psel-name">Alejandro</div>
+        <div class="psel-role">Administración</div>
+      </div>
+      <div class="psel-arrow">›</div>
+    </div>
+    <div class="psel-card" onclick="elegirPerfil('empleado')">
+      <div class="psel-icon">👷</div>
+      <div class="psel-info">
+        <div class="psel-name">Técnico en Campo</div>
+        <div class="psel-role">Técnico Operativo y Logístico</div>
+      </div>
+      <div class="psel-arrow">›</div>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="hdr-left">
+    <div class="logo">🔴 PREVIFUEGO</div>
+    <div class="subtitle">Gestión de Extintores</div>
+  </div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" data-sec="plan" onclick="goToSection('plan')">📅 Plan del Mes</button>
+    <button class="nav-tab admin-only" data-sec="ne" onclick="goToSection('ne')">📄 Notas de Entrega</button>
+    <button class="nav-tab" data-sec="certs" onclick="goToSection('certs')">📜 Certificados</button>
+    <button class="nav-tab admin-only" data-sec="bd" onclick="goToSection('bd')">🗄️ Base de Datos</button>
+    <button class="nav-tab admin-only" data-sec="config" onclick="goToSection('config')">⚙️ Configuración</button>
+  </nav>
+  <div class="hdr-right">
+    <div id="monthSelector" class="month-sel">
+      <select id="selMes" onchange="onMonthChange()">
+        <option value="01 ENERO">Enero</option>
+        <option value="02 FEBRERO">Febrero</option>
+        <option value="03 MARZO">Marzo</option>
+        <option value="04 ABRIL">Abril</option>
+        <option value="05 MAYO">Mayo</option>
+        <option value="06 JUNIO">Junio</option>
+        <option value="07 JULIO">Julio</option>
+        <option value="08 AGOSTO">Agosto</option>
+        <option value="09 SEPTIEMBRE">Septiembre</option>
+        <option value="10 OCTUBRE">Octubre</option>
+        <option value="11 NOVIEMBRE">Noviembre</option>
+        <option value="12 DICIEMBRE">Diciembre</option>
+      </select>
+      <select id="selAnio" onchange="onMonthChange()">
+        <option value="2026">2026</option>
+        <option value="2025">2025</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
+    <div id="perfilIndicator" class="perfil-indicator" onclick="mostrarSelectorPerfil()" title="Cambiar perfil">
+      👤 Admin <span class="perfil-chip">· cambiar</span>
+    </div>
+    <button class="icon-btn" onclick="toggleDark()" title="Modo oscuro">🌙</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ════════════ SECCIÓN: PLAN DEL MES ════════════ -->
+  <div class="app-section" id="sec-plan">
+    <div class="section-title">📅 Plan del Mes</div>
+    <div class="section-desc">Locales a visitar este mes. Selecciona un local, realiza el trabajo y genera su certificado.</div>
+
+    <input type="text" id="planSearch" class="search-box" placeholder="🔍 Buscar local por código o nombre…" oninput="renderPlan()" />
+
+    <div class="plan-stats">
+      <div class="admin-only">
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial NE</label>
+        <input type="number" id="neInicial" value="6700" min="1" style="width:90px;padding:5px" onchange="renderPlan();autosave()" />
+      </div>
+      <div class="admin-only">
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial Cert.</label>
+        <input type="number" id="cotInicial" value="1500" min="1" style="width:90px;padding:5px" onchange="renderPlan();autosave()" />
+      </div>
+      <div id="planStats" style="font-size:13px;color:#555;font-weight:600"></div>
+    </div>
+    <div id="loadStatus"></div>
+    <div id="planContainer">
+      <p style="color:#999;font-size:13px">Cargando locales del mes desde la base de datos…</p>
+    </div>
+  </div>
+
+  <!-- ════════════ SECCIÓN: NOTAS DE ENTREGA (admin) ════════════ -->
+  <div class="app-section admin-only" id="sec-ne" style="display:none">
+    <div class="section-title">📄 Notas de Entrega</div>
+    <div class="section-desc">
+      Para servicios <strong>fuera del presupuesto</strong> (mantenimientos extra, ventas, cambios de accesorios):
+      sube la foto de la nota y la IA la registra. Para los locales del presupuesto, genera la NE directamente
+      desde el <strong>Plan del Mes</strong>.
+    </div>
+
+    <!-- Registrar notas con foto -->
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('fotos')">
+        <h2>📸 Registrar notas de entrega (foto + IA)</h2>
+        <span class="toggle" id="fotos-toggle">▼</span>
+      </div>
+      <div class="card-body" id="fotos-body">
+        <p style="font-size:13px;color:#555;margin-bottom:12px">
+          Sube la <strong>foto de cada nota de entrega</strong>. La IA (Groq) la lee y la registra sola:
+          local, # nota de entrega, extintores/servicio, valores y si es <strong>MANTGES</strong> (presupuestado)
+          o <strong>MANT</strong> (fuera de presupuesto). Puedes corregir cualquier dato en la tabla.
+        </p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="file" id="fotoNE" accept="image/*" multiple style="font-size:13px" />
+          <button class="btn btn-info" onclick="leerFotosNE()">🤖 Leer con IA</button>
+          <span id="fotoStatus" style="font-size:13px;color:#666"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revisar registros -->
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('tabla')">
+        <h2>📋 Revisar registros del mes</h2>
+        <span class="toggle" id="tabla-toggle">▼</span>
+      </div>
+      <div class="card-body" id="tabla-body">
+        <p style="font-size:12px;color:#777;margin-bottom:8px">
+          Revisa lo que leyó la IA. Puedes cambiar empresa, <strong>MANTGES/MANT</strong>,
+          descripción, # nota de entrega y observación directamente en la tabla.
+        </p>
+        <div id="tablaContainer"></div>
+      </div>
+    </div>
+
+    <!-- Facturas por empresa -->
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('fact')">
+        <h2>🧾 Números de factura por empresa</h2>
+        <span class="toggle" id="fact-toggle">▼</span>
+      </div>
+      <div class="card-body" id="fact-body">
+        <p style="font-size:13px;color:#555;margin-bottom:16px">
+          Ingresa el número de factura por empresa (MANGES y MANT) antes de generar los Excels.
+        </p>
+        <div id="empresaFacturasContainer"></div>
+      </div>
+    </div>
+
+    <!-- Generar Excels -->
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('gen')">
+        <h2>⬇️ Generar Excels</h2>
+        <span class="toggle" id="gen-toggle">▼</span>
+      </div>
+      <div class="card-body" id="gen-body">
+        <div class="outputs">
+          <div class="output-card" id="out1">
+            <div class="icon">📊</div>
+            <h3>DETALLE FACT MENSUAL</h3>
+            <p>Hojas: MANGES + MANT<br>Detalle extintores por local</p>
+            <button class="btn btn-success btn-sm" onclick="generarDetalle()" disabled id="btn1">Generar</button>
+          </div>
+          <div class="output-card" id="out2">
+            <div class="icon">📑</div>
+            <h3>DISTRIBUCIÓN</h3>
+            <p>Una hoja por factura<br>C.C. + descripción + valores</p>
+            <button class="btn btn-success btn-sm" onclick="generarDistribucion()" disabled id="btn2">Generar</button>
+          </div>
+          <div class="output-card" id="out3">
+            <div class="icon">🏢</div>
+            <h3>FORMATO FACTURACIÓN</h3>
+            <p>Una hoja por empresa<br>Resumen con # factura</p>
+            <button class="btn btn-success btn-sm" onclick="generarFormatoFact()" disabled id="btn3">Generar</button>
+          </div>
+          <div class="output-card" id="out4">
+            <div class="icon">📜</div>
+            <h3>CERTIFICADOS PDF</h3>
+            <p>Un PDF por local MANGES<br>Formato Previfuego/Pyroshield</p>
+            <button class="btn btn-success btn-sm" onclick="generarCertificados()" disabled id="btn4">Generar</button>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn btn-primary" onclick="generarTodo()" id="btnGenerarTodo" disabled>
+            ⬇️ Generar y descargar los 3 Excels
+          </button>
+        </div>
+        <div id="genLog" class="log-box" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ SECCIÓN: CERTIFICADOS ════════════ -->
+  <div class="app-section" id="sec-certs" style="display:none">
+    <div class="section-title">📜 Certificados</div>
+    <div class="section-desc" id="certsDesc">
+      Los certificados se generan desde el <strong>Plan del Mes</strong>: abre un local, adjunta las fotos del
+      trabajo realizado y pulsa <strong>Generar Certificado</strong>.
+    </div>
+    <div id="certsContainer">
+      <p style="color:#999;font-size:13px">Aún no hay certificados guardados para este mes.</p>
+    </div>
+  </div>
+
+  <!-- ════════════ SECCIÓN: BASE DE DATOS (admin) ════════════ -->
+  <div class="app-section admin-only" id="sec-bd" style="display:none">
+    <div class="section-title">🗄️ Base de Datos</div>
+    <div class="section-desc">Consulta y descarga las bases de datos consolidadas de extintores.</div>
+
+    <div class="card">
+      <div class="card-body">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:stretch">
+          <div style="background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px;padding:20px;flex:1;min-width:220px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:8px;">📊</div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS KFC</div>
+            <div style="font-size:12px;color:#666;margin-bottom:14px;">
+              197 locales · 906 extintores<br>
+              KFC · GUS · CINNABON · BASKIN · IL CAPPO<br>
+              SHEMLON · TROPIBURGER · JUAN VALDEZ · otros
+            </div>
+            <a href="BASE_DATOS_KFC.xlsx" download="BASE_DATOS_KFC.xlsx"
+               style="display:inline-block;background:#1F4E79;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
+              ⬇️ Descargar Excel
+            </a>
+          </div>
+          <div style="background:#f5f0ff;border:1px solid #c8a8f0;border-radius:8px;padding:20px;flex:1;min-width:220px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:8px;">🍣</div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS SUSHICORP</div>
+            <div style="font-size:12px;color:#666;margin-bottom:14px;">
+              13 locales · 62 extintores<br>
+              KOBE · NOE (KN01–KN13)<br>
+              Misma estructura: RESUMEN + DETALLE
+            </div>
+            <a href="BASE_DATOS_SUSHICORP.xlsx" download="BASE_DATOS_SUSHICORP.xlsx"
+               style="display:inline-block;background:#6c3483;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
+              ⬇️ Descargar Excel
+            </a>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding:12px 16px;background:#fffbe6;border:1px solid #f0d060;border-radius:6px;font-size:12px;color:#7a5c00;">
+          <strong>ℹ️ Nota:</strong> La base de datos usa el ciclo <strong>OCT 2026 → SEP 2027</strong> (recarga para todos los locales).
+          El <strong>COBRO_ANUAL</strong> es el precio de <em>RECARGA</em> (que ya incluye el mantenimiento), nunca aditivo.
+          Locales servidos OCT–DIC tienen recarga en 2026; ENE–SEP en 2027. <em>AÑO_ULT_RECARGA</em> = AÑO_RECARGA − 3.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('bdtable')">
+        <h2>📋 Locales del mes seleccionado</h2>
+        <span class="toggle" id="bdtable-toggle">▼</span>
+      </div>
+      <div class="card-body" id="bdtable-body">
+        <div id="bdContainer"><p style="color:#999;font-size:13px">Selecciona un mes para ver sus locales.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ SECCIÓN: CONFIGURACIÓN (admin) ════════════ -->
+  <div class="app-section admin-only" id="sec-config" style="display:none">
+    <div class="section-title">⚙️ Configuración</div>
+    <div class="section-desc">Tus claves se guardan automáticamente y de forma permanente en este navegador.</div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label>🟠 API Key Groq — requerida para leer fotos con IA (<a href="https://console.groq.com/keys" target="_blank">console.groq.com</a> → API Keys → Create, gratis)</label>
+            <input type="password" id="groqKey" placeholder="gsk_..." autocomplete="off" oninput="saveConfig(); validarGroqKey(this)" />
+            <span id="groqKeyStatus" style="font-size:11px"></span>
+          </div>
+          <div class="form-group" style="flex:2">
+            <label>⚫ GitHub Token — respalda tus datos en la nube (opcional)</label>
+            <input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off" oninput="saveConfig()" />
+          </div>
+        </div>
+        <span id="cfgStatus" style="font-size:12px;color:#27ae60"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('gh')">
+        <h2>☁️ Respaldo en la nube</h2>
+        <span class="toggle" id="gh-toggle">▼</span>
+      </div>
+      <div class="card-body" id="gh-body">
+        <p style="font-size:13px;color:#555;margin-bottom:10px">
+          Todo se guarda automáticamente — al instante en este navegador, y si hay GitHub Token también en la nube.
+          Nunca necesitas guardar a mano.
+        </p>
+        <span id="ghStatus" style="font-size:12px;color:#27ae60"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- EDIT EXTINTORES MODAL -->
+<div id="editExtModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:12px;padding:22px;max-width:560px;width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="color:#f39c12;font-size:14px;margin:0;font-weight:800">✏️ Editar extintores — <span id="editExtTitle"></span></h3>
+      <button onclick="cerrarEditExtModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;line-height:1;padding:0 4px">✕</button>
+    </div>
+    <div style="font-size:12px;color:#888;margin-bottom:12px">
+      Los cambios se guardan en este navegador y sobreescriben los datos de la base de datos para este local.
+      <button onclick="resetEditExt()" style="margin-left:8px;background:#e74c3c;color:white;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer">🗑️ Restaurar BD</button>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px" id="editExtTable">
+      <thead>
+        <tr style="background:#f5f5f5;font-size:11px;text-transform:uppercase;color:#666">
+          <th style="padding:6px 8px;text-align:left;border:1px solid #ddd">Tipo</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #ddd">Cap.</th>
+          <th style="padding:6px 8px;text-align:right;border:1px solid #ddd">$ Mantt</th>
+          <th style="padding:6px 8px;text-align:right;border:1px solid #ddd">$ Recarga</th>
+          <th style="padding:6px 8px;border:1px solid #ddd"></th>
+        </tr>
+      </thead>
+      <tbody id="editExtBody"></tbody>
+    </table>
+    <button onclick="editExtAgregarFila()" style="margin-top:10px;background:#27ae60;color:white;border:none;border-radius:5px;padding:6px 14px;font-size:12px;cursor:pointer">+ Agregar extintor</button>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button onclick="cerrarEditExtModal()" style="background:#bbb;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer">Cancelar</button>
+      <button onclick="guardarEditExt()" style="background:#f39c12;color:white;border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CERT MODAL (3 pasos) -->
+<div id="certModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:12px;padding:22px;max-width:480px;width:93%;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="color:#9e1212;font-size:14px;margin:0;font-weight:800">📜 <span id="certModalTitle"></span></h3>
+      <button onclick="cerrarCertModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;line-height:1;padding:0 4px">✕</button>
+    </div>
+
+    <div class="cert-steps">
+      <div class="cert-step-ind active" id="csi1">1 · Fotos</div>
+      <div class="cert-step-ind" id="csi2">2 · Firma</div>
+      <div class="cert-step-ind" id="csi3">3 · Accesorios</div>
+    </div>
+
+    <!-- ── PASO 1: FOTOS ── -->
+    <div id="certPaso1">
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Tipo de trabajo</div>
+        <div style="display:flex;gap:8px">
+          <label id="lblMant" style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:border-color 0.15s">
+            <input type="radio" name="certTipoServ" value="mantenimiento" style="width:auto;accent-color:#9e1212" onchange="certTipoChange()" /> 🔧 Mantenimiento
+          </label>
+          <label id="lblRec" style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:border-color 0.15s">
+            <input type="radio" name="certTipoServ" value="recarga" style="width:auto;accent-color:#9e1212" onchange="certTipoChange()" /> ⟳ Recarga
+          </label>
+        </div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Evidencia Fotográfica</div>
+
+      <div class="cert-foto-card" id="certFotoCard_antes">
+        <div class="cert-foto-label">📷 Antes del mantenimiento</div>
+        <img class="cert-foto-preview" id="certFotoPreview_antes" alt="" />
+        <div class="cert-foto-btns">
+          <button class="cert-foto-btn cam" onclick="certAbrirFoto('antes','cam')">📸 Cámara</button>
+          <button class="cert-foto-btn gal" onclick="certAbrirFoto('antes','gal')">🖼️ Galería</button>
+        </div>
+      </div>
+      <div class="cert-foto-card" id="certFotoCard_despues">
+        <div class="cert-foto-label">📷 Después del mantenimiento</div>
+        <img class="cert-foto-preview" id="certFotoPreview_despues" alt="" />
+        <div class="cert-foto-btns">
+          <button class="cert-foto-btn cam" onclick="certAbrirFoto('despues','cam')">📸 Cámara</button>
+          <button class="cert-foto-btn gal" onclick="certAbrirFoto('despues','gal')">🖼️ Galería</button>
+        </div>
+      </div>
+      <div class="cert-foto-card" id="certFotoCard_cilindro">
+        <div class="cert-foto-label">🧯 Cilindro CO₂</div>
+        <img class="cert-foto-preview" id="certFotoPreview_cilindro" alt="" />
+        <div class="cert-foto-btns">
+          <button class="cert-foto-btn cam" onclick="certAbrirFoto('cilindro','cam')">📸 Cámara</button>
+          <button class="cert-foto-btn gal" onclick="certAbrirFoto('cilindro','gal')">🖼️ Galería</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button style="background:#bbb;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer" onclick="cerrarCertModal()">Cancelar</button>
+        <button style="background:#9e1212;color:white;border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer" onclick="certPaso(2)">Siguiente — Firma ›</button>
+      </div>
+    </div>
+
+    <!-- ── PASO 2: FIRMA ── -->
+    <div id="certPaso2" style="display:none">
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">✍️ Firma del encargado del local</div>
+      <div class="cert-firma-wrap">
+        <canvas id="sigCanvas" height="140"></canvas>
+      </div>
+      <div class="cert-firma-nota">Dibuja la firma en el recuadro de arriba</div>
+      <button onclick="clearSignature()" style="margin-top:8px;background:#e74c3c;color:white;border:none;border-radius:5px;padding:6px 14px;font-size:12px;cursor:pointer">🗑️ Limpiar</button>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button style="background:#95a5a6;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer" onclick="certPaso(1)">‹ Anterior</button>
+        <button style="background:#9e1212;color:white;border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer" onclick="certPaso(3)">Siguiente — Accesorios ›</button>
+      </div>
+    </div>
+
+    <!-- ── PASO 3: ACCESORIOS ── -->
+    <div id="certPaso3" style="display:none">
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">🔧 ¿Hay novedades?</div>
+      <div class="cert-novedades-toggle">
+        <button class="nov-btn" id="novBtnBad" onclick="certSetNovedades(true)">⚠️ Accesorios dañados</button>
+        <button class="nov-btn active-ok" id="novBtnOk" onclick="certSetNovedades(false)">✅ Sin novedades</button>
+      </div>
+      <div id="accCatalogWrap" style="display:none">
+        <div class="acc-catalog" id="accCatalog"></div>
+        <div class="acc-total-bar" id="accTotal">Total accesorios: $0.00</div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button style="background:#95a5a6;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer" onclick="certPaso(2)">‹ Anterior</button>
+        <button style="background:#27ae60;color:white;border:none;border-radius:6px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer" onclick="generarCertLocal()">📜 Generar Certificado</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── DATOS GLOBALES ───────────────────────────────────────────────────────────
+const MESES_NOMBRE = {
+  '01 ENERO':'ENERO','02 FEBRERO':'FEBRERO','03 MARZO':'MARZO',
+  '04 ABRIL':'ABRIL','05 MAYO':'MAYO','06 JUNIO':'JUNIO',
+  '07 JULIO':'JULIO','08 AGOSTO':'AGOSTO','09 SEPTIEMBRE':'SEPTIEMBRE',
+  '10 OCTUBRE':'OCTUBRE','11 NOVIEMBRE':'NOVIEMBRE','12 DICIEMBRE':'DICIEMBRE'
+};
+
+// Mapa de prefijos de código local → empresa
+const EMPRESAS_MAP = {
+  'K':    { empresa:'INT FOOD SERVICES CORP SA',              marca:'KFC',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'G':    { empresa:'INT FOOD SERVICES CORP SA',              marca:'GUS',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'M':    { empresa:'SHEMLON SA',                             marca:'MENESTRAS DEL NEGRO',ruc:'1792049504001', hoja:'SHEMLON' },
+  'J':    { empresa:'SHEMLON SA',                             marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
+  'CJNC': { empresa:'SHEMLON SA',                             marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
+  'CN':   { empresa:'CINNABON SA',                            marca:'CINNABON',           ruc:'',              hoja:'CINNABON' },
+  'BS':   { empresa:'BASKIN ROBBINS SA',                      marca:'BASKIN ROBBINS',     ruc:'',              hoja:'BASKIN ROBBINS' },
+  'T':    { empresa:'DELI-INTERNACIONAL SA',                  marca:'TROPIBURGER',        ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
+  'I':    { empresa:'IL CAPPO SA',                            marca:'IL CAPPO',           ruc:'',              hoja:'IL CAPPO' },
+  'ILCI': { empresa:'PRODUCCIONES Y EVENTOS NOVOEVENTOS SA',  marca:'IVORY',              ruc:'1792025435001', hoja:'NOVOEVENTOS' },
+  'V':    { empresa:'PROMOTORA ECUATORIANA DE CAFÉ DE COLOMBIA SA', marca:'JUAN VALDEZ',  ruc:'1792141486001', hoja:'PROCAFECOL' },
+  'JV':   { empresa:'PROMOTORA ECUATORIANA DE CAFÉ DE COLOMBIA SA', marca:'JUAN VALDEZ',  ruc:'1792141486001', hoja:'PROCAFECOL' },
+  'AMCA': { empresa:'AMCA SA',                                marca:'AMCA',               ruc:'',              hoja:'AMCA' },
+  'ESPE': { empresa:'ESPRESSO AMERICANO SA',                  marca:'ESPRESSO AMERICANO', ruc:'',              hoja:'ESPRESSO AMERICANO' },
+  'DI':   { empresa:'DOLCE INCONTRO SA',                      marca:'DOLCE INCONTRO',     ruc:'',              hoja:'DOLCE INCONTRO' },
+  'CA':   { empresa:'CAFA SA',                                marca:'CAFA',               ruc:'',              hoja:'CAFA' },
+  'A':    { empresa:'AMERICAN DELI SA',                       marca:'AMERICAN DELI',      ruc:'',              hoja:'AMERICAN DELI' },
+  'B':    { empresa:'AMERICAN DELI SA',                       marca:'AMERICAN DELI',      ruc:'',              hoja:'AMERICAN DELI' },
+  'F':    { empresa:'AMERICAN DELI SA',                       marca:'AMERICAN DELI',      ruc:'',              hoja:'AMERICAN DELI' },
+  'E':    { empresa:'ESPAÑOL SA',                             marca:'ESPAÑOL',            ruc:'',              hoja:'ESPAÑOL' },
+  'R':    { empresa:'CASA RES SA',                            marca:'CASA RES',           ruc:'',              hoja:'CASA RES' },
+  'H':    { empresa:'HELADERIAS SA',                          marca:'HELADERIAS',         ruc:'',              hoja:'HELADERIAS' },
+  'KN':   { empresa:'SUSHICORP SAS',                         marca:'KOBE / NOE',         ruc:'1792256267001', hoja:'SUSHICORP' },
+};
+
+let cotizaciones = []; // array of parsed cotizacion objects
+let facturaMap = {};   // { hojaKey: { factManges: 'XXXX', factMant: 'YYYY' } }
+
+// Overrides de extintores por local (persisten en localStorage)
+let extOverrides = (() => { try { return JSON.parse(localStorage.getItem('extOverrides') || '{}'); } catch(e) { return {}; } })();
+
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const GROQ_KEY_DEFAULT = ['gsk_v2dEa44p','FqiiNrh9Fa','HjWGdyb3FY','xmbuOBV47T','RRJACWXJJt','J400'].join('');
+
+function getGroqKey() {
+  return localStorage.getItem('groqKey') ||
+         document.getElementById('groqKey')?.value?.trim() ||
+         GROQ_KEY_DEFAULT;
+}
+
+function loadConfig() {
+  const gkEl = document.getElementById('groqKey');
+  const saved = localStorage.getItem('groqKey');
+  gkEl.value = saved || GROQ_KEY_DEFAULT;
+  if (!saved) localStorage.setItem('groqKey', GROQ_KEY_DEFAULT);
+  document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
+  validarGroqKey(gkEl);
+}
+
+function saveConfig() {
+  const gk = document.getElementById('groqKey').value.trim();
+  const gt = document.getElementById('ghToken').value.trim();
+  localStorage.setItem('groqKey', gk || GROQ_KEY_DEFAULT);
+  if (gt) localStorage.setItem('ghToken', gt); else localStorage.removeItem('ghToken');
+  const el = document.getElementById('cfgStatus');
+  el.textContent = '✅ Guardado permanentemente en este navegador';
+  clearTimeout(saveConfig._t);
+  saveConfig._t = setTimeout(() => el.textContent = '', 3000);
+}
+
+function validarGroqKey(input) {
+  const v = input.value.trim();
+  const el = document.getElementById('groqKeyStatus');
+  if (!el) return;
+  if (!v) { el.textContent = ''; return; }
+  if (v.startsWith('gsk_') && v.length > 20) {
+    el.textContent = '✅ Formato válido'; el.style.color = '#27ae60';
+  } else {
+    el.textContent = '⚠️ Debe empezar con gsk_'; el.style.color = '#e74c3c';
+  }
+}
+
+function getGhToken() {
+  return localStorage.getItem('ghToken') || document.getElementById('ghToken').value.trim();
+}
+
+function toggleCard(id) {
+  const body = document.getElementById(id + '-body');
+  const tog = document.getElementById(id + '-toggle');
+  const hidden = body.classList.toggle('hidden');
+  tog.textContent = hidden ? '▶' : '▼';
+}
+
+// ─── LOCAL CODE NORMALIZATION ─────────────────────────────────────────────────
+function normalizeLocalCode(rawCode) {
+  // KFCK02 → K02, GUSG49 → G49, M58 → M58, T032 → T032
+  let code = rawCode.toUpperCase().trim();
+  if (code.startsWith('KFCK')) code = 'K' + code.slice(4);
+  else if (code.startsWith('GUSG')) code = 'G' + code.slice(4);
+  return code;
+}
+
+function costCenter(localCode) {
+  // K02 → K002EC, M58 → M058EC, K105 → K105EC, CJNC01 → CJNC01EC
+  const m = localCode.match(/^([A-Z]+)(\d+)$/);
+  if (!m) return localCode + 'EC';
+  const prefix = m[1];
+  const num = m[2];
+  // Single-letter prefixes: pad to 3 digits
+  const padded = prefix.length === 1 ? num.padStart(3, '0') : num;
+  return prefix + padded + 'EC';
+}
+
+function getEmpresa(localCode) {
+  const code = localCode.toUpperCase();
+  // Try multi-char prefixes first (longest match)
+  const prefixes = ['CJNC','GUSG','ILCI','AMCA','ESPE','JV','BS','DI','CA','KN','K','M','T','V','I','G','J','A','B','E','F','H','R','CN'];
+  for (const p of prefixes) {
+    if (code.startsWith(p)) return EMPRESAS_MAP[p] || null;
+  }
+  return null;
+}
+
+// ─── PARSE COTIZACION EXCEL ───────────────────────────────────────────────────
+function parseCotizacion(arrayBuffer, filename) {
+  const wb = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+
+  // Extract from filename: "COTIZACION1262 KFCK02 9 DE OCT Y CHIMBORAZO.xlsx"
+  const fnMatch = filename.match(/COTIZACION(\d+)\s+([A-Z0-9]+)/i);
+  const proformaNum = fnMatch ? fnMatch[1] : '?';
+  const rawLocalCode = fnMatch ? fnMatch[2].toUpperCase() : '?';
+  const localCode = normalizeLocalCode(rawLocalCode);
+  const cc = costCenter(localCode);
+  const empresa = getEmpresa(localCode);
+
+  let localName = '';
+  let currentServiceType = 'MANTENIMIENTO';
+  let items = [];
+  let subtotal = 0, iva = 0, total = 0;
+  let ciudad = '';
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row) continue;
+
+    // Detect service type header (col D = index 3)
+    const colD = row[3];
+    if (typeof colD === 'string') {
+      const upper = colD.toUpperCase().trim();
+      if (upper === 'MANTENIMIENTO') { currentServiceType = 'MANTENIMIENTO'; continue; }
+      if (upper.includes('RECARGA')) { currentServiceType = 'RECARGA'; continue; }
+      if (upper.includes('VENTA') || upper.includes('INSTALACION')) { currentServiceType = 'VENTA'; continue; }
+      if (upper.includes('VARIOS')) { currentServiceType = 'VARIOS'; continue; }
+
+      // LOCAL line
+      if (upper.startsWith('LOCAL:')) {
+        localName = colD.replace(/LOCAL\s*:/i, '').trim();
+        continue;
+      }
+    }
+
+    // Subtotal (col I = index 8 contains 'SUBTOTAL')
+    if (row[8] === 'SUBTOTAL' || row[7] === 'SUBTOTAL') {
+      subtotal = parseFloat(row[9] || row[10] || 0);
+      continue;
+    }
+    // IVA (col H = index 7)
+    if (typeof row[7] === 'string' && row[7].includes('IVA')) {
+      iva = parseFloat(row[9] || 0);
+      continue;
+    }
+    // TOTAL
+    if (row[8] === 'TOTAL') {
+      total = parseFloat(row[10] || 0);
+      continue;
+    }
+
+    // Item row: col C (index 2) = qty (number), col D (index 3) = description
+    const qty = row[2];
+    const desc = row[3];
+    const unitPrice = row[9];
+    const totalItem = row[12];
+
+    if (typeof qty === 'number' && typeof desc === 'string' && desc.length > 2) {
+      // Classify item
+      const descU = desc.toUpperCase();
+      let tipo = '-', capacidad = '-';
+
+      if (descU.includes('CO2') || descU.includes('GAS CARBONICO')) tipo = 'CO2';
+      else if (descU.includes('PQS') || descU.includes('POLVO QUIMICO')) tipo = 'PQS';
+      else if (descU.includes('TIPO K') || descU.includes('ACETATO')) tipo = 'K';
+      else if (descU.includes('FOAM') || descU.includes('AGUA QUIMICA')) tipo = 'FOAM';
+      else tipo = '-';
+
+      // Extract capacity
+      const capMatch = desc.match(/(\d+[\.,]?\d*)\s*(LIBRAS?|LBS|GLNS|GL)/i);
+      if (capMatch) capacidad = capMatch[1] + (capMatch[2].toUpperCase().includes('G') ? ' GLNS' : ' LBS');
+
+      items.push({
+        qty, desc, tipo, capacidad,
+        unitPrice: parseFloat(unitPrice || 0),
+        total: parseFloat(totalItem || 0),
+        serviceType: currentServiceType,
+        isExtintor: descU.includes('EXTINTOR')
+      });
+    }
+  }
+
+  // Determine overall service category
+  const hasOnlyMaint = items.length > 0 && items.every(i => i.serviceType === 'MANTENIMIENTO');
+  const category = hasOnlyMaint ? 'MANGES' : 'MANT';
+
+  // Description for FORMATO_FACTURACIÓN
+  let descripcionFact = 'EXTINTORES MANTENIMIENTO ANUAL';
+  if (category === 'MANT') {
+    const types = [...new Set(items.map(i => {
+      const d = i.desc.toUpperCase();
+      if (d.includes('LAMPARA')) return 'LAMPARA EMERGENCIA';
+      if (d.includes('LETRERO') || d.includes('SEÑALET')) return 'SEÑALETICAS';
+      if (d.includes('PEDESTAL')) return 'PEDESTAL';
+      if (d.includes('NUEVO')) return 'EXTINTOR NUEVO';
+      if (d.includes('RECARGA') || d.includes('REC')) return 'RECARGA';
+      if (d.includes('REUBICACION')) return 'REUBICACION';
+      if (d.includes('ACCESORIOS')) return 'ACCESORIOS';
+      if (d.includes('VISITA')) return 'VISITA TECNICA';
+      return 'VARIOS';
+    }))];
+    descripcionFact = types.join(' Y ');
+  }
+
+  // Extract observacion (first non-empty mant description)
+  let observacion = '';
+  if (category === 'MANT') {
+    const mantItems = items.filter(i => !i.isExtintor || i.serviceType !== 'MANTENIMIENTO');
+    if (mantItems.length) observacion = mantItems[0].desc.toUpperCase().includes('DAÑADO')
+      ? 'ACCESORIOS DAÑADOS DURANTE MANTENIMIENTO ANUAL' : 'SOLICITADO POR EL LOCAL';
+  }
+
+  return {
+    filename,
+    proformaNum,
+    rawLocalCode,
+    localCode,
+    cc,
+    empresa,
+    localName: localName || rawLocalCode,
+    ciudad,
+    items,
+    subtotal,
+    iva,
+    total,
+    category,
+    descripcionFact,
+    observacion,
+    notaEntrega: '' // to be filled by user
+  };
+}
+
+// ─── NAVEGACIÓN POR SECCIONES ─────────────────────────────────────────────────
+function goToSection(name) {
+  document.querySelectorAll('.app-section').forEach(s => s.style.display = 'none');
+  const sec = document.getElementById('sec-' + name);
+  if (sec) sec.style.display = '';
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const tab = document.querySelector(`.nav-tab[data-sec="${name}"]`);
+  if (tab) tab.classList.add('active');
+  localStorage.setItem('lastSection', name);
+  if (name === 'bd') renderBD();
+  if (name === 'certs') renderCertsList();
+}
+
+// ─── PERFILES (admin / empleado) ──────────────────────────────────────────────
+let currentProfile = localStorage.getItem('perfil') || 'admin';
+
+function setPerfil(p) {
+  currentProfile = p;
+  localStorage.setItem('perfil', p);
+  applyPerfil();
+}
+
+function applyPerfil() {
+  const isAdmin = currentProfile === 'admin';
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+  document.getElementById('monthSelector').style.display = isAdmin ? '' : 'none';
+  if (!isAdmin) {
+    goToSection('plan');
+  } else {
+    const last = localStorage.getItem('lastSection') || 'plan';
+    goToSection(last);
+  }
+  updatePerfilIndicator();
+  renderPlan();
+}
+
+// ─── CAMBIO DE MES ────────────────────────────────────────────────────────────
+function onMonthChange() {
+  // Recalcular cotInicial por defecto según el nuevo mes (solo si no hay sesión guardada para ese mes)
+  const mesVal = document.getElementById('selMes').value;
+  const mesNum = parseInt(mesVal.substring(0, 2));
+  const cotInicialInp = document.getElementById('cotInicial');
+  if (cotInicialInp) cotInicialInp.value = 1200 + mesNum * 50;
+
+  if (!cotizaciones.length) localRestore();
+  cargarPlan();
+  renderTabla();
+  renderEmpresaFacturas();
+  renderBD();
+}
+
+// ─── MODO OSCURO ──────────────────────────────────────────────────────────────
+function toggleDark() {
+  const dark = document.body.classList.toggle('dark');
+  localStorage.setItem('darkMode', dark ? '1' : '0');
+}
+
+// Normaliza la categoría a 'MANGES' (presupuestado) o 'MANT' (extra fuera de presupuesto).
+// La IA devuelve "MANTGES"; internamente usamos 'MANGES'.
+function normCategoria(v) {
+  const s = String(v || '').toUpperCase();
+  return s.includes('GES') ? 'MANGES' : 'MANT';
+}
+
+// Cambia MANTGES/MANT de un registro desde la tabla y re-renderiza.
+function setCategoria(idx, val) {
+  if (cotizaciones[idx]) {
+    cotizaciones[idx].category = normCategoria(val);
+    renderTabla();
+    renderEmpresaFacturas();
+    autosave();
+  }
+}
+
+// ─── RENDER TABLA ─────────────────────────────────────────────────────────────
+function renderTabla() {
+  const container = document.getElementById('tablaContainer');
+
+  const manges = cotizaciones.filter(c => c.category === 'MANGES');
+  const mant = cotizaciones.filter(c => c.category === 'MANT');
+
+  let html = `
+    <div style="margin-bottom:8px;font-size:13px;color:#666">
+      <span class="badge badge-manges">MANGES: ${manges.length}</span>&nbsp;
+      <span class="badge badge-mant">MANT: ${mant.length}</span>&nbsp;
+      Total: ${cotizaciones.length} cotizaciones
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Archivo</th>
+          <th>Cód. Local</th>
+          <th>C.C.</th>
+          <th>Empresa</th>
+          <th>Tipo</th>
+          <th>Descripción Serv.</th>
+          <th>Subtotal</th>
+          <th>IVA</th>
+          <th>Total</th>
+          <th># N.E.</th>
+          <th>Obs.</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  cotizaciones.forEach((c, idx) => {
+    const empNombre = c.empresa?.empresa || '❓ Sin empresa';
+    const cls = c.category === 'MANGES' ? 'manges' : 'mant';
+    html += `
+      <tr class="${cls}">
+        <td>${idx+1}</td>
+        <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.filename}">${c.filename.replace('.xlsx','')}</td>
+        <td><strong>${c.localCode}</strong></td>
+        <td style="font-family:monospace;font-size:11px">${c.cc}</td>
+        <td style="font-size:11px">
+          <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderEmpresaFacturas();autosave()">
+            ${Object.entries(EMPRESAS_MAP).map(([k,v]) =>
+              `<option value="${k}" ${c.empresa===v?'selected':''}>${v.empresa}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td>
+          <select style="font-size:11px;padding:2px 4px" onchange="setCategoria(${idx}, this.value)">
+            <option value="MANGES" ${c.category==='MANGES'?'selected':''}>MANTGES (presup.)</option>
+            <option value="MANT" ${c.category==='MANT'?'selected':''}>MANT (extra)</option>
+          </select>
+        </td>
+        <td style="font-size:11px;max-width:180px" contenteditable="true" onblur="cotizaciones[${idx}].descripcionFact=this.textContent.trim();autosave()">${c.descripcionFact}</td>
+        <td style="text-align:right">$${c.subtotal.toFixed(2)}</td>
+        <td style="text-align:right">$${c.iva.toFixed(2)}</td>
+        <td style="text-align:right;font-weight:700">$${c.total.toFixed(2)}</td>
+        <td><input type="text" value="${c.notaEntrega}" placeholder="ej: 6494" style="width:80px" onchange="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
+        <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim();autosave()">${c.observacion}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+// ─── RENDER FACTURAS POR EMPRESA ──────────────────────────────────────────────
+function renderEmpresaFacturas() {
+  const container = document.getElementById('empresaFacturasContainer');
+
+  // Group by hoja
+  const byHoja = {};
+  cotizaciones.forEach(c => {
+    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+    if (!byHoja[hoja]) byHoja[hoja] = { empresa: c.empresa, manges: [], mant: [] };
+    if (c.category === 'MANGES') byHoja[hoja].manges.push(c);
+    else byHoja[hoja].mant.push(c);
+  });
+
+  let html = '';
+  for (const [hoja, data] of Object.entries(byHoja)) {
+    if (!facturaMap[hoja]) facturaMap[hoja] = { factManges: '', factMant: '' };
+    const subtManges = data.manges.reduce((s,c) => s + c.subtotal, 0);
+    const subtMant = data.mant.reduce((s,c) => s + c.subtotal, 0);
+
+    html += `
+      <div class="empresa-section">
+        <div class="empresa-header">
+          <div>
+            <div class="empresa-nombre">${data.empresa?.empresa || hoja}</div>
+            <div style="font-size:11px;color:#777">
+              MANGES: ${data.manges.length} locales ($${subtManges.toFixed(2)}) &nbsp;|&nbsp;
+              MANT: ${data.mant.length} locales ($${subtMant.toFixed(2)})
+            </div>
+          </div>
+          <div class="empresa-facturas">
+            ${data.manges.length ? `
+            <div class="fact-input-group">
+              <label>Fact. MANGES:</label>
+              <input type="text" placeholder="ej: 3296 MANTGES" value="${facturaMap[hoja].factManges}"
+                onchange="facturaMap['${hoja}'].factManges=this.value.trim();autosave()" />
+            </div>` : ''}
+            ${data.mant.length ? `
+            <div class="fact-input-group">
+              <label>Fact. MANT:</label>
+              <input type="text" placeholder="ej: 3299 MANTT" value="${facturaMap[hoja].factMant}"
+                onchange="facturaMap['${hoja}'].factMant=this.value.trim();autosave()" />
+            </div>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  container.innerHTML = html || '<p style="color:#999;font-size:13px">Sin datos cargados</p>';
+}
+
+// ─── LEER FOTOS NE ────────────────────────────────────────────────────────────
+let _leerFotosEnProgreso = false;
+async function leerFotosNE() {
+  if (_leerFotosEnProgreso) return;   // evita doble clic / race condition
+  const groqKey = getGroqKey();
+  if (!groqKey) {
+    document.getElementById('fotoStatus').textContent = '⚠️ Necesitas API Key de Groq en Configuración (console.groq.com)';
+    return;
+  }
+
+  const files = document.getElementById('fotoNE').files;
+  if (!files.length) {
+    document.getElementById('fotoStatus').textContent = '⚠️ Selecciona al menos una foto';
+    return;
+  }
+
+  _leerFotosEnProgreso = true;
+  document.getElementById('fotoStatus').textContent = `🤖 Procesando ${files.length} foto${files.length>1?'s':''} con Groq IA...`;
+  let procesadas = 0, errores = 0;
+
+  try {
+  for (const file of files) {
+    try {
+      const mimeType = file.type || 'image/jpeg';
+      const base64 = await fileToBase64(file);
+      if (!base64) { errores++; continue; }
+      const statusEl = document.getElementById('fotoStatus');
+      const result = await callGroq(groqKey, base64, mimeType,
+        `Eres un asistente de facturación de extintores de Previfuego (Ecuador).
+Analiza TODA la imagen de esta nota de entrega/servicio y extrae TODOS los datos visibles.
+
+CAMPOS OBLIGATORIOS:
+1. notaEntrega: número de nota (4-5 dígitos). Busca "N°", "No.", "NOTA DE ENTREGA", "NE".
+2. localCode: código del local. Ejemplos reales: KFCK76, KFCK161, GUSG45, K02, K105, M35, T032, BS04, KN01, ILCI12, GUS G45 (sin espacio → GUSG45).
+   Devuelve SIN espacios, mayúsculas.
+3. empresa: razón social completa del cliente (ej: "INT FOOD SERVICES CORP", "OPERADORA GUAYAQUIL S.A.", "ILCI S.A.").
+4. ruc: RUC o cédula del cliente si aparece.
+5. ciudad: ciudad del local (ej: "GUAYAQUIL", "QUITO", "CUENCA").
+6. localNombre: nombre o dirección exacta del local (ej: "KFC CARAPUNGO", "LOCAL 42 CC VENTURA").
+7. fecha: fecha del servicio en formato DD/MM/YYYY si aparece.
+8. categoria: "MANTGES" si es mantenimiento/recarga anual; "MANT" si es accesorio/señalética/lámpara/instalación extra.
+9. descripcion: descripción completa del servicio (ej: "EXTINTORES MANTENIMIENTO ANUAL", "ACCESORIOS EXTINTORES Y SEÑALETICAS", "LAMPARA DE EMERGENCIA").
+10. extintores: TODOS los extintores/ítems del detalle:
+    [{tipo:"CO2", capacidad:"50LBS", cantidad:1, valorUnit:45.00, valorTotal:45.00, serie:"12345"}]
+    tipo: CO2 / PQS / AGUA / HALON / ESPUMA / LAMPARA / SEÑALETICA / ACCESORIO / etc.
+    capacidad: exactamente como aparece (ej: "50LBS", "10LBS", "6KG", "25LBS").
+    serie: número de serie si aparece en la nota.
+11. subtotal: monto sin IVA exacto (número decimal).
+12. iva: monto IVA exacto (número decimal).
+13. total: monto total con IVA exacto (número decimal).
+14. formaPago: forma de pago si aparece (ej: "CREDITO", "CONTADO", "TRANSFERENCIA").
+15. observacion: cualquier observación, nota o comentario adicional visible en el documento.
+16. tecnico: nombre del técnico que realizó el servicio si aparece.
+17. firmaCliente: nombre de quien recibió/firmó si aparece.
+
+Responde ÚNICAMENTE con JSON válido sin texto extra ni markdown:
+{"notaEntrega":"","localCode":"","empresa":"","ruc":"","ciudad":"","localNombre":"","fecha":"","categoria":"MANTGES","descripcion":"EXTINTORES MANTENIMIENTO ANUAL","extintores":[],"subtotal":0,"iva":0,"total":0,"formaPago":"","observacion":"","tecnico":"","firmaCliente":""}
+Si no encuentras un campo, deja "" o 0.`,
+        msg => { if (statusEl) statusEl.textContent = msg; }
+      );
+
+      let json;
+      try {
+        json = JSON.parse(result.replace(/```json|```/g, '').trim());
+      } catch(pe) {
+        const m = result.match(/\{[\s\S]*\}/);
+        if (m) { try { json = JSON.parse(m[0]); } catch(e2) { throw pe; } }
+        else throw pe;
+      }
+
+      if (json.localCode || json.notaEntrega) {
+        const rawCode = (json.localCode || '').toUpperCase().trim().replace(/\s+/g, '');
+        // Match by full normalised code (spaces removed, uppercase). Fallback: last digits only if unique.
+        let cot = rawCode ? cotizaciones.find(c =>
+          c.localCode.toUpperCase().replace(/\s+/g,'') === rawCode
+        ) : null;
+        if (!cot && rawCode) {
+          const rawNum = rawCode.replace(/\D/g, '');
+          const matches = rawNum ? cotizaciones.filter(c => c.localCode.replace(/\D/g,'') === rawNum) : [];
+          if (matches.length === 1) cot = matches[0]; // solo si es inequívoco
+        }
+
+        if (cot) {
+          if (json.notaEntrega) cot.notaEntrega = String(json.notaEntrega);
+          if (json.categoria) cot.category = normCategoria(json.categoria);
+          if (json.descripcion) cot.descripcionFact = json.descripcion;
+          if (json.observacion) cot.observacion = json.observacion;
+          if (json.ciudad) cot.ciudad = json.ciudad;
+          if (json.ruc) cot.ruc = json.ruc;
+          if (json.fecha) cot.fecha = json.fecha;
+          if (json.tecnico) cot.tecnico = json.tecnico;
+          if (json.firmaCliente) cot.firmaCliente = json.firmaCliente;
+          if (json.formaPago) cot.formaPago = json.formaPago;
+          if (json.subtotal && !cot.subtotal) cot.subtotal = parseFloat(json.subtotal) || 0;
+          if (json.iva && !cot.iva) cot.iva = parseFloat(json.iva) || 0;
+          if (json.total && !cot.total) cot.total = parseFloat(json.total) || 0;
+          if (json.extintores?.length && (!cot.items || !cot.items.length)) {
+            cot.items = json.extintores.map(e => ({
+              qty: e.cantidad || 1, desc: `${e.tipo||''} ${e.capacidad||''}`.trim(),
+              tipo: e.tipo, capacidad: e.capacidad, serie: e.serie || '',
+              unitPrice: parseFloat(e.valorUnit) || 0,
+              total: parseFloat(e.valorTotal) || (e.cantidad||1) * (parseFloat(e.valorUnit)||0),
+              serviceType: 'MANTENIMIENTO', isExtintor: true
+            }));
+          }
+          procesadas++;
+          document.getElementById('fotoStatus').textContent =
+            `🤖 [${procesadas}/${files.length}] ✅ ${json.localCode||'?'} NE:${json.notaEntrega||'?'} $${json.total||0}`;
+        } else if (json.subtotal > 0 || json.total > 0) {
+          const localCodeClean = (json.localCode || '').toUpperCase().trim().replace(/\s+/g,'');
+          const emp = getEmpresa(localCodeClean);
+          cotizaciones.push({
+            filename: `foto-${file.name}`,
+            proformaNum: '',
+            rawLocalCode: localCodeClean,
+            localCode: localCodeClean,
+            cc: costCenter(localCodeClean),
+            empresa: emp,
+            localName: json.localNombre || localCodeClean,
+            ciudad: json.ciudad || '',
+            ruc: json.ruc || '',
+            fecha: json.fecha || '',
+            tecnico: json.tecnico || '',
+            firmaCliente: json.firmaCliente || '',
+            formaPago: json.formaPago || '',
+            items: (json.extintores || []).map(e => ({
+              qty: e.cantidad || 1, desc: `${e.tipo||''} ${e.capacidad||''}`.trim(),
+              tipo: e.tipo, capacidad: e.capacidad, serie: e.serie || '',
+              unitPrice: parseFloat(e.valorUnit) || 0,
+              total: parseFloat(e.valorTotal) || (e.cantidad||1) * (parseFloat(e.valorUnit)||0),
+              serviceType: 'MANTENIMIENTO', isExtintor: true
+            })),
+            subtotal: parseFloat(json.subtotal) || 0,
+            iva: parseFloat(json.iva) || 0,
+            total: parseFloat(json.total) || 0,
+            category: normCategoria(json.categoria),
+            descripcionFact: json.descripcion || 'EXTINTORES MANTENIMIENTO ANUAL',
+            observacion: json.observacion || '',
+            notaEntrega: String(json.notaEntrega || '')
+          });
+          procesadas++;
+          document.getElementById('fotoStatus').textContent =
+            `🤖 [${procesadas}/${files.length}] ➕ ${localCodeClean} NE:${json.notaEntrega||'?'} $${json.total||0} (nuevo)`;
+        } else {
+          errores++;
+        }
+        renderTabla();
+        renderEmpresaFacturas();
+      }
+    } catch(e) {
+      console.warn('Groq error:', file.name, e);
+      errores++;
+      document.getElementById('fotoStatus').textContent =
+        `⚠️ Error en ${file.name}: ${e.message}`;
+    }
+    // Pequeña pausa entre fotos
+    if (files.length > 1) await new Promise(res => setTimeout(res, 500));
+  }
+  } finally {
+    _leerFotosEnProgreso = false;
+  }
+
+  document.getElementById('fotoStatus').textContent =
+    `✅ Listo: ${procesadas} notas procesadas${errores ? `, ${errores} errores` : ''}`;
+
+  if (cotizaciones.length) enableGenerarBtns();
+  autosave();   // guarda las notas recién registradas
+}
+
+// onStatus: callback(msg) para reportar progreso al caller (evita acoplamiento al DOM)
+async function callGroq(apiKey, base64, mimeType, prompt, onStatus) {
+  const MAX_ATTEMPTS = 4;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    let r;
+    try {
+      r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          temperature: 0.1,
+          max_tokens: 2000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } }
+            ]
+          }]
+        })
+      });
+    } catch(netErr) {
+      throw new Error('Error de red al contactar Groq: ' + netErr.message);
+    }
+
+    if (r.status === 429) {
+      if (attempt < MAX_ATTEMPTS) {
+        const wait = 3000 * Math.pow(2, attempt - 1); // 3s, 6s, 12s
+        if (onStatus) onStatus(`⏳ Groq límite — reintentando en ${wait/1000}s (${attempt}/${MAX_ATTEMPTS})…`);
+        await new Promise(res => setTimeout(res, wait));
+        continue;
+      }
+      throw new Error('Groq: límite de tasa excedido, espera unos segundos y vuelve a intentar');
+    }
+
+    if (r.status === 401) throw new Error('Groq: API Key inválida — verifica que empiece con gsk_');
+    if (r.status === 400) {
+      let data2; try { data2 = await r.json(); } catch(e) { throw new Error('Groq: request inválido (400)'); }
+      throw new Error(`Groq: ${data2?.error?.message || 'request inválido (400)'}`);
+    }
+
+    let data;
+    try { data = await r.json(); } catch(e) { throw new Error(`Groq: respuesta no-JSON (HTTP ${r.status})`); }
+
+    if (!r.ok || !data.choices?.[0]?.message?.content) {
+      const msg = data?.error?.message || `HTTP ${r.status}`;
+      throw new Error(`Groq: ${msg}`);
+    }
+    return data.choices[0].message.content;
+  }
+  throw new Error('Groq: sin respuesta después de todos los reintentos');
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = e => res((e.target?.result || '').split(',')[1] || '');
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ─── GITHUB PERSISTENCE ──────────────────────────────────────────────────────
+const GH_REPO = 'alejosl0801/previfuego-facturacion';
+const GH_BRANCH = 'main';
+
+function ghFilePath() {
+  const mes = document.getElementById('selMes').value;
+  const anio = document.getElementById('selAnio').value;
+  const mesNombre = MESES_NOMBRE[mes] || mes;
+  return `datos/${mesNombre}-${anio}.json`;
+}
+
+// Construye el objeto de la sesión del mes (registros + facturas)
+function buildPayload() {
+  return {
+    mes: document.getElementById('selMes').value,
+    anio: document.getElementById('selAnio').value,
+    savedAt: new Date().toISOString(),
+    cotizaciones: cotizaciones.map(c => ({
+      filename: c.filename, proformaNum: c.proformaNum, localCode: c.localCode,
+      cc: c.cc, localName: c.localName, ciudad: c.ciudad,
+      empresaHoja: c.empresa?.hoja || '',
+      items: c.items, subtotal: c.subtotal, iva: c.iva, total: c.total,
+      category: c.category, descripcionFact: c.descripcionFact,
+      observacion: c.observacion, notaEntrega: c.notaEntrega,
+      ruc: c.ruc || '', fecha: c.fecha || '',
+      tecnico: c.tecnico || '', firmaCliente: c.firmaCliente || '',
+      formaPago: c.formaPago || ''
+    })),
+    facturaMap,
+    visitaStatus,
+    extOverrides,
+    neInicial:  parseInt(document.getElementById('neInicial')?.value)  || 6700,
+    cotInicial: parseInt(document.getElementById('cotInicial')?.value) || 1500
+  };
+}
+
+// ─── AUTO-GUARDADO ────────────────────────────────────────────────────────────
+// Cada cambio se guarda SOLO: al instante en el navegador (localStorage) y, si hay
+// token de GitHub, también en la nube (con un pequeño retraso para no saturar).
+function lsKey() { return 'sesion_' + ghFilePath(); }
+
+function localSave() {
+  try { localStorage.setItem(lsKey(), JSON.stringify(buildPayload())); } catch(e) {}
+}
+
+function localRestore() {
+  try {
+    const raw = localStorage.getItem(lsKey());
+    if (!raw) return false;
+    const json = JSON.parse(raw);
+    facturaMap   = json.facturaMap   || {};
+    visitaStatus = json.visitaStatus || {};
+    if (json.extOverrides) {
+      extOverrides = json.extOverrides;
+      localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
+    }
+    if (json.neInicial) {
+      const inp = document.getElementById('neInicial');
+      if (inp) inp.value = json.neInicial;
+    }
+    if (json.cotInicial) {
+      const inp = document.getElementById('cotInicial');
+      if (inp) inp.value = json.cotInicial;
+    }
+    cotizaciones = (json.cotizaciones || []).map(c => ({
+      ...c,
+      empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
+      notaEntrega: c.notaEntrega || '',
+      ruc: c.ruc || '', fecha: c.fecha || '',
+      tecnico: c.tecnico || '', firmaCliente: c.firmaCliente || '',
+      formaPago: c.formaPago || ''
+    }));
+    return true;
+  } catch(e) { return false; }
+}
+
+let _autosaveTimer = null;
+function autosave() {
+  localSave();                       // inmediato y local — nunca se pierde
+  if (getGhToken()) {                // y a la nube, con debounce de 2.5s
+    clearTimeout(_autosaveTimer);
+    _autosaveTimer = setTimeout(() => ghGuardar(true), 2500);
+  }
+}
+
+async function ghGuardar(silent = false) {
+  const token = getGhToken();
+  const st = document.getElementById('ghStatus');
+  if (!token) return;
+
+  const path = ghFilePath();
+  const payload = buildPayload();
+  if (!silent && st) st.textContent = '⏳ Guardando...';
+
+  try {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+    const notasTxt = cotizaciones.length ? ` · ${cotizaciones.length} notas` : '';
+    const ghHeaders = {
+      Authorization: `token ${token}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    };
+
+    // Intento 1: PUT sin SHA (funciona si el archivo no existe → 201)
+    let body = { message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio}${notasTxt}`, content, branch: GH_BRANCH };
+    let r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+      method: 'PUT', headers: ghHeaders, body: JSON.stringify(body)
+    });
+
+    // 409 = archivo existe, necesita SHA → buscarlo y reintentar
+    if (r.status === 409 || r.status === 422) {
+      const meta = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+      });
+      if (meta.ok) {
+        body.sha = (await meta.json()).sha;
+        r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+          method: 'PUT', headers: ghHeaders, body: JSON.stringify(body)
+        });
+      }
+    }
+
+    if (r.ok) {
+      if (st) st.innerHTML = `<span style="color:green">✅ Guardado en la nube${notasTxt} · ${new Date().toLocaleTimeString()}</span>`;
+    } else {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${r.status}`);
+    }
+  } catch (e) {
+    if (st) st.innerHTML = `<span style="color:red">❌ ${e.message}</span>`;
+  }
+}
+
+async function ghCargar() {
+  const path = ghFilePath();
+  try {
+    // Raw URL pública — no requiere token (repositorio público)
+    const rawUrl = `https://raw.githubusercontent.com/${GH_REPO}/${GH_BRANCH}/${path}?t=${Date.now()}`;
+    const r = await fetch(rawUrl);
+    if (!r.ok) {
+      const ok = localRestore();
+      if (ok) { renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan(); }
+      return;
+    }
+    const json = await r.json();
+
+    facturaMap    = json.facturaMap    || {};
+    visitaStatus  = json.visitaStatus  || {};
+    extOverrides  = json.extOverrides  || {};
+    localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
+    cotizaciones = (json.cotizaciones || []).map(c => ({
+      ...c,
+      empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
+      notaEntrega: c.notaEntrega || '',
+      ruc: c.ruc || '', fecha: c.fecha || '',
+      tecnico: c.tecnico || '', firmaCliente: c.firmaCliente || '',
+      formaPago: c.formaPago || ''
+    }));
+    if (json.neInicial) {
+      const inp = document.getElementById('neInicial');
+      if (inp) inp.value = json.neInicial;
+    }
+    if (json.cotInicial) {
+      const inp = document.getElementById('cotInicial');
+      if (inp) inp.value = json.cotInicial;
+    }
+
+    renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan();
+    const gs = document.getElementById('ghStatus');
+    if (gs) gs.textContent = `☁️ Sincronizado (${new Date(json.savedAt).toLocaleString()})`;
+  } catch (e) {
+    const ok = localRestore();
+    if (ok) { renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan(); }
+  }
+}
+
+// ─── GENERADORES ─────────────────────────────────────────────────────────────
+function log(msg, type='') {
+  const box = document.getElementById('genLog');
+  box.style.display = '';
+  const line = document.createElement('div');
+  line.className = 'log-line' + (type ? ' log-' + type : '');
+  line.textContent = new Date().toLocaleTimeString() + ' › ' + msg;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ─── PLAN DEL MES & NOTAS DE ENTREGA ─────────────────────────────────────────
+let planMes = [];
+let visitaStatus = {};
+let extMapBD = {}; // copia del extMap del Excel, para poder restaurar overrides
+const RAW_BASE = '';
+
+const NE_TEMPLATE_MAP = {
+  'INT FOOD SERVICES': 'INT',
+  'SHEMLON':           'SHEMLON',
+  'DELI INTERNACIONAL':'DELI',
+  'PROCAFECOL':        'PROCAFECOL',
+  'NOVOEVENTOS':       'NOVO',
+  'SUSHICORP':         'SUSHICORP',
+};
+
+async function cargarPlan() {
+  const mesVal  = document.getElementById('selMes').value;
+  const mesNom  = MESES_NOMBRE[mesVal];
+  const anio    = document.getElementById('selAnio').value;
+
+  document.getElementById('planContainer').innerHTML =
+    '<p style="color:#999;font-size:13px">Cargando bases de datos…</p>';
+
+  // Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
+  const CN_TO_BS_MAP = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
+  function normCode(raw) {
+    const m = String(raw).match(/^([A-Z]+)(\d+)/);
+    if (!m) return raw;
+    const n = m[1] + String(parseInt(m[2])).padStart(3, '0');
+    return CN_TO_BS_MAP[n] || n;
+  }
+
+  // Extrae resumen + detalle de un workbook y los acumula en los arrays dados
+  function parseWB(wb, resumenArr, extMap) {
+    const wsRes = wb.Sheets['RESUMEN_LOCALES'];
+    const wsDet = wb.Sheets['DETALLE'];
+    if (wsRes) {
+      const rows = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
+      rows.slice(1).forEach(r => {
+        if (r[0] && !String(r[0]).toUpperCase().startsWith('GRAN')) resumenArr.push(r);
+      });
+    }
+    if (wsDet) {
+      const rows = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
+      rows.slice(1).forEach(r => {
+        if (!r[1] || String(r[2] || '').trim() !== mesNom) return;
+        const mx = String(r[1]).match(/^([A-Z]+\d+)/);
+        if (!mx) return;
+        const cod = normCode(mx[1]);
+        if (!extMap[cod]) extMap[cod] = [];
+        extMap[cod].push({ tipo: r[4], cap: r[5], costoMantt: r[6], precioRec: r[7], anioRec: r[9] });
+      });
+    }
+  }
+
+  try {
+    const t = Date.now();
+    // Cargar ambos Excel en paralelo; SUSHICORP puede no existir → se ignora el error
+    const [bufKFC, bufSUS] = await Promise.all([
+      fetch(`BASE_DATOS_KFC.xlsx?t=${t}`).then(r => { if (!r.ok) throw new Error(`BD KFC: HTTP ${r.status}`); return r.arrayBuffer(); }),
+      fetch(`BASE_DATOS_SUSHICORP.xlsx?t=${t}`).then(r => r.arrayBuffer()).catch(() => null),
+    ]);
+
+    const resumenAll = [];
+    const extMap     = {};
+
+    parseWB(XLSX.read(bufKFC, { type: 'array' }), resumenAll, extMap);
+    if (bufSUS) parseWB(XLSX.read(bufSUS, { type: 'array' }), resumenAll, extMap);
+
+    extMapBD = extMap;
+
+    planMes = resumenAll
+      .filter(r => r[3] === mesNom)
+      .map(r => {
+        const cod = normCode(String(r[0]));
+        const anioRec = parseInt(r[9]) || 9999;
+        const esRecarga = parseInt(anio) === anioRec;
+        const totalMantt   = parseFloat(r[5]) || 0;
+        const totalRecarga = parseFloat(r[6]) || 0;
+        return {
+          codigo: cod,
+          marca: r[1],
+          nombre: String(r[2] || cod),
+          mes: r[3],
+          nExt: r[4] || 0,
+          totalMantt,
+          totalRecarga,
+          cobro: esRecarga ? totalRecarga : totalMantt,
+          anioRec,
+          esRecarga,
+          empresa: getEmpresa(cod),
+          extintores: extOverrides[cod] || extMap[cod] || [],
+        };
+      });
+
+    renderPlan();
+  } catch(e) {
+    console.error('cargarPlan:', e);
+    document.getElementById('planContainer').innerHTML =
+      `<p style="color:#c0392b;font-size:13px">Error cargando base de datos: ${e.message}</p>`;
+  }
+}
+
+function renderPlan() {
+  const total     = planMes.length;
+  const visitados = planMes.filter(l => visitaStatus[l.codigo] === 'visitado').length;
+  const pendientes = total - visitados;
+  const mesNom = MESES_NOMBRE[document.getElementById('selMes').value];
+  const isAdmin = currentProfile === 'admin';
+
+  const statsEl = document.getElementById('planStats');
+  if (statsEl) statsEl.innerHTML =
+    `${mesNom}: <span style="color:#27ae60">✅ ${visitados} visitados</span> &nbsp;·&nbsp; ` +
+    `<span style="color:#e74c3c">🔴 ${pendientes} pendientes</span> &nbsp;·&nbsp; ${total} total`;
+
+  const cont = document.getElementById('planContainer');
+  if (!cont) return;
+
+  if (!total) {
+    cont.innerHTML = '<p style="color:#999;font-size:13px">Sin locales programados para este mes.</p>';
+    return;
+  }
+
+  // Filtro de búsqueda
+  const q = (document.getElementById('planSearch')?.value || '').toUpperCase().trim();
+  const neBase  = parseInt(document.getElementById('neInicial')?.value)  || 6700;
+  const cotBase = parseInt(document.getElementById('cotInicial')?.value) || 1500;
+
+  const visibles = planMes
+    .map((local, idx) => ({ local, neNum: neBase + idx, cotNum: cotBase + idx }))
+    .filter(({ local }) => !q ||
+      local.codigo.toUpperCase().includes(q) ||
+      String(local.nombre).toUpperCase().includes(q) ||
+      String(local.marca).toUpperCase().includes(q));
+
+  if (!visibles.length) {
+    cont.innerHTML = `<p style="color:#999;font-size:13px">Ningún local coincide con "${q}".</p>`;
+    return;
+  }
+
+  function buildCard({ local, neNum, cotNum }) {
+    const status     = visitaStatus[local.codigo] || 'pendiente';
+    const isVisitado = status === 'visitado';
+    const iva        = parseFloat((local.cobro * 0.15).toFixed(2));
+    const totalCobro = parseFloat((local.cobro + iva).toFixed(2));
+    const localLabel = local.nombre.replace(local.codigo + ' - ', '');
+    const extList    = local.extintores
+      .map(e => `<code style="font-size:11px;background:#f5f5f5;padding:1px 4px;border-radius:3px">${e.tipo} ${e.cap}</code>`)
+      .join(' ');
+    const tipoServ   = local.esRecarga
+      ? `<span style="color:#8e44ad;font-weight:600">⟳ RECARGA ${local.anioRec}</span>`
+      : `<span style="color:#2980b9;font-weight:600">🔧 MANTENIMIENTO</span>`;
+
+    const btnNE = isAdmin ? `
+            <button class="btn btn-sm btn-info" style="font-size:11px;padding:3px 8px;white-space:nowrap"
+              onclick="event.stopPropagation();generarNELocal('${local.codigo}',${neNum})">
+              📄 NE #${neNum}
+            </button>` : '';
+
+    return `
+      <div class="local-card ${status}" id="lcard-${local.codigo}">
+        <div class="local-card-header" onclick="toggleLocalCard('${local.codigo}')">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
+            <span class="badge-${status}">${isVisitado ? '✅' : '🔴'}</span>
+            <strong style="white-space:nowrap">${local.codigo}</strong>
+            <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${localLabel}</span>
+            <span style="font-size:11px;color:#999;white-space:nowrap">${local.marca}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <span class="badge-${status}">${isVisitado ? 'VISITADO' : 'PENDIENTE'}</span>
+            <span style="font-size:12px;font-weight:600;color:#333;white-space:nowrap">${local.nExt} ext · $${local.cobro.toFixed(2)}</span>
+            <button class="btn btn-sm ${isVisitado ? 'btn-warning' : 'btn-success'}" style="font-size:11px;padding:3px 8px;white-space:nowrap"
+              onclick="event.stopPropagation();toggleVisita('${local.codigo}')">
+              ${isVisitado ? '↩ Pendiente' : '✅ Visitado'}
+            </button>${btnNE}
+            <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
+              onclick="event.stopPropagation();abrirCertModal('${local.codigo}',${cotNum})">
+              📜 Certificado #${cotNum}
+            </button>
+          </div>
+        </div>
+        <div class="local-card-body" id="lbody-${local.codigo}">
+          <div style="margin-bottom:6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
+            <div style="flex:1;min-width:0">${extList || '<em style="color:#e74c3c">⚠️ Sin extintores en la base de datos</em>'}</div>
+            ${isAdmin ? `<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#f39c12;color:white;flex-shrink:0"
+              onclick="abrirEditExtModal('${local.codigo}')">✏️ Editar exts</button>` : ''}
+          </div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;align-items:center">
+            ${tipoServ}
+            <span>Subtotal: <strong>$${local.cobro.toFixed(2)}</strong></span>
+            <span>IVA 15%: <strong>$${iva.toFixed(2)}</strong></span>
+            <span>Total: <strong>$${totalCobro.toFixed(2)}</strong></span>
+            ${isAdmin ? `<span style="color:#888">NE asignado: <strong>#${neNum}</strong></span>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Separar pendientes y visitados
+  const grpPendientes = visibles.filter(({ local }) => (visitaStatus[local.codigo] || 'pendiente') !== 'visitado');
+  const grpVisitados  = visibles.filter(({ local }) => (visitaStatus[local.codigo] || 'pendiente') === 'visitado');
+
+  let html = '';
+
+  if (grpPendientes.length) {
+    html += `<div style="font-size:12px;font-weight:700;color:#e74c3c;text-transform:uppercase;letter-spacing:0.5px;padding:6px 4px;margin-bottom:4px;border-bottom:2px solid #e74c3c">
+      🔴 PENDIENTES (${grpPendientes.length})
+    </div>`;
+    html += grpPendientes.map(buildCard).join('');
+  }
+
+  if (grpVisitados.length) {
+    html += `<div style="font-size:12px;font-weight:700;color:#27ae60;text-transform:uppercase;letter-spacing:0.5px;padding:6px 4px;margin:12px 0 4px;border-bottom:2px solid #27ae60">
+      ✅ VISITADOS (${grpVisitados.length})
+    </div>`;
+    html += grpVisitados.map(buildCard).join('');
+  }
+
+  cont.innerHTML = html;
+}
+
+// ─── BASE DE DATOS: tabla del mes ─────────────────────────────────────────────
+function renderBD() {
+  const cont = document.getElementById('bdContainer');
+  if (!cont) return;
+  if (!planMes.length) {
+    cont.innerHTML = '<p style="color:#999;font-size:13px">Sin locales para este mes.</p>';
+    return;
+  }
+  const totalExt = planMes.reduce((s, l) => s + (l.nExt || 0), 0);
+  const totalCobro = planMes.reduce((s, l) => s + l.cobro, 0);
+  let html = `<div style="font-size:12px;color:#555;margin-bottom:8px">
+    <strong>${planMes.length}</strong> locales · <strong>${totalExt}</strong> extintores ·
+    Total cobro: <strong>$${totalCobro.toFixed(2)}</strong>
+  </div>`;
+  html += `<table><thead><tr>
+    <th>Código</th><th>Local</th><th>Marca</th><th>Extintores</th>
+    <th>Servicio</th><th>Cobro</th></tr></thead><tbody>`;
+  html += planMes.map(l => {
+    const ext = l.extintores.map(e => `${e.tipo} ${e.cap}`).join(', ');
+    const serv = l.esRecarga ? `RECARGA ${l.anioRec}` : 'MANTENIMIENTO';
+    const isSushi = l.codigo.startsWith('KN');
+    const rowBg = isSushi ? 'background:#fdf5ff' : '';
+    return `<tr style="${rowBg}">
+      <td><strong>${l.codigo}</strong>${isSushi ? ' <span style="font-size:9px;background:#6c3483;color:white;border-radius:3px;padding:1px 4px">SUSHI</span>' : ''}</td>
+      <td>${l.nombre.replace(l.codigo+' - ','')}</td>
+      <td>${l.marca}</td>
+      <td style="font-size:11px">${ext || '—'}</td>
+      <td>${serv}</td>
+      <td style="text-align:right">$${l.cobro.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+  html += '</tbody></table>';
+  cont.innerHTML = html;
+}
+
+// ─── CERTIFICADOS: lista guardada (admin) ─────────────────────────────────────
+async function renderCertsList() {
+  const cont = document.getElementById('certsContainer');
+  const desc = document.getElementById('certsDesc');
+  if (!cont) return;
+  const isAdmin = currentProfile === 'admin';
+
+  if (!isAdmin) {
+    if (desc) desc.innerHTML =
+      `Abre un local en el <strong>Plan del Mes</strong>, adjunta las fotos del trabajo y pulsa ` +
+      `<strong>Generar Certificado</strong>. El PDF se descarga y se respalda en la nube.`;
+    cont.innerHTML = '<p style="color:#999;font-size:13px">Ve a 📅 Plan del Mes para generar certificados por local.</p>';
+    return;
+  }
+
+  if (desc) desc.innerHTML = `Certificados generados por el personal este mes. Descárgalos para enviarlos por correo.`;
+
+  const token = getGhToken();
+  if (!token) {
+    cont.innerHTML = '<p style="color:#999;font-size:13px">Configura un GitHub Token para ver los certificados guardados en la nube.</p>';
+    return;
+  }
+  const mes = MESES_NOMBRE[document.getElementById('selMes').value];
+  const anio = document.getElementById('selAnio').value;
+  const dir = `certificados/${mes}-${anio}`;
+  cont.innerHTML = '<p style="color:#999;font-size:13px">⏳ Cargando certificados…</p>';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${dir}?ref=${GH_BRANCH}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    });
+    if (!r.ok) {
+      cont.innerHTML = '<p style="color:#999;font-size:13px">Aún no hay certificados guardados para este mes.</p>';
+      return;
+    }
+    const files = await r.json();
+    const pdfs = (Array.isArray(files) ? files : []).filter(f => f.name.endsWith('.pdf'));
+    if (!pdfs.length) {
+      cont.innerHTML = '<p style="color:#999;font-size:13px">Aún no hay certificados guardados para este mes.</p>';
+      return;
+    }
+    cont.innerHTML = pdfs.map(f => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid #eee;border-radius:6px;margin-bottom:6px">
+        <span style="font-size:13px">📜 ${f.name}</span>
+        <a href="${f.download_url}" download="${f.name}" class="btn btn-sm btn-info" style="font-size:12px">⬇️ Descargar</a>
+      </div>`).join('');
+  } catch (e) {
+    cont.innerHTML = `<p style="color:#c0392b;font-size:13px">Error cargando certificados: ${e.message}</p>`;
+  }
+}
+
+function toggleLocalCard(codigo) {
+  const card = document.getElementById(`lcard-${codigo}`);
+  if (card) card.classList.toggle('open');
+}
+
+// ─── EDIT EXTINTORES MODAL ─────────────────────────────────────────────────────
+let _editExtCodigo = null;
+let _editExtOriginal = []; // copia de extMap para poder restaurar
+
+function abrirEditExtModal(codigo) {
+  _editExtCodigo = codigo;
+  const local = planMes.find(l => l.codigo === codigo);
+  if (!local) return;
+  document.getElementById('editExtTitle').textContent = `${codigo} — ${local.nombre}`;
+  _editExtOriginal = (extMapBD[codigo] || []).slice(); // datos originales del Excel
+  _renderEditExtRows(extOverrides[codigo] || extMapBD[codigo] || local.extintores);
+  const modal = document.getElementById('editExtModal');
+  modal.style.display = 'flex';
+}
+
+function cerrarEditExtModal() {
+  document.getElementById('editExtModal').style.display = 'none';
+  _editExtCodigo = null;
+}
+
+function _renderEditExtRows(rows) {
+  const tbody = document.getElementById('editExtBody');
+  tbody.innerHTML = rows.map((e, i) => `
+    <tr id="editExtRow-${i}">
+      <td style="padding:4px 6px;border:1px solid #ddd">
+        <select style="width:100%;font-size:12px;padding:2px">
+          ${(() => {
+            const TIPOS = ['PQS','CO2','AGUA','HCFC','K'];
+            const cur = (e.tipo||'').toUpperCase();
+            const opts = TIPOS.map(t => `<option value="${t}" ${cur===t?'selected':''}>${t}</option>`);
+            if (cur && !TIPOS.includes(cur)) opts.push(`<option value="${cur}" selected>${cur}</option>`);
+            return opts.join('');
+          })()}
+        </select>
+      </td>
+      <td style="padding:4px 6px;border:1px solid #ddd">
+        <input type="text" value="${e.cap||''}" style="width:80px;font-size:12px;padding:2px" />
+      </td>
+      <td style="padding:4px 6px;border:1px solid #ddd;text-align:right">
+        <input type="number" value="${e.costoMantt||0}" step="0.01" style="width:70px;font-size:12px;padding:2px;text-align:right" />
+      </td>
+      <td style="padding:4px 6px;border:1px solid #ddd;text-align:right">
+        <input type="number" value="${e.precioRec||0}" step="0.01" style="width:70px;font-size:12px;padding:2px;text-align:right" />
+      </td>
+      <td style="padding:4px 6px;border:1px solid #ddd;text-align:center">
+        <button onclick="editExtEliminarFila(${i})" style="background:#e74c3c;color:white;border:none;border-radius:3px;padding:2px 6px;font-size:11px;cursor:pointer">✕</button>
+      </td>
+    </tr>`).join('');
+}
+
+function _leerFilasEditExt() {
+  const rows = document.querySelectorAll('#editExtBody tr');
+  return Array.from(rows).map(tr => {
+    const cells = tr.querySelectorAll('td');
+    return {
+      tipo:      cells[0].querySelector('select').value.trim().toUpperCase(),
+      cap:       cells[1].querySelector('input').value.trim().toUpperCase(),
+      costoMantt: parseFloat(cells[2].querySelector('input').value) || 0,
+      precioRec:  parseFloat(cells[3].querySelector('input').value) || 0,
+    };
+  }).filter(e => e.tipo);
+}
+
+function editExtAgregarFila() {
+  const current = _leerFilasEditExt();
+  current.push({ tipo: 'PQS', cap: '10LBS', costoMantt: 0, precioRec: 0 });
+  _renderEditExtRows(current);
+}
+
+function editExtEliminarFila(idx) {
+  const current = _leerFilasEditExt();
+  current.splice(idx, 1);
+  _renderEditExtRows(current);
+}
+
+function guardarEditExt() {
+  if (!_editExtCodigo) return;
+  const rows = _leerFilasEditExt();
+  extOverrides[_editExtCodigo] = rows;
+  localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
+  const local = planMes.find(l => l.codigo === _editExtCodigo);
+  if (local) local.extintores = rows;
+  cerrarEditExtModal();
+  renderPlan();
+  autosave();
+  log(`✅ Extintores de ${_editExtCodigo} actualizados (${rows.length} exts)`, 'ok');
+}
+
+function resetEditExt() {
+  if (!_editExtCodigo) return;
+  if (!confirm(`¿Restaurar extintores de ${_editExtCodigo} desde la base de datos?`)) return;
+  delete extOverrides[_editExtCodigo];
+  localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
+  const local = planMes.find(l => l.codigo === _editExtCodigo);
+  if (local) local.extintores = _editExtOriginal.slice();
+  cerrarEditExtModal();
+  renderPlan();
+  autosave();
+  log(`🔄 Extintores de ${_editExtCodigo} restaurados desde la BD`, 'ok');
+}
+
+function toggleVisita(codigo) {
+  const cur = visitaStatus[codigo] || 'pendiente';
+  visitaStatus[codigo] = cur === 'visitado' ? 'pendiente' : 'visitado';
+  renderPlan();
+  autosave();
+}
+
+async function generarNELocal(codigo, neNum) {
+  const local = planMes.find(l => l.codigo === codigo);
+  if (!local) { log(`Local ${codigo} no encontrado en el plan`, 'error'); return; }
+
+  const tplKey = NE_TEMPLATE_MAP[local.empresa?.hoja] || 'INT';
+  const tplUrl = `formatos/ne/${tplKey}.xlsx`;
+
+  try {
+    log(`Generando NE #${neNum} para ${codigo}…`);
+    const resp = await fetch(tplUrl);
+    if (!resp.ok) throw new Error(`Template ${tplKey} no encontrado (${resp.status})`);
+    const buf  = await resp.arrayBuffer();
+    const wb   = XLSX.read(buf, { type: 'array', cellStyles: true });
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+
+    // ── Date ────────────────────────────────────────────────────────────────
+    const today = new Date();
+    const MNAMES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
+                    'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+    const fechaStr = `${today.getDate()} DE ${MNAMES[today.getMonth()]} DEL ${today.getFullYear()}`;
+    ws['I10'] = { t:'s', v: fechaStr };
+
+    // ── Company name & RUC: only override when using a dedicated template ──
+    // INT fallback keeps "INT FOOD SERVICES" since KFC/GUS/CN/BS/I all bill via INT
+    const emp = local.empresa || {};
+    const hasOwnTemplate = emp.hoja && NE_TEMPLATE_MAP[emp.hoja] && NE_TEMPLATE_MAP[emp.hoja] !== 'INT';
+    if (hasOwnTemplate) {
+      if (emp.empresa) ws['B10'] = { t:'s', v: emp.empresa };
+      if (emp.ruc)     ws['L11'] = { t:'s', v: emp.ruc };
+    }
+
+    // ── Service type ─────────────────────────────────────────────────────────
+    ws['C13'] = { t:'s', v: local.esRecarga ? 'RECARGA' : 'MANTENIMIENTO' };
+
+    // ── Clear old sample rows 14-24 ──────────────────────────────────────────
+    for (let r = 14; r <= 24; r++) {
+      ['A','B','C','L','M','N'].forEach(col => { delete ws[col + r]; });
+    }
+
+    // ── Build grouped items ──────────────────────────────────────────────────
+    const groups = {};
+    local.extintores.forEach(e => {
+      const k = `${e.tipo}|${e.cap}`;
+      if (!groups[k]) groups[k] = {
+        tipo: e.tipo, cap: e.cap, qty: 0,
+        price: parseFloat(local.esRecarga ? e.precioRec : e.costoMantt) || 0
+      };
+      groups[k].qty++;
+    });
+    const items = Object.values(groups);
+
+    let subtotalCalc = 0;
+    items.forEach((item, i) => {
+      if (i >= 11) return; // max 11 item rows (14-24)
+      const r = 14 + i;
+      const desc  = tipoExtDescripcion(item.tipo, item.cap);
+      const lineT = parseFloat((item.qty * item.price).toFixed(2));
+      subtotalCalc += lineT;
+      ws[`A${r}`] = { t:'n', v: item.qty };
+      ws[`B${r}`] = { t:'n', v: item.qty };
+      ws[`C${r}`] = { t:'s', v: desc };
+      ws[`L${r}`] = { t:'s', v: '$' };
+      ws[`M${r}`] = { t:'n', v: item.price };
+      ws[`N${r}`] = { t:'n', v: lineT, f: `M${r}*A${r}` };
+    });
+
+    // ── Local info (row 25) ──────────────────────────────────────────────────
+    const localLabel = local.nombre.replace(local.codigo + ' - ', '');
+    ws['C25'] = { t:'s', v: `LOCAL: ${local.codigo} - ${localLabel}` };
+
+    // ── Totals ───────────────────────────────────────────────────────────────
+    const sub = parseFloat(subtotalCalc.toFixed(2));
+    const iva = parseFloat((sub * 0.15).toFixed(2));
+    const tot = parseFloat((sub + iva).toFixed(2));
+    ws['N27'] = { t:'n', v: sub, f:'SUM(N14:N25)' };
+    ws['N29'] = { t:'n', v: iva, f:'N27*0.15' };
+    ws['N31'] = { t:'n', v: tot, f:'N27+N29' };
+    ws['N32'] = { t:'n', v: tot };
+
+    // ── Amount in words ──────────────────────────────────────────────────────
+    ws['B29'] = { t:'s', v: numeroEnLetras(sub) };
+
+    XLSX.writeFile(wb, `NE-${neNum}-${local.codigo}.xlsx`);
+    log(`✅ NE #${neNum} — ${local.codigo} descargada`, 'ok');
+  } catch(e) {
+    console.error('generarNELocal:', e);
+    log(`❌ Error NE ${codigo}: ${e.message}`, 'error');
+  }
+}
+
+function tipoExtDescripcion(tipo, cap) {
+  const tm = { CO2:'GAS CARBONICO', PQS:'POLVO QUIMICO SECO',
+                K:'TIPO K (ACETATO DE POTASIO)', FOAM:'ESPUMA (AGUA QUIMICA)' };
+  const td = tm[(tipo || '').toUpperCase()] || tipo;
+  const cd = (cap || '').replace(/\bLBS\b/gi,'LIBRAS').replace(/\b(?:GLNS|GLS|GL)\b/gi,'GALONES');
+  return `EXTINTOR ${cd} - ${td}`;
+}
+
+function numeroEnLetras(num) {
+  const un = ['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE',
+              'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS',
+              'DIECISIETE','DIECIOCHO','DIECINUEVE'];
+  const de = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA',
+              'SESENTA','SETENTA','OCHENTA','NOVENTA'];
+  const ce = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS',
+              'QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+  const b100 = n => {
+    if (n < 20) return un[n];
+    if (n%10 === 0) return de[~~(n/10)];
+    if (n < 30) return (n===21?'VEINTIÚN':n===22?'VEINTIDÓS':n===23?'VEINTITRÉS':n===26?'VEINTISÉIS':'VEINTI'+un[n-20]);
+    return de[~~(n/10)]+' Y '+un[n%10];
+  };
+  const b1000 = n => n===100 ? 'CIEN' : n<100 ? b100(n) : (n%100===0 ? ce[~~(n/100)] : ce[~~(n/100)]+' '+b100(n%100));
+  const int = Math.floor(num), dec = Math.round((num - int) * 100);
+  let txt = int===0 ? 'CERO' : int<1000 ? b1000(int)
+    : (int<1000000 ? (~~(int/1000)===1?'MIL':b1000(~~(int/1000))+' MIL')+(int%1000===0?'':' '+b1000(int%1000)) : 'MONTO');
+  return `                ${txt} CON ${String(dec).padStart(2,'0')}/100 USD`;
+}
+
+function generarTodo() {
+  generarDetalle();
+  generarDistribucion();
+  generarFormatoFact();
+}
+
+function getMesLabel() {
+  const mes = document.getElementById('selMes').value;
+  return MESES_NOMBRE[mes] || mes;
+}
+
+function generarDetalle() {
+  log('Generando DETALLE FACT MENSUAL...');
+
+  // Agrupar cotizaciones por empresa (hoja)
+  const porEmpresa = {};
+  cotizaciones.forEach(c => {
+    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+    if (!porEmpresa[hoja]) porEmpresa[hoja] = [];
+    porEmpresa[hoja].push(c);
+  });
+
+  for (const [hoja, cots] of Object.entries(porEmpresa)) {
+    const wb = XLSX.utils.book_new();
+
+    // ── MANGES sheet ────────────────────────────────────────────────────────
+    const mangesRows = [
+      ['DATOS DE LA EMPRESA', null, null, null, null,
+       'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null, null,
+       'DETALLE DE COSTOS', null, null, null, null],
+      ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO',
+       'EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R',
+       'JEFE DE OPERACIONES QUE AUTORIZA',
+       'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
+    ];
+    const mangesCots = cots.filter(c => c.category === 'MANGES');
+    mangesCots.forEach(c => {
+      const emp = c.empresa || {};
+      const extItems = c.items.filter(i => i.isExtintor);
+      const first = extItems[0];
+      mangesRows.push([
+        emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
+        c.localCode, null,
+        first ? first.qty : 1,
+        first ? first.tipo : '-',
+        first ? first.capacidad : '-',
+        'M', null,
+        first ? first.unitPrice : 0,
+        c.subtotal, c.iva, c.total, c.notaEntrega || ''
+      ]);
+      for (let i = 1; i < extItems.length; i++) {
+        const item = extItems[i];
+        mangesRows.push([
+          null, null, null, null, null, null,
+          item.qty, item.tipo, item.capacidad, 'M', null,
+          item.unitPrice, null, null, null, null
+        ]);
+      }
+    });
+    const wsManges = XLSX.utils.aoa_to_sheet(mangesRows);
+    wsManges['!cols'] = [15,20,20,12,12,25,8,8,10,4,20,8,8,8,8,10].map(w => ({ wpx: w * 6 }));
+    XLSX.utils.book_append_sheet(wb, wsManges, 'MANGES');
+
+    // ── MANT sheet ──────────────────────────────────────────────────────────
+    const mantRows = [
+      ['DATOS DE LA EMPRESA', null, null, null, null,
+       'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null,
+       'DETALLE DE COSTOS', null, null, null, null, 'OBSERVACION', null],
+      ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO',
+       'EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD',
+       'JEFE DE OPERACIONES QUE AUTORIZA',
+       'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA', null, null]
+    ];
+    const mantCots = cots.filter(c => c.category === 'MANT');
+    mantCots.forEach(c => {
+      const emp = c.empresa || {};
+      mantRows.push([
+        emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
+        c.localCode, c.descripcionFact,
+        '-', '-', '-', null,
+        c.subtotal, c.subtotal, c.iva, c.total,
+        c.notaEntrega || '',
+        c.observacion || 'SOLICITADO POR EL LOCAL', null
+      ]);
+    });
+    const wsMant = XLSX.utils.aoa_to_sheet(mantRows);
+    XLSX.utils.book_append_sheet(wb, wsMant, 'MANT');
+
+    const nombreArchivo = sanitizeFileName(`DETALLE FACT MENSUAL ${getMesLabel()} - ${hoja}.xlsx`);
+    XLSX.writeFile(wb, nombreArchivo);
+    log(`  ✅ ${nombreArchivo} (MANGES: ${mangesCots.length}, MANT: ${mantCots.length})`, 'ok');
+  }
+
+  markOutput('out1');
+}
+
+function generarDistribucion() {
+  log('Generando DISTRIBUCIÓN...');
+  const wb = XLSX.utils.book_new();
+
+  // Group by empresa + category (each becomes an invoice)
+  const byHoja = {};
+  cotizaciones.forEach(c => {
+    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+    const key = hoja + '|' + c.category;
+    if (!byHoja[key]) byHoja[key] = { hoja, category: c.category, empresa: c.empresa, items: [] };
+    byHoja[key].items.push(c);
+  });
+
+  let sheetCount = 0;
+  for (const [key, data] of Object.entries(byHoja)) {
+    const factNum = data.category === 'MANGES'
+      ? (facturaMap[data.hoja]?.factManges || 'XXXX MANTGES')
+      : (facturaMap[data.hoja]?.factMant || 'XXXX MANTT');
+
+    const rows = [
+      ['C.C.', 'DESCRIPCION', 'SUBTOTAL', 'IVA', 'TOTAL']
+    ];
+
+    data.items.forEach(c => {
+      rows.push([
+        c.cc,
+        c.descripcionFact,
+        c.subtotal,
+        c.iva,
+        c.total
+      ]);
+    });
+
+    const totSub = parseFloat(data.items.reduce((s,c) => s + c.subtotal, 0).toFixed(2));
+    const totIva = parseFloat(data.items.reduce((s,c) => s + c.iva, 0).toFixed(2));
+    const totTot = parseFloat(data.items.reduce((s,c) => s + c.total, 0).toFixed(2));
+    rows.push([null, 'TOTAL:', totSub, totIva, totTot]);
+
+    const sheetName = ('FACT ' + factNum).slice(0, 31);
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{ wpx: 80 }, { wpx: 200 }, { wpx: 70 }, { wpx: 60 }, { wpx: 70 }];
+
+    // Style header
+    ['A1','B1','C1','D1','E1'].forEach(ref => {
+      if (ws[ref]) ws[ref].s = { font: { bold: true }, fill: { fgColor: { rgb: 'C0392B' } } };
+    });
+
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    sheetCount++;
+    log(`  Hoja: ${sheetName} (${data.items.length} líneas)`, 'ok');
+  }
+
+  XLSX.writeFile(wb, `DISTRIBUCION ${getMesLabel()}.xlsx`);
+  log(`✅ DISTRIBUCIÓN descargado (${sheetCount} hojas)`, 'ok');
+  markOutput('out2');
+}
+
+function generarFormatoFact() {
+  log('Generando FORMATO_FACTURACIÓN...');
+  const wb = XLSX.utils.book_new();
+
+  // Group by empresa hoja
+  const byHoja = {};
+  cotizaciones.forEach(c => {
+    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+    if (!byHoja[hoja]) byHoja[hoja] = { empresa: c.empresa, items: [] };
+    byHoja[hoja].items.push(c);
+  });
+
+  for (const [hoja, data] of Object.entries(byHoja)) {
+    const rows = [
+      ['C.COSTO', 'DESCRIPCION FACTURA + # ACTA/ORDEN DE TRABAJO',
+       'N° FACTURA', 'SUBTOTAL', 'IVA', 'TOTAL', 'ACTA']
+    ];
+
+    data.items.forEach(c => {
+      const factNum = c.category === 'MANGES'
+        ? (facturaMap[hoja]?.factManges || '')
+        : (facturaMap[hoja]?.factMant || '');
+
+      rows.push([
+        c.cc,
+        c.descripcionFact,
+        factNum,
+        c.subtotal,
+        c.iva,
+        c.total,
+        c.notaEntrega || null
+      ]);
+    });
+
+    const totSub = parseFloat(data.items.reduce((s,c) => s + c.subtotal, 0).toFixed(2));
+    const totIva = parseFloat(data.items.reduce((s,c) => s + c.iva, 0).toFixed(2));
+    const totTot = parseFloat(data.items.reduce((s,c) => s + c.total, 0).toFixed(2));
+    rows.push([null, 'TOTALES', null, totSub, totIva, totTot, null]);
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [
+      { wpx: 70 }, { wpx: 240 }, { wpx: 120 },
+      { wpx: 70 }, { wpx: 60 }, { wpx: 70 }, { wpx: 80 }
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, hoja.slice(0, 31));
+    log(`  Hoja: ${hoja} (${data.items.length} líneas)`, 'ok');
+  }
+
+  XLSX.writeFile(wb, `FORMATO_FACTURACIÓN ${getMesLabel()}.xlsx`);
+  log('✅ FORMATO_FACTURACIÓN descargado', 'ok');
+  markOutput('out3');
+}
+
+// ─── CERTIFICADOS PDF ─────────────────────────────────────────────────────────
+let certModalCodigo = null;
+let certModalCotNum = 0;   // número de cotización para el cert activo
+let certFotos = {};       // { antes: File, despues: File, cilindro: File }
+let certHayNovedades = false;
+let certAccsSelected = new Set();  // indices into ACCESSORIES
+let sigCtx = null, sigDrawing = false;
+
+// Reconstruye el código de display: K76→KFCK76, G49→GUSG49, resto igual
+function certDisplayCode(cod) {
+  if (/^K\d/.test(cod)) return 'KFCK' + cod.slice(1);
+  if (/^G\d/.test(cod)) return 'GUSG' + cod.slice(1);
+  return cod;
+}
+function sanitizeFileName(s) {
+  return String(s || '').replace(/[/\\:*?"<>|]/g, '_').trim();
+}
+
+const ACCESSORIES = [
+  { desc: 'Abrazadera plástica',   precio: 1.50 },
+  { desc: 'Manómetro PQS',         precio: 2.00 },
+  { desc: 'Cabezal extintor PQS',  precio: 8.00 },
+  { desc: 'Manguera PQS',          precio: 4.00 },
+  { desc: 'Corneta CO₂ 5lbs',      precio: 8.00 },
+  { desc: 'Corneta CO₂ 10lbs',     precio: 13.00 },
+  { desc: 'Manguera CO₂ 10lbs',    precio: 13.00 },
+  { desc: 'Empaque válvula',       precio: 1.50 },
+  { desc: 'Soporte metálico',      precio: 5.00 },
+  { desc: 'Pitón',                 precio: 1.50 },
+  { desc: 'Tubo sifón',            precio: 2.00 },
+  { desc: 'Boquilla',              precio: 1.00 },
+  { desc: 'Válvula PQS',           precio: 3.00 },
+  { desc: 'Pintura sintética',     precio: 2.00 },
+  { desc: 'Precinto de seguridad', precio: 0.50 },
+  { desc: 'Etiqueta de control',   precio: 0.50 },
+];
+
+let _LOGO_CACHE = null;
+async function fetchLogo() {
+  if (_LOGO_CACHE) return _LOGO_CACHE;
+  try {
+    const r = await fetch('https://raw.githubusercontent.com/alejosl0801/previfuego-backend/main/logo.js');
+    const t = await r.text();
+    const m = t.match(/var LOGO_B64\s*=\s*"([^"]+)"/);
+    if (m) { _LOGO_CACHE = m[1]; return m[1]; }
+  } catch(e) { console.warn('Logo no disponible:', e); }
+  return null;
+}
+
+async function hacerPDF(opts) {
+  const { localNom, puntNom, localCode, exts, FB64, ACCS, certNum, MA, MAS, anio, fileName } = opts;
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('Error: librería PDF no cargada. Recarga la página.'); return; }
+  const { jsPDF } = window.jspdf;
+  const LOGO_B64 = await fetchLogo();
+
+  const R  = [158,18,18], NG = [26,24,28], GR = [88,86,90], BG = [246,246,246];
+  const PW = 210, PH = 297, ML = 15, CW = 180;
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+
+  const fR  = () => doc.setFillColor(...R);
+  const fN  = () => doc.setFillColor(...NG);
+  const fBG = () => doc.setFillColor(...BG);
+  const dR  = () => doc.setDrawColor(...R);
+  const dL  = () => doc.setDrawColor(...NG);
+  const dG  = () => doc.setDrawColor(...GR);
+  const tR  = () => doc.setTextColor(...R);
+  const tN  = () => doc.setTextColor(...NG);
+  const tG  = () => doc.setTextColor(...GR);
+  const tW  = () => doc.setTextColor(255,255,255);
+
+  function fondoBase() {
+    doc.setFillColor(255,255,255); doc.rect(0,0,PW,PH,'F');
+    fR(); doc.rect(0,0,4,PH,'F');
+    fR(); doc.rect(0,0,PW,7,'F');
+  }
+
+  function piePagina() {
+    fN(); doc.rect(0,PH-10,PW,10,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(6.8); tW();
+    doc.text('DIR: PORTETE #3007 Y GALLEGOS LARA  |  TEL: 04-2374822 · 0978997247 · 0983588325  |  EMAIL: ventas_previfuego@hotmail.com',
+      PW/2, PH-3.8, {align:'center'});
+  }
+
+  function bloqueAutorizacion(yy) {
+    if (yy + 40 > PH - 15) { doc.addPage(); fondoBase(); piePagina(); yy = 25; }
+    dR(); doc.setLineWidth(0.5); doc.line(ML,yy,ML+CW,yy); yy += 5;
+    doc.setFillColor(253,251,251);
+    dR(); doc.setLineWidth(0.3); doc.rect(ML,yy,CW,30,'FD');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); tR();
+    doc.text('AUTORIZADO POR:', ML+5, yy+7);
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); tN();
+    doc.text('Alejandro Lopez', ML+5, yy+15);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); tG();
+    doc.text('Jefe de Operaciones  —  Previfuego / Pyroshield', ML+5, yy+22);
+    doc.text('RUC: 0952773976001', ML+5, yy+28);
+    return yy + 36;
+  }
+
+  // ── Page 1 ──────────────────────────────────────────────────────────────────
+  fondoBase(); piePagina();
+  let y = 9;
+
+  if (LOGO_B64) {
+    try { doc.addImage('data:image/png;base64,'+LOGO_B64, 'PNG', ML, y, 24, 24); }
+    catch(e) {}
+  }
+
+  doc.setFontSize(7); doc.setFont('helvetica','normal'); tG();
+  doc.text(certNum, PW-5, 12, {align:'right'});
+
+  const HX = ML+27, HW = PW-HX-12;
+  doc.setFont('helvetica','bold'); doc.setFontSize(22); tR();
+  doc.text('PREVIFUEGO', HX+HW/2, y+9, {align:'center'});
+  doc.setFontSize(9); tR();
+  doc.text('SEGURIDAD INDUSTRIAL Y CONTRA INCENDIOS', HX+HW/2, y+15, {align:'center'});
+  dR(); doc.setLineWidth(0.4); doc.line(HX, y+16, HX+HW, y+16);
+
+  const iL = [
+    'RUC.: 0952773976001  |  ASESORAMIENTO · RECARGA · MANTENIMIENTO · VENTAS',
+    'PQS (ABC) · GAS CARBONICO · HALOTRON',
+    'DISEÑO E INSTALACIÓN DE RED HIDRÁULICA CONTRA INCENDIOS',
+    'SISTEMAS DE CO2 PARA COCINAS, GENERADORES, TRANSFORMADORES, ETC',
+    'INSTALACIÓN DE LÁMPARAS DE EMERGENCIA Y DETECTORES DE HUMO'
+  ];
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); tG();
+  iL.forEach((line,i) => {
+    const lw = doc.getTextWidth(line);
+    doc.text(line, HX+(HW-lw)/2, y+20+i*3.4);
+  });
+
+  y = 48;
+  dR(); doc.setLineWidth(0.9); doc.line(ML,y,PW-ML,y);
+  dL(); doc.setLineWidth(0.3); doc.line(ML,y+1.8,PW-ML,y+1.8);
+  y += 8;
+
+  const tits = ['CERTIFICADO DE INSPECCIÓN Y MANTENIMIENTO DE','EXTINTORES PORTÁTILES'];
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); tN();
+  tits.forEach(t => {
+    const tw = doc.getTextWidth(t);
+    doc.text(t, PW/2, y, {align:'center'});
+    dR(); doc.setLineWidth(0.5); doc.line(PW/2-tw/2, y+1.5, PW/2+tw/2, y+1.5);
+    y += 6;
+  });
+  y += 2;
+
+  doc.setFillColor(247,247,247); dL(); doc.setLineWidth(0.4); doc.rect(ML,y-3,CW,7.5,'FD');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); tG();
+  doc.text('MEDIANTE EL PRESENTE, SE GARANTIZA EL TRABAJO REALIZADO BAJO EL SIGUIENTE DETALLE:', ML+3, y+1.5);
+  y += 9;
+
+  const locUp  = (localNom||'').toUpperCase();
+  const puntUp = (puntNom && puntNom !== localNom ? puntNom : localNom).toUpperCase();
+  const ptxt   = 'INSPECCIÓN Y MANTENIMIENTO DE EXTINTORES PORTÁTILES UBICADOS EN LOS DISTINTOS PUNTOS ESTRATÉGICOS DEL LOCAL «'+locUp+'» UBICADO EN '+puntUp+', SIGUIENDO LAS NORMAS NFPA10.';
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); tN();
+  const pLines = doc.splitTextToSize(ptxt, CW);
+  doc.text(pLines, ML, y);
+  y += pLines.length*4.5+4;
+
+  fR(); doc.rect(ML,y-3.5,CW,7.5,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); tW();
+  doc.text('COMPRENDE:', ML+4, y+0.8);
+  y += 7;
+
+  const compItems = [
+    'REVISION INTEGRAL DE LOS CILINDROS','INSPECCIÓN DE CABEZALES',
+    'INSPECCIÓN DE CORNETAS / MANGUERAS','PESAJE / TARA',
+    'MANTENIMIENTO PREVENTIVO-CORRECTIVO','RECARGA DEL AGENTE'
+  ];
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); tN();
+  compItems.forEach(item => {
+    fR(); doc.rect(ML+3, y-2.2, 2.2, 2.2, 'F');
+    tN(); doc.text(item, ML+8, y);
+    y += 5.5;
+  });
+  y += 2;
+
+  // Extinguisher table
+  const cws = [18,36,28,50,48], cxs = [ML];
+  for (let i=1;i<cws.length;i++) cxs.push(cxs[i-1]+cws[i-1]);
+  const rH = 9;
+
+  const gmap = {};
+  (exts||[]).forEach(e => {
+    const cap=(e.cap||e.capacidad||'').toUpperCase(), tip=(e.tipo||'').toUpperCase();
+    const k=cap+'|'+tip;
+    if (!gmap[k]) gmap[k]={cnt:0,cap,tip};
+    gmap[k].cnt++;
+  });
+  const grps = Object.values(gmap);
+  if (!grps.length) grps.push({cnt:1,cap:'—',tip:'PQS'});
+
+  fN(); doc.rect(ML,y,CW,rH,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); tW();
+  ['CANT.','CAPACIDAD','TIPO','ÚLTIMO MANT.','PRÓXIMO MANT.'].forEach((h,i) => {
+    doc.text(h, cxs[i]+cws[i]/2, y+rH-2.8, {align:'center',maxWidth:cws[i]-2});
+  });
+  dR(); doc.setLineWidth(0.3);
+  for (let i=1;i<cxs.length;i++) doc.line(cxs[i],y,cxs[i],y+rH);
+  y += rH;
+
+  grps.forEach((g,r) => {
+    const ry=y+r*rH;
+    if (r%2===0) doc.setFillColor(255,255,255); else fBG();
+    doc.rect(ML,ry,CW,rH,'F');
+    dG(); doc.setLineWidth(0.2); doc.line(ML,ry+rH,ML+CW,ry+rH);
+    dG(); for (let i=1;i<cxs.length;i++) doc.line(cxs[i],ry,cxs[i],ry+rH);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); tN();
+    doc.text(String(g.cnt), cxs[0]+cws[0]/2, ry+rH-2.8, {align:'center'});
+    doc.setFont('helvetica','normal'); tN();
+    doc.text(g.cap, cxs[1]+cws[1]/2, ry+rH-2.8, {align:'center',maxWidth:cws[1]-2});
+    tR(); doc.setFont('helvetica','bold');
+    doc.text(g.tip, cxs[2]+cws[2]/2, ry+rH-2.8, {align:'center'});
+    tN(); doc.setFont('helvetica','normal');
+    doc.text(MA,  cxs[3]+cws[3]/2, ry+rH-2.8, {align:'center'});
+    doc.text(MAS, cxs[4]+cws[4]/2, ry+rH-2.8, {align:'center'});
+  });
+  dR(); doc.setLineWidth(0.6); doc.rect(ML, y-rH, CW, rH+grps.length*rH, 'S');
+  y += grps.length*rH+5;
+
+  const gar = 'Los extintores detallados se encuentran operativos de acuerdo con la norma NFPA10 y normativa ecuatoriana vigente. Cada extintor cuenta con sus respectivos precintos y seguros metálicos, etiqueta de control de carga, accesorios en buen estado y agente extintor en óptimas condiciones, garantizando su funcionamiento con vigencia de un (1) año a partir de su último mantenimiento.';
+  doc.setFont('helvetica','italic'); doc.setFontSize(8); tG();
+  const gLines = doc.splitTextToSize(gar, CW);
+  doc.text(gLines, ML, y);
+  y += gLines.length*4+6;
+
+  y = bloqueAutorizacion(y);
+
+  // ── Page 2: Evidence photos + signature + accessories ───────────────────────
+  const fotoKeys = ['antes','despues','cilindro'].filter(k => FB64&&FB64[k]);
+  if (fotoKeys.length>0 || FB64.firma || (ACCS&&ACCS.length>0)) {
+    doc.addPage(); fondoBase(); piePagina();
+    let y2 = 18;
+
+    const evTit = 'EVIDENCIA FOTOGRÁFICA — '+(localNom||'').toUpperCase().substring(0,30);
+    fR(); doc.rect(ML,y2-4,CW,8,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); tW();
+    doc.text(evTit, ML+3, y2+0.5);
+    y2 += 10;
+
+    if (fotoKeys.length>0) {
+      const lblMap = {antes:'ANTES',despues:'DESPUÉS',cilindro:'CILINDRO CO₂'};
+      const fotos  = fotoKeys.map(k=>({b64:FB64[k],lbl:lblMap[k]}));
+      if (fotos.length===1) {
+        const fw=100,fh=75, fx=ML+(CW-fw)/2;
+        doc.setFillColor(200,200,200); doc.rect(fx+2,y2+2,fw,fh,'F');
+        dR(); doc.setLineWidth(1); doc.rect(fx-1,y2-1,fw+2,fh+2,'S');
+        try { doc.addImage('data:image/jpeg;base64,'+fotos[0].b64,'JPEG',fx,y2,fw,fh); }
+        catch(e) { try { doc.addImage('data:image/png;base64,'+fotos[0].b64,'PNG',fx,y2,fw,fh); } catch(e2){} }
+        fR(); doc.rect(fx-1,y2+fh+1,fw+2,5,'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); tW();
+        doc.text(fotos[0].lbl, fx+fw/2, y2+fh+4.2, {align:'center'});
+        y2 += fh+10;
+      } else {
+        const fw=85,fh=64; let col=0;
+        fotos.forEach(foto => {
+          const fx=ML+col*(fw+10), fy=y2;
+          doc.setFillColor(200,200,200); doc.rect(fx+2,fy+2,fw,fh,'F');
+          dR(); doc.setLineWidth(1); doc.rect(fx-1,fy-1,fw+2,fh+2,'S');
+          try { doc.addImage('data:image/jpeg;base64,'+foto.b64,'JPEG',fx,fy,fw,fh); }
+          catch(e) { try { doc.addImage('data:image/png;base64,'+foto.b64,'PNG',fx,fy,fw,fh); } catch(e2){} }
+          fR(); doc.rect(fx-1,fy+fh+1,fw+2,5,'F');
+          doc.setFont('helvetica','bold'); doc.setFontSize(7.5); tW();
+          doc.text(foto.lbl, fx+fw/2, fy+fh+4.2, {align:'center'});
+          col++;
+          if (col>=2) { col=0; y2+=fh+12; }
+        });
+        if (col>0) y2+=fh+12;
+      }
+    }
+
+    // Firma del encargado
+    if (FB64 && FB64.firma) {
+      y2 += 4;
+      dR(); doc.setLineWidth(0.5); doc.line(ML,y2,ML+CW,y2); y2 += 5;
+      doc.setFillColor(253,251,251); dR(); doc.setLineWidth(0.3);
+      doc.rect(ML,y2,CW,38,'FD');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); tR();
+      doc.text('FIRMA DEL ENCARGADO:', ML+5, y2+7);
+      try { doc.addImage('data:image/png;base64,'+FB64.firma,'PNG',ML+5,y2+10,70,22); } catch(e){}
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); tG();
+      doc.text('Encargado del local — '+(localNom||'').toUpperCase(), ML+5, y2+36);
+      y2 += 44;
+    }
+
+    if (ACCS&&ACCS.length>0) {
+      y2 += 4;
+      dR(); doc.setLineWidth(0.5); doc.line(ML,y2,ML+CW,y2); y2 += 5;
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); tR();
+      doc.text('ACCESORIOS UTILIZADOS:', ML+5, y2+3); y2 += 8;
+      fN(); doc.rect(ML,y2-3.5,CW,7.5,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); tW();
+      doc.text('DESCRIPCIÓN DEL ACCESORIO', ML+4, y2+0.8);
+      y2 += 8;
+      ACCS.forEach((acc,i) => {
+        if (i%2===0) doc.setFillColor(255,255,255); else fBG();
+        doc.rect(ML,y2-3.5,CW,7,'F');
+        doc.setFont('helvetica','normal'); doc.setFontSize(9); tN();
+        doc.text('• '+(acc.desc||acc), ML+4, y2+0.5);
+        y2 += 7;
+      });
+      y2 += 4;
+    }
+    bloqueAutorizacion(y2);
+  }
+
+  doc.save(fileName || ('CERT-'+localCode+'-'+anio+'.pdf'));
+  return doc;
+}
+
+async function generarCertificados() {
+  log('Generando Certificados PDF...');
+  const mangesCots = cotizaciones.filter(c => c.category === 'MANGES');
+  if (!mangesCots.length) { log('⚠️ No hay registros MANGES para certificar','warn'); return; }
+
+  const mesVal = document.getElementById('selMes').value;
+  const anio   = document.getElementById('selAnio').value;
+  const mesNum = mesVal.substring(0,2);
+
+  const cotBase = parseInt(document.getElementById('cotInicial')?.value) || 1500;
+  let count = 0;
+  for (const [i, cot] of mangesCots.entries()) {
+    const exts = [];
+    (cot.items||[]).filter(it=>it.isExtintor).forEach(it => {
+      for (let q=0;q<(it.qty||1);q++) exts.push({tipo:it.tipo, cap:it.capacidad||it.cap||'—'});
+    });
+    const dispCode = certDisplayCode(cot.localCode);
+    const cotNum   = cotBase + i;
+    const certNum  = `CERT. N° ${cotNum}`;
+    try {
+    const fileName = sanitizeFileName(`COTIZACION${cotNum} ${dispCode} ${cot.localName||cot.localCode}.pdf`);
+    await hacerPDF({
+      localNom:  cot.localName||cot.localCode,
+      puntNom:   cot.ciudad||cot.localName||'',
+      localCode: cot.localCode,
+      exts, FB64:{}, ACCS:[],
+      certNum,
+      fileName,
+      MA:  mesNum+'/'+anio,
+      MAS: mesNum+'/'+(parseInt(anio)+1),
+      anio,
+    });
+      count++;
+      log('  📜 '+cot.localCode+' — '+(cot.localName||cot.localCode),'ok');
+    } catch(e) {
+      console.warn('Cert error:', cot.localCode, e);
+      log('  ❌ Error en '+cot.localCode+': '+e.message,'error');
+    }
+    await new Promise(r=>setTimeout(r,300));
+  }
+  log('✅ '+count+' certificado(s) generado(s)','ok');
+  markOutput('out4');
+}
+
+function abrirCertModal(codigo, cotNum) {
+  const local = planMes.find(l=>l.codigo===codigo);
+  if (!local) return;
+  certModalCodigo = codigo;
+  certModalCotNum = cotNum || (parseInt(document.getElementById('cotInicial')?.value) || 1500);
+  certFotos = {}; certHayNovedades = false; certAccsSelected = new Set();
+  document.getElementById('certModalTitle').textContent =
+    codigo+' — '+local.nombre.replace(codigo+' - ','');
+  // Reset foto previews
+  ['antes','despues','cilindro'].forEach(k => {
+    const prev = document.getElementById('certFotoPreview_'+k);
+    const card = document.getElementById('certFotoCard_'+k);
+    if (prev) { prev.src=''; prev.classList.remove('show'); }
+    if (card) card.classList.remove('has-foto');
+  });
+  // Ocultar foto de cilindro CO₂ si el local no tiene CO2
+  const tieneCO2 = local.extintores.some(e => (e.tipo||'').toUpperCase() === 'CO2');
+  const cilCard = document.getElementById('certFotoCard_cilindro');
+  if (cilCard) cilCard.style.display = tieneCO2 ? '' : 'none';
+  // Preseleccionar tipo de servicio
+  const tipoVal = local.esRecarga ? 'recarga' : 'mantenimiento';
+  document.querySelectorAll('input[name="certTipoServ"]').forEach(r => { r.checked = (r.value === tipoVal); });
+  certTipoChange();
+  // Reset novedades
+  document.getElementById('novBtnBad').className = 'nov-btn';
+  document.getElementById('novBtnOk').className  = 'nov-btn active-ok';
+  document.getElementById('accCatalogWrap').style.display = 'none';
+  // Reset signature canvas
+  const c = document.getElementById('sigCanvas');
+  if (c) { c._initialized = false; sigCtx = null; }
+  // Go to step 1
+  certPaso(1);
+  document.getElementById('certModal').style.display = 'flex';
+}
+
+function cerrarCertModal() {
+  document.getElementById('certModal').style.display = 'none';
+  certModalCodigo = null; certFotos = {}; certAccsSelected = new Set();
+}
+
+function certPaso(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('certPaso'+i).style.display = i === n ? '' : 'none';
+    const ind = document.getElementById('csi'+i);
+    ind.classList.remove('active','done');
+    if (i === n) ind.classList.add('active');
+    else if (i < n) ind.classList.add('done');
+  });
+  if (n === 2) initSignatureCanvas();
+  if (n === 3) renderAccCatalog();
+}
+
+function certTipoChange() {
+  const v = document.querySelector('input[name="certTipoServ"]:checked')?.value;
+  document.getElementById('lblMant').style.borderColor = v === 'mantenimiento' ? '#9e1212' : '#ddd';
+  document.getElementById('lblRec').style.borderColor  = v === 'recarga'       ? '#9e1212' : '#ddd';
+}
+
+function certAbrirFoto(tipo, modo) {
+  let input = document.getElementById('_fi_'+tipo+'_'+modo);
+  if (!input) {
+    input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*';
+    input.id = '_fi_'+tipo+'_'+modo;
+    input.style.display = 'none';
+    if (modo === 'cam') input.setAttribute('capture', 'environment');
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if (!file) return;
+      certFotos[tipo] = file;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const prev = document.getElementById('certFotoPreview_'+tipo);
+        const card = document.getElementById('certFotoCard_'+tipo);
+        if (prev) { prev.src = e.target.result; prev.classList.add('show'); }
+        if (card) card.classList.add('has-foto');
+      };
+      reader.readAsDataURL(file);
+    });
+    document.body.appendChild(input);
+  }
+  input.value = ''; input.click();
+}
+
+function initSignatureCanvas() {
+  const canvas = document.getElementById('sigCanvas');
+  if (!canvas || canvas._initialized) return;
+  canvas._initialized = true;
+  const W = canvas.offsetWidth || 436;
+  const H = 140;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  sigCtx = canvas.getContext('2d');
+  sigCtx.scale(dpr, dpr);
+  sigCtx.strokeStyle = '#1a1a1a'; sigCtx.lineWidth = 2;
+  sigCtx.lineCap = 'round'; sigCtx.lineJoin = 'round';
+  sigCtx.fillStyle = '#fff'; sigCtx.fillRect(0, 0, W, H);
+  const pos = e => {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: src.clientX - r.left, y: src.clientY - r.top };
+  };
+  canvas.addEventListener('mousedown',  e => { sigDrawing=true; const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); });
+  canvas.addEventListener('mousemove',  e => { if(!sigDrawing) return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); });
+  canvas.addEventListener('mouseup',    () => sigDrawing=false);
+  canvas.addEventListener('mouseleave', () => sigDrawing=false);
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); sigDrawing=true; const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); }, {passive:false});
+  canvas.addEventListener('touchmove',  e => { e.preventDefault(); if(!sigDrawing) return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); }, {passive:false});
+  canvas.addEventListener('touchend',   () => sigDrawing=false);
+}
+
+function clearSignature() {
+  if (!sigCtx) return;
+  const c = document.getElementById('sigCanvas');
+  if (!c) return;
+  sigCtx.fillStyle = '#fff'; sigCtx.fillRect(0, 0, c.width, c.height);
+}
+
+function getSignatureB64() {
+  const c = document.getElementById('sigCanvas');
+  if (!c || !sigCtx) return null;
+  const data = sigCtx.getImageData(0, 0, c.width, c.height).data;
+  const hasInk = Array.from(data).some((v,i) => (i%4 !== 3) && v < 200);
+  if (!hasInk) return null;
+  return c.toDataURL('image/png').split(',')[1];
+}
+
+function certSetNovedades(hayNov) {
+  certHayNovedades = hayNov;
+  document.getElementById('novBtnBad').className = 'nov-btn' + (hayNov  ? ' active-bad' : '');
+  document.getElementById('novBtnOk').className  = 'nov-btn' + (!hayNov ? ' active-ok'  : '');
+  document.getElementById('accCatalogWrap').style.display = hayNov ? '' : 'none';
+}
+
+function renderAccCatalog() {
+  const cat = document.getElementById('accCatalog');
+  if (!cat) return;
+
+  // Determinar tipos de extintores que tiene el local actual
+  const local = planMes.find(l => l.codigo === certModalCodigo);
+  const tipos = new Set((local?.extintores || []).map(e => (e.tipo||'').toUpperCase()));
+  const tienePQS   = tipos.has('PQS') || tipos.size === 0;   // si no hay datos, mostrar todo
+  const tieneCO2   = tipos.has('CO2') || tipos.size === 0;
+  const tieneTIPOK = tipos.has('TIPO K') || tipos.size === 0;
+
+  // Filtrar accesorios relevantes al tipo de extintor
+  const relevant = ACCESSORIES.map((a, i) => ({ ...a, i })).filter(a => {
+    const d = a.desc.toUpperCase();
+    if (d.includes('CO') && (d.includes('CORNETA') || d.includes('MANGUERA CO'))) return tieneCO2;
+    if (d.includes('PQS') || d.includes('MANÓMETRO') || d.includes('MANOMETRO')) return tienePQS || tieneTIPOK;
+    return true; // accesorios genéricos siempre visibles
+  });
+
+  cat.innerHTML = relevant.map(a => `
+    <div class="acc-row ${certAccsSelected.has(a.i)?'sel':''}" onclick="certToggleAcc(${a.i})">
+      <input type="checkbox" ${certAccsSelected.has(a.i)?'checked':''} onclick="event.stopPropagation();certToggleAcc(${a.i})" />
+      <span class="acc-row-desc">${a.desc}</span>
+      <span class="acc-row-price">$${a.precio.toFixed(2)}</span>
+    </div>`).join('');
+  updateAccTotal();
+}
+
+function certToggleAcc(i) {
+  if (certAccsSelected.has(i)) certAccsSelected.delete(i); else certAccsSelected.add(i);
+  renderAccCatalog();
+}
+
+function updateAccTotal() {
+  const total = parseFloat([...certAccsSelected].reduce((s,i) => s + ACCESSORIES[i].precio, 0).toFixed(2));
+  const el = document.getElementById('accTotal');
+  if (el) el.textContent = `Total accesorios: $${total.toFixed(2)}`;
+}
+
+async function generarCertLocal() {
+  if (!certModalCodigo) return;
+  const local = planMes.find(l=>l.codigo===certModalCodigo);
+  if (!local) return;
+
+  // Fotos del nuevo estado
+  const FB64 = {};
+  for (const [key, file] of Object.entries(certFotos)) {
+    if (file) FB64[key] = await fileToBase64(file);
+  }
+  // Firma digital del canvas
+  const firmaB64 = getSignatureB64();
+  if (firmaB64) FB64.firma = firmaB64;
+
+  const mesVal = document.getElementById('selMes').value;
+  const anio   = document.getElementById('selAnio').value;
+  const mesNum = mesVal.substring(0,2);
+
+  const tipoServSel = document.querySelector('input[name="certTipoServ"]:checked')?.value || 'mantenimiento';
+  const tipoLabel   = tipoServSel === 'recarga' ? 'RECARGA' : 'MANT';
+
+  // Accesorios del catálogo seleccionados
+  const ACCS_SEL = certHayNovedades
+    ? [...certAccsSelected].map(i => ({ desc: ACCESSORIES[i].desc }))
+    : [];
+
+  const localLabel = local.nombre.replace(local.codigo + ' - ', '');
+  const dispCode   = certDisplayCode(local.codigo);
+  const cotNum     = certModalCotNum;
+  const certNum    = `CERT. N° ${cotNum}`;
+  const fileName   = sanitizeFileName(`COTIZACION${cotNum} ${dispCode} ${localLabel}.pdf`);
+
+  const doc = await hacerPDF({
+    localNom:  localLabel,
+    puntNom:   local.nombre,
+    localCode: local.codigo,
+    exts: local.extintores.map(e=>({tipo:e.tipo,cap:e.cap})),
+    FB64,
+    ACCS: ACCS_SEL,
+    certNum,
+    fileName,
+    MA:  mesNum+'/'+anio,
+    MAS: mesNum+'/'+(parseInt(anio)+1),
+    anio,
+    tipoServ: tipoServSel,
+  });
+
+  try { if (doc) await subirCertGitHub(local.codigo, anio, mesVal, doc, fileName); } catch(e) { console.warn('subirCert:', e); }
+
+  cerrarCertModal();
+}
+
+// Sube el PDF del certificado a GitHub: certificados/[MES]-[ANIO]/COTIZACION{num} {CODE} {LOCAL}.pdf
+async function subirCertGitHub(localCode, anio, mesVal, doc, fileName) {
+  const token = getGhToken();
+  if (!token) return;
+  const mes = MESES_NOMBRE[mesVal];
+  const name = fileName || `CERT-${localCode}-${anio}.pdf`;
+  const path = `certificados/${mes}-${anio}/${name}`;
+  // jsPDF → base64 (sin el prefijo data:)
+  const content = doc.output('datauristring').split(',')[1];
+  let sha = null;
+  const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+  });
+  if (check.ok) { const d = await check.json(); sha = d.sha; }
+  const body = { message: `cert: ${fileName}`, content, branch: GH_BRANCH };
+  if (sha) body.sha = sha;
+  await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+}
+
+// ─── UI HELPERS ───────────────────────────────────────────────────────────────
+function showStatus(elId, type, msg) {
+  const el = document.getElementById(elId);
+  el.className = 'status-bar status-' + type;
+  el.innerHTML = msg;
+  el.style.display = 'flex';
+}
+
+function setStep(n) { /* obsoleto: la app ya no usa pasos lineales */ }
+
+function enableGenerarBtns() {
+  ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = false;
+  });
+}
+
+function markOutput(id) {
+  document.getElementById(id).classList.add('ready');
+}
+
+// ─── SELECTOR DE PERFIL ───────────────────────────────────────────────────────
+function elegirPerfil(p) {
+  document.getElementById('profileSelector').style.display = 'none';
+  setPerfil(p);
+}
+
+function mostrarSelectorPerfil() {
+  document.getElementById('profileSelector').style.display = 'flex';
+}
+
+function updatePerfilIndicator() {
+  const el = document.getElementById('perfilIndicator');
+  if (!el) return;
+  const label = currentProfile === 'admin' ? '👤 Admin' : '👷 Técnico';
+  el.innerHTML = label + ' <span class="perfil-chip">· cambiar</span>';
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init() {
+  loadConfig();
+
+  if (localStorage.getItem('darkMode') === '1') document.body.classList.add('dark');
+
+  const hoy = new Date();
+  const mesActual = String(hoy.getMonth() + 1).padStart(2, '0');
+  const mesNum    = parseInt(mesActual);
+  const selMes = document.getElementById('selMes');
+  const opt = Array.from(selMes.options).find(o => o.value.startsWith(mesActual));
+  if (opt) selMes.value = opt.value;
+
+  // Auto-calcular número inicial de cotización: base 1200 + mes*50 (sólo si no hay valor guardado)
+  const cotInicialAuto = 1200 + mesNum * 50;
+  const cotInicialInp  = document.getElementById('cotInicial');
+  if (cotInicialInp) cotInicialInp.value = cotInicialAuto; // se sobreescribe si hay sesión guardada
+  const anioActual = String(hoy.getFullYear());
+  const selAnio = document.getElementById('selAnio');
+  if (Array.from(selAnio.options).some(o => o.value === anioActual)) selAnio.value = anioActual;
+
+  localRestore();
+  cargarPlan();
+  renderTabla();
+  renderEmpresaFacturas();
+  enableGenerarBtns();
+  if (getGhToken()) ghCargar();
+
+  // Preparar vista interna con el perfil guardado sin mostrar aún
+  const isAdmin = currentProfile === 'admin';
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+  document.getElementById('monthSelector').style.display = isAdmin ? '' : 'none';
+  const lastSec = localStorage.getItem('lastSection') || 'plan';
+  goToSection(isAdmin ? lastSec : 'plan');
+  updatePerfilIndicator();
+
+  // Cargar logo en selector de perfil
+  fetchLogo().then(b64 => {
+    if (!b64) return;
+    const img = document.getElementById('pselLogo');
+    const fb  = document.getElementById('pselLogoFallback');
+    if (img) { img.src = 'data:image/png;base64,'+b64; img.style.display = 'block'; }
+    if (fb)  fb.style.display = 'none';
+  });
+
+  // Mostrar selector de perfil al inicio (como previfuego-backend)
+  mostrarSelectorPerfil();
+}
+
+init();
+</script>
+</body>
+</html>
