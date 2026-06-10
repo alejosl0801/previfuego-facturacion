@@ -1,7 +1,7 @@
 {
   "mes": "06 JUNIO",
   "anio": "2026",
-  "savedAt": "2026-06-10T13:25:25.790Z",
+  "savedAt": "2026-06-10T13:27:44.128Z",
   "cotizaciones": [
     {
       "filename": "foto-WhatsApp Image 2026-04-25 at 12.08.13 PM.jpeg",
@@ -69,10 +69,48 @@
       "tecnico": "",
       "firmaCliente": "",
       "formaPago": ""
+    },
+    {
+      "filename": "foto-WhatsApp Image 2026-04-25 at 12.09.07 PM (1).jpeg",
+      "proformaNum": "",
+      "localCode": "IV87",
+      "cc": "IV87EC",
+      "localName": "IV87 - DAULE",
+      "ciudad": "DAULE",
+      "empresaHoja": "IL CAPPO",
+      "items": [
+        {
+          "qty": 1,
+          "desc": "PQS 10 LIBRAS",
+          "tipo": "PQS",
+          "capacidad": "10 LIBRAS",
+          "serie": "",
+          "unitPrice": 4,
+          "total": 8,
+          "serviceType": "MANTENIMIENTO",
+          "isExtintor": true
+        }
+      ],
+      "subtotal": 8,
+      "iva": 1.2,
+      "total": 9.2,
+      "category": "MANT",
+      "descripcionFact": "MANTENIMIENTO EXTINTOR 10 LIBRAS - POLVO QUIMICO SECO",
+      "observacion": "",
+      "notaEntrega": "0006773",
+      "ruc": "1792141486001",
+      "fecha": "14/04/2026",
+      "tecnico": "Alejandro López",
+      "firmaCliente": "",
+      "formaPago": ""
     }
   ],
   "facturaMap": {
     "INT FOOD SERVICES": {
+      "factManges": "",
+      "factMant": ""
+    },
+    "IL CAPPO": {
       "factManges": "",
       "factMant": ""
     }
