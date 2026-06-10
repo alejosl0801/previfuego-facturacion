@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // Versión: v20260610-007
-const _VER = '20260610008';
+const _VER = '20260610009';
 // Mata SW viejo + limpia cachés + redirige con timestamp para romper CDN cache
 (function(){
   // Timestamp por minuto → URL siempre nueva al primer acceso tras deploy
@@ -33,7 +33,7 @@ const _VER = '20260610008';
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Previfuego – Facturación KFC</title>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
@@ -885,8 +885,17 @@ const EMPRESAS_MAP = {
   'ILCI': { empresa:'PRODUCCIONES Y EVENTOS NOVOEVENTOS SA',        marca:'IVORY',              ruc:'1792025435001', hoja:'NOVOEVENTOS' },
   'V':    { empresa:'PROMOTORA ECUATORIANA DE CAFE DE COLOMBIA SA', marca:'JUAN VALDEZ',        ruc:'1792141486001', hoja:'PROCAFECOL' },
   'JV':   { empresa:'PROMOTORA ECUATORIANA DE CAFE DE COLOMBIA SA', marca:'JUAN VALDEZ',        ruc:'1792141486001', hoja:'PROCAFECOL' },
+  'IV':   { empresa:'PROMOTORA ECUATORIANA DE CAFE DE COLOMBIA SA', marca:'JUAN VALDEZ',        ruc:'1792141486001', hoja:'PROCAFECOL' },
   'KN':   { empresa:'SUSHICORP SAS',                                marca:'KOBE / NOE',         ruc:'1792256267001', hoja:'SUSHICORP' },
 };
+
+// Opciones únicas para el dropdown (sin duplicados por empresa)
+const EMPRESAS_OPTS = (() => {
+  const seen = new Set();
+  return Object.entries(EMPRESAS_MAP)
+    .filter(([, v]) => { if (seen.has(v.empresa)) return false; seen.add(v.empresa); return true; })
+    .map(([k, v]) => ({ key: k, label: v.empresa }));
+})();
 
 let cotizaciones = []; // array of parsed cotizacion objects
 let facturaMap = {};   // { hojaKey: { factManges: 'XXXX', factMant: 'YYYY' } }
@@ -969,7 +978,7 @@ function costCenter(localCode) {
 function getEmpresa(localCode) {
   const code = localCode.toUpperCase();
   // Try multi-char prefixes first (longest match)
-  const prefixes = ['CJNC','ILCI','JV','KN','K','G','M','J','T','V'];
+  const prefixes = ['CJNC','ILCI','JV','IV','KN','K','G','M','J','T','V'];
   for (const p of prefixes) {
     if (code.startsWith(p)) return EMPRESAS_MAP[p] || null;
   }
@@ -1228,12 +1237,15 @@ function renderTabla() {
       <tr class="${cls}">
         <td>${idx+1}</td>
         <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.filename}">${c.filename.replace('.xlsx','')}</td>
-        <td><strong>${c.localCode}</strong></td>
+        <td style="font-family:monospace;font-size:11px;font-weight:700;min-width:80px"
+            contenteditable="true"
+            onblur="(function(el,i){const v=el.textContent.trim().toUpperCase().replace(/\s+/g,'');if(!v)return;cotizaciones[i].localCode=v;cotizaciones[i].cc=costCenter(v);const emp=getEmpresa(v);if(emp)cotizaciones[i].empresa=emp;renderTabla();renderEmpresaFacturas();autosave();})(this,${idx})"
+            >${c.localCode}</td>
         <td style="font-family:monospace;font-size:11px">${c.cc}</td>
         <td style="font-size:11px">
-          <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderEmpresaFacturas();autosave()">
-            ${Object.entries(EMPRESAS_MAP).map(([k,v]) =>
-              `<option value="${k}" ${c.empresa===v?'selected':''}>${v.empresa}</option>`
+          <select style="font-size:11px;padding:2px 4px;min-width:160px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderEmpresaFacturas();autosave()">
+            ${EMPRESAS_OPTS.map(({ key, label }) =>
+              `<option value="${key}" ${c.empresa?.empresa===label?'selected':''}>${label}</option>`
             ).join('')}
           </select>
         </td>
@@ -1351,7 +1363,8 @@ CAMPOS OBLIGATORIOS:
 9. descripcion: descripción completa del servicio (ej: "EXTINTORES MANTENIMIENTO ANUAL", "ACCESORIOS EXTINTORES Y SEÑALETICAS", "LAMPARA DE EMERGENCIA").
 10. extintores: TODOS los extintores/ítems del detalle:
     [{tipo:"CO2", capacidad:"50LBS", cantidad:1, valorUnit:45.00, valorTotal:45.00, serie:"12345"}]
-    tipo: CO2 / PQS / AGUA / HALON / ESPUMA / LAMPARA / SEÑALETICA / ACCESORIO / etc.
+    tipo: CO2 / PQS / K / AGUA / HALON / ESPUMA / LAMPARA / SEÑALETICA / ACCESORIO / etc.
+    IMPORTANTE: Para extintores de cocina tipo K (acetato de potasio), usa exactamente "K" — NO "ESPUMA".
     capacidad: exactamente como aparece (ej: "50LBS", "10LBS", "6KG", "25LBS").
     serie: número de serie si aparece en la nota.
 11. subtotal: monto sin IVA exacto (número decimal).
@@ -2273,6 +2286,88 @@ function generarTodo() {
   generarFormatoFact();
 }
 
+// ─── EXCEL HELPERS ────────────────────────────────────────────────────────────
+function normTipo(tipo) {
+  const t = (tipo || '').toUpperCase().trim();
+  if (t === 'K' || t.includes('TIPO K') || t.includes('ACETATO')) return 'K';
+  if (t === 'CO2' || t.includes('CARBONICO')) return 'CO2';
+  if (t === 'PQS' || t.includes('POLVO')) return 'PQS';
+  if (t.includes('CO2')) return 'CO2';
+  return t || '-';
+}
+
+const _XB = { style: 'thin', color: { rgb: 'BDBDBD' } };
+const _XBM = { style: 'medium', color: { rgb: '888888' } };
+const XSTYLE = {
+  TITLE: {
+    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 12, name: 'Calibri' },
+    fill: { fgColor: { rgb: '1F4E79' }, patternType: 'solid' },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: { top: _XBM, bottom: _XBM, left: _XBM, right: _XBM }
+  },
+  SEC: {
+    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 9, name: 'Calibri' },
+    fill: { fgColor: { rgb: '2E75B6' }, patternType: 'solid' },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: { top: _XB, bottom: _XB, left: _XB, right: _XB }
+  },
+  HDR: {
+    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 9, name: 'Calibri' },
+    fill: { fgColor: { rgb: 'C0392B' }, patternType: 'solid' },
+    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+    border: { top: _XB, bottom: { style: 'medium', color: { rgb: '922B21' } }, left: _XB, right: _XB }
+  },
+  DATA: {
+    font: { sz: 9, name: 'Calibri' },
+    fill: { fgColor: { rgb: 'FFFFFF' }, patternType: 'solid' },
+    alignment: { vertical: 'center' },
+    border: { top: _XB, bottom: _XB, left: _XB, right: _XB }
+  },
+  ALT: {
+    font: { sz: 9, name: 'Calibri' },
+    fill: { fgColor: { rgb: 'EBF5FB' }, patternType: 'solid' },
+    alignment: { vertical: 'center' },
+    border: { top: _XB, bottom: _XB, left: _XB, right: _XB }
+  },
+  TOT: {
+    font: { bold: true, sz: 9, name: 'Calibri' },
+    fill: { fgColor: { rgb: 'FEF9E7' }, patternType: 'solid' },
+    alignment: { vertical: 'center' },
+    border: { top: { style: 'medium', color: { rgb: 'F0B400' } }, bottom: { style: 'medium', color: { rgb: 'F0B400' } }, left: _XB, right: _XB }
+  },
+  MONEY: '"$"#,##0.00',
+};
+
+function xsApply(ws, rows, opts = {}) {
+  const nr = rows.length;
+  const nc = Math.max(...rows.map(r => r.length));
+  let dataIdx = 0;
+  for (let ri = 0; ri < nr; ri++) {
+    const rowLen = rows[ri].length;
+    for (let ci = 0; ci < nc; ci++) {
+      const ref = XLSX.utils.encode_cell({ r: ri, c: ci });
+      if (!ws[ref]) ws[ref] = { t: 'z', v: '' };
+      let s;
+      if (ri === opts.titleRow) s = XSTYLE.TITLE;
+      else if (ri === opts.secRow) s = XSTYLE.SEC;
+      else if (ri === opts.hdrRow) s = XSTYLE.HDR;
+      else if (opts.totalRows?.includes(ri)) s = XSTYLE.TOT;
+      else { s = dataIdx % 2 === 0 ? XSTYLE.DATA : XSTYLE.ALT; }
+      ws[ref].s = JSON.parse(JSON.stringify(s));
+      if (opts.moneyCols?.includes(ci) && ws[ref].t === 'n') {
+        ws[ref].s.numFmt = XSTYLE.MONEY;
+      }
+    }
+    const isData = ri !== opts.titleRow && ri !== opts.secRow && ri !== opts.hdrRow && !opts.totalRows?.includes(ri);
+    if (isData) dataIdx++;
+  }
+  ws['!rows'] = rows.map((_, ri) => ({
+    hpt: ri === opts.titleRow ? 22 : ri === opts.secRow ? 18 : ri === opts.hdrRow ? 36 : opts.totalRows?.includes(ri) ? 18 : 15
+  }));
+  if (opts.merges) ws['!merges'] = opts.merges;
+  if (opts.freezeRows) ws['!freeze'] = { xSplit: 0, ySplit: opts.freezeRows, topLeftCell: XLSX.utils.encode_cell({ r: opts.freezeRows, c: 0 }) };
+}
+
 function getMesLabel() {
   const mes = document.getElementById('selMes').value;
   return MESES_NOMBRE[mes] || mes;
@@ -2280,8 +2375,8 @@ function getMesLabel() {
 
 function generarDetalle() {
   log('Generando DETALLE FACT MENSUAL...');
+  const periodo = `${getMesLabel()} ${document.getElementById('selAnio').value}`;
 
-  // Agrupar cotizaciones por empresa (hoja)
   const porEmpresa = {};
   cotizaciones.forEach(c => {
     const hoja = c.empresa?.hoja || 'SIN EMPRESA';
@@ -2291,125 +2386,141 @@ function generarDetalle() {
 
   for (const [hoja, cots] of Object.entries(porEmpresa)) {
     const wb = XLSX.utils.book_new();
-
-    // ── MANGES sheet ────────────────────────────────────────────────────────
-    const mangesRows = [
-      ['DATOS DE LA EMPRESA', null, null, null, null,
-       'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null, null,
-       'DETALLE DE COSTOS', null, null, null, null],
-      ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO',
-       'EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R',
-       'JEFE DE OPERACIONES QUE AUTORIZA',
-       'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
-    ];
+    const empNombre = cots[0]?.empresa?.empresa || hoja;
     const mangesCots = cots.filter(c => c.category === 'MANGES');
-    mangesCots.forEach(c => {
-      const emp = c.empresa || {};
-      const extItems = c.items.filter(i => i.isExtintor);
-      const first = extItems[0];
-      mangesRows.push([
-        emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
-        c.localCode, null,
-        first ? first.qty : 1,
-        first ? first.tipo : '-',
-        first ? first.capacidad : '-',
-        'M', null,
-        first ? first.unitPrice : 0,
-        c.subtotal, c.iva, c.total, c.notaEntrega || ''
-      ]);
-      for (let i = 1; i < extItems.length; i++) {
-        const item = extItems[i];
-        mangesRows.push([
-          null, null, null, null, null, null,
-          item.qty, item.tipo, item.capacidad, 'M', null,
-          item.unitPrice, null, null, null, null
-        ]);
-      }
-    });
-    const wsManges = XLSX.utils.aoa_to_sheet(mangesRows);
-    wsManges['!cols'] = [15,20,20,12,12,25,8,8,10,4,20,8,8,8,8,10].map(w => ({ wpx: w * 6 }));
-    XLSX.utils.book_append_sheet(wb, wsManges, 'MANGES');
+    const mantCots   = cots.filter(c => c.category === 'MANT');
 
-    // ── MANT sheet ──────────────────────────────────────────────────────────
-    const mantRows = [
-      ['DATOS DE LA EMPRESA', null, null, null, null,
-       'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null,
-       'DETALLE DE COSTOS', null, null, null, null, 'OBSERVACION', null],
-      ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO',
-       'EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD',
-       'JEFE DE OPERACIONES QUE AUTORIZA',
-       'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA', null, null]
-    ];
-    const mantCots = cots.filter(c => c.category === 'MANT');
-    mantCots.forEach(c => {
-      const emp = c.empresa || {};
-      mantRows.push([
-        emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
-        c.localCode, c.descripcionFact,
-        '-', '-', '-', null,
-        c.subtotal, c.subtotal, c.iva, c.total,
-        c.notaEntrega || '',
-        c.observacion || 'SOLICITADO POR EL LOCAL', null
-      ]);
-    });
-    const wsMant = XLSX.utils.aoa_to_sheet(mantRows);
-    XLSX.utils.book_append_sheet(wb, wsMant, 'MANT');
+    // ── MANGES sheet ──────────────────────────────────────────────────────
+    if (mangesCots.length > 0) {
+      const NC = 16;
+      const titleRow = [`DETALLE FACTURACIÓN MANTGES — ${empNombre} — ${periodo}`, ...Array(NC-1).fill(null)];
+      const secRow   = ['DATOS DE LA EMPRESA',null,null,null,null, 'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null,null, 'DETALLE DE COSTOS',null,null,null,null];
+      const hdrRow   = ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO', 'EQUIPO/SERVICIO ENTREGADO','No. EXT','TIPO','CAPACIDAD','M/R', 'JEFE DE OPERACIONES', 'VALOR UNIT.','SUBTOTAL','IVA 15%','TOTAL','# N.E.'];
+      const dataRows = [];
+      mangesCots.forEach(c => {
+        const emp = c.empresa || {};
+        const extItems = c.items.filter(i => i.isExtintor);
+        const first = extItems[0];
+        dataRows.push([emp.empresa||'', emp.marca||'', c.localName||'', c.ciudad||'', c.localCode||'', null,
+          first?first.qty:1, first?normTipo(first.tipo):'-', first?first.capacidad:'-', 'M', null,
+          first?first.unitPrice:0, c.subtotal, c.iva, c.total, c.notaEntrega||'']);
+        for (let i = 1; i < extItems.length; i++) {
+          const it = extItems[i];
+          dataRows.push([null,null,null,null,null,null, it.qty,normTipo(it.tipo),it.capacidad,'M',null, it.unitPrice,null,null,null,null]);
+        }
+      });
+      const totSub = parseFloat(mangesCots.reduce((s,c)=>s+c.subtotal,0).toFixed(2));
+      const totIva = parseFloat(mangesCots.reduce((s,c)=>s+c.iva,0).toFixed(2));
+      const totTot = parseFloat(mangesCots.reduce((s,c)=>s+c.total,0).toFixed(2));
+      const totRow = [null,null,null,null,null,null,null,null,null,null,null, 'TOTALES', totSub, totIva, totTot, null];
+      const allRows = [titleRow, secRow, hdrRow, ...dataRows, totRow];
+      const tr = allRows.length - 1;
+      const ws = XLSX.utils.aoa_to_sheet(allRows);
+      // Formulas in total row (Excel 1-indexed: data starts at row 4)
+      ws[`M${tr+1}`] = { t:'n', v:totSub, f:`SUM(M4:M${tr})` };
+      ws[`N${tr+1}`] = { t:'n', v:totIva, f:`SUM(N4:N${tr})` };
+      ws[`O${tr+1}`] = { t:'n', v:totTot, f:`SUM(O4:O${tr})` };
+      ws['!cols'] = [22,14,22,10,12,26,7,7,9,4,18,10,10,9,10,9].map(w=>({wch:w}));
+      xsApply(ws, allRows, {
+        titleRow:0, secRow:1, hdrRow:2, totalRows:[tr],
+        moneyCols:[11,12,13,14],
+        merges:[
+          {s:{r:0,c:0},e:{r:0,c:NC-1}},
+          {s:{r:1,c:0},e:{r:1,c:4}}, {s:{r:1,c:5},e:{r:1,c:10}}, {s:{r:1,c:11},e:{r:1,c:15}}
+        ],
+        freezeRows:3
+      });
+      XLSX.utils.book_append_sheet(wb, ws, 'MANGES');
+    }
 
+    // ── MANT sheet ────────────────────────────────────────────────────────
+    if (mantCots.length > 0) {
+      const NC = 16;
+      const titleRow = [`DETALLE FACTURACIÓN MANT — ${empNombre} — ${periodo}`, ...Array(NC-1).fill(null)];
+      const secRow   = ['DATOS DE LA EMPRESA',null,null,null,null, 'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null, 'DETALLE DE COSTOS',null,null,null, 'DATOS ENTREGA',null];
+      const hdrRow   = ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. COSTO', 'EQUIPO/SERVICIO','# EXT','TIPO','CAPACIDAD','JEFE DE OPERACIONES', 'VALOR UNIT.','SUBTOTAL','IVA 15%','TOTAL','# N.E.','OBSERVACIÓN'];
+      const dataRows = mantCots.map(c => {
+        const emp = c.empresa || {};
+        return [emp.empresa||'', emp.marca||'', c.localName||'', c.ciudad||'', c.localCode||'',
+          c.descripcionFact||'', '-','-','-', null,
+          c.subtotal, c.subtotal, c.iva, c.total, c.notaEntrega||'', c.observacion||'SOLICITADO POR EL LOCAL'];
+      });
+      const totSub = parseFloat(mantCots.reduce((s,c)=>s+c.subtotal,0).toFixed(2));
+      const totIva = parseFloat(mantCots.reduce((s,c)=>s+c.iva,0).toFixed(2));
+      const totTot = parseFloat(mantCots.reduce((s,c)=>s+c.total,0).toFixed(2));
+      const totRow = [null,null,null,null,null,null,null,null,null,null, 'TOTALES', totSub, totIva, totTot, null, null];
+      const allRows = [titleRow, secRow, hdrRow, ...dataRows, totRow];
+      const tr = allRows.length - 1;
+      const ws = XLSX.utils.aoa_to_sheet(allRows);
+      ws[`L${tr+1}`] = { t:'n', v:totSub, f:`SUM(L4:L${tr})` };
+      ws[`M${tr+1}`] = { t:'n', v:totIva, f:`SUM(M4:M${tr})` };
+      ws[`N${tr+1}`] = { t:'n', v:totTot, f:`SUM(N4:N${tr})` };
+      ws['!cols'] = [22,14,22,10,12,26,7,7,9,18,10,10,9,10,9,22].map(w=>({wch:w}));
+      xsApply(ws, allRows, {
+        titleRow:0, secRow:1, hdrRow:2, totalRows:[tr],
+        moneyCols:[10,11,12,13],
+        merges:[
+          {s:{r:0,c:0},e:{r:0,c:NC-1}},
+          {s:{r:1,c:0},e:{r:1,c:4}}, {s:{r:1,c:5},e:{r:1,c:9}}, {s:{r:1,c:10},e:{r:1,c:13}}, {s:{r:1,c:14},e:{r:1,c:15}}
+        ],
+        freezeRows:3
+      });
+      XLSX.utils.book_append_sheet(wb, ws, 'MANT');
+    }
+
+    if (!wb.SheetNames.length) continue;
     const nombreArchivo = sanitizeFileName(`DETALLE FACT MENSUAL ${getMesLabel()} - ${hoja}.xlsx`);
     XLSX.writeFile(wb, nombreArchivo);
     log(`  ✅ ${nombreArchivo} (MANGES: ${mangesCots.length}, MANT: ${mantCots.length})`, 'ok');
   }
-
   markOutput('out1');
 }
 
 function generarDistribucion() {
   log('Generando DISTRIBUCIÓN...');
+  const periodo = `${getMesLabel()} ${document.getElementById('selAnio').value}`;
   const wb = XLSX.utils.book_new();
 
-  // Group by empresa + category (each becomes an invoice)
   const byHoja = {};
   cotizaciones.forEach(c => {
     const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-    const key = hoja + '|' + c.category;
+    const key  = hoja + '|' + c.category;
     if (!byHoja[key]) byHoja[key] = { hoja, category: c.category, empresa: c.empresa, items: [] };
     byHoja[key].items.push(c);
   });
 
   let sheetCount = 0;
-  for (const [key, data] of Object.entries(byHoja)) {
-    const factNum = data.category === 'MANGES'
-      ? (facturaMap[data.hoja]?.factManges || 'XXXX MANTGES')
-      : (facturaMap[data.hoja]?.factMant || 'XXXX MANTT');
+  for (const [, data] of Object.entries(byHoja)) {
+    const factNum  = data.category === 'MANGES'
+      ? (facturaMap[data.hoja]?.factManges || 'XXXX')
+      : (facturaMap[data.hoja]?.factMant   || 'XXXX');
+    const empNombre = data.empresa?.empresa || data.hoja;
+    const tipo      = data.category === 'MANGES' ? 'MANTGES' : 'MANT';
 
-    const rows = [
-      ['C.C.', 'DESCRIPCION', 'SUBTOTAL', 'IVA', 'TOTAL']
-    ];
+    const NC = 5;
+    const titleRow = [`DISTRIBUCIÓN ${tipo} — ${empNombre} — FACT. ${factNum} — ${periodo}`, null, null, null, null];
+    const hdrRow   = ['C.C.', 'DESCRIPCIÓN DEL SERVICIO', 'SUBTOTAL', 'IVA 15%', 'TOTAL'];
+    const dataRows = data.items.map(c => [c.cc, c.descripcionFact, c.subtotal, c.iva, c.total]);
 
-    data.items.forEach(c => {
-      rows.push([
-        c.cc,
-        c.descripcionFact,
-        c.subtotal,
-        c.iva,
-        c.total
-      ]);
+    const totSub = parseFloat(data.items.reduce((s,c)=>s+c.subtotal,0).toFixed(2));
+    const totIva = parseFloat(data.items.reduce((s,c)=>s+c.iva,0).toFixed(2));
+    const totTot = parseFloat(data.items.reduce((s,c)=>s+c.total,0).toFixed(2));
+    const totRow = [null, 'TOTAL FACTURA', totSub, totIva, totTot];
+
+    const allRows = [titleRow, hdrRow, ...dataRows, totRow];
+    const tr = allRows.length - 1;
+    const ws = XLSX.utils.aoa_to_sheet(allRows);
+    ws[`C${tr+1}`] = { t:'n', v:totSub, f:`SUM(C3:C${tr})` };
+    ws[`D${tr+1}`] = { t:'n', v:totIva, f:`SUM(D3:D${tr})` };
+    ws[`E${tr+1}`] = { t:'n', v:totTot, f:`SUM(E3:E${tr})` };
+    ws['!cols'] = [{ wch:12 }, { wch:40 }, { wch:12 }, { wch:11 }, { wch:12 }];
+    xsApply(ws, allRows, {
+      titleRow:0, hdrRow:1, totalRows:[tr],
+      moneyCols:[2,3,4],
+      merges:[{ s:{r:0,c:0}, e:{r:0,c:NC-1} }]
     });
 
-    const totSub = parseFloat(data.items.reduce((s,c) => s + c.subtotal, 0).toFixed(2));
-    const totIva = parseFloat(data.items.reduce((s,c) => s + c.iva, 0).toFixed(2));
-    const totTot = parseFloat(data.items.reduce((s,c) => s + c.total, 0).toFixed(2));
-    rows.push([null, 'TOTAL:', totSub, totIva, totTot]);
-
-    const sheetName = ('FACT ' + factNum).slice(0, 31);
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{ wpx: 80 }, { wpx: 200 }, { wpx: 70 }, { wpx: 60 }, { wpx: 70 }];
-
-    // Style header
-    ['A1','B1','C1','D1','E1'].forEach(ref => {
-      if (ws[ref]) ws[ref].s = { font: { bold: true }, fill: { fgColor: { rgb: 'C0392B' } } };
-    });
-
+    const sheetName = (`FACT ${factNum}`).slice(0, 31);
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
     sheetCount++;
     log(`  Hoja: ${sheetName} (${data.items.length} líneas)`, 'ok');
@@ -2422,9 +2533,9 @@ function generarDistribucion() {
 
 function generarFormatoFact() {
   log('Generando FORMATO_FACTURACIÓN...');
+  const periodo = `${getMesLabel()} ${document.getElementById('selAnio').value}`;
   const wb = XLSX.utils.book_new();
 
-  // Group by empresa hoja
   const byHoja = {};
   cotizaciones.forEach(c => {
     const hoja = c.empresa?.hoja || 'SIN EMPRESA';
@@ -2433,37 +2544,34 @@ function generarFormatoFact() {
   });
 
   for (const [hoja, data] of Object.entries(byHoja)) {
-    const rows = [
-      ['C.COSTO', 'DESCRIPCION FACTURA + # ACTA/ORDEN DE TRABAJO',
-       'N° FACTURA', 'SUBTOTAL', 'IVA', 'TOTAL', 'ACTA']
-    ];
-
-    data.items.forEach(c => {
+    const empNombre = data.empresa?.empresa || hoja;
+    const NC = 7;
+    const titleRow = [`FORMATO FACTURACIÓN — ${empNombre} — ${periodo}`, null, null, null, null, null, null];
+    const hdrRow   = ['C. COSTO', 'DESCRIPCIÓN FACTURA / # ACTA U ORDEN DE TRABAJO', 'N° FACTURA', 'SUBTOTAL', 'IVA 15%', 'TOTAL', '# N.E.'];
+    const dataRows = data.items.map(c => {
       const factNum = c.category === 'MANGES'
         ? (facturaMap[hoja]?.factManges || '')
-        : (facturaMap[hoja]?.factMant || '');
-
-      rows.push([
-        c.cc,
-        c.descripcionFact,
-        factNum,
-        c.subtotal,
-        c.iva,
-        c.total,
-        c.notaEntrega || null
-      ]);
+        : (facturaMap[hoja]?.factMant   || '');
+      return [c.cc, c.descripcionFact, factNum, c.subtotal, c.iva, c.total, c.notaEntrega||''];
     });
 
-    const totSub = parseFloat(data.items.reduce((s,c) => s + c.subtotal, 0).toFixed(2));
-    const totIva = parseFloat(data.items.reduce((s,c) => s + c.iva, 0).toFixed(2));
-    const totTot = parseFloat(data.items.reduce((s,c) => s + c.total, 0).toFixed(2));
-    rows.push([null, 'TOTALES', null, totSub, totIva, totTot, null]);
+    const totSub = parseFloat(data.items.reduce((s,c)=>s+c.subtotal,0).toFixed(2));
+    const totIva = parseFloat(data.items.reduce((s,c)=>s+c.iva,0).toFixed(2));
+    const totTot = parseFloat(data.items.reduce((s,c)=>s+c.total,0).toFixed(2));
+    const totRow = [null, 'TOTALES', null, totSub, totIva, totTot, null];
 
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [
-      { wpx: 70 }, { wpx: 240 }, { wpx: 120 },
-      { wpx: 70 }, { wpx: 60 }, { wpx: 70 }, { wpx: 80 }
-    ];
+    const allRows = [titleRow, hdrRow, ...dataRows, totRow];
+    const tr = allRows.length - 1;
+    const ws = XLSX.utils.aoa_to_sheet(allRows);
+    ws[`D${tr+1}`] = { t:'n', v:totSub, f:`SUM(D3:D${tr})` };
+    ws[`E${tr+1}`] = { t:'n', v:totIva, f:`SUM(E3:E${tr})` };
+    ws[`F${tr+1}`] = { t:'n', v:totTot, f:`SUM(F3:F${tr})` };
+    ws['!cols'] = [{ wch:12 }, { wch:45 }, { wch:14 }, { wch:11 }, { wch:10 }, { wch:11 }, { wch:10 }];
+    xsApply(ws, allRows, {
+      titleRow:0, hdrRow:1, totalRows:[tr],
+      moneyCols:[3,4,5],
+      merges:[{ s:{r:0,c:0}, e:{r:0,c:NC-1} }]
+    });
     XLSX.utils.book_append_sheet(wb, ws, hoja.slice(0, 31));
     log(`  Hoja: ${hoja} (${data.items.length} líneas)`, 'ok');
   }
