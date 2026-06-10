@@ -1,0 +1,91 @@
+{
+  "mes": "06 JUNIO",
+  "anio": "2026",
+  "savedAt": "2026-06-10T13:25:25.790Z",
+  "cotizaciones": [
+    {
+      "filename": "foto-WhatsApp Image 2026-04-25 at 12.08.13 PM.jpeg",
+      "proformaNum": "",
+      "localCode": "KFCK161",
+      "cc": "KFCK161EC",
+      "localName": "KFCK161 - C.C. MALL DEL RIO",
+      "ciudad": "GUAYAQUIL",
+      "empresaHoja": "INT FOOD SERVICES",
+      "items": [
+        {
+          "qty": 1,
+          "desc": "CO2 50 LIBRAS",
+          "tipo": "CO2",
+          "capacidad": "50 LIBRAS",
+          "serie": "",
+          "unitPrice": 20,
+          "total": 20,
+          "serviceType": "MANTENIMIENTO",
+          "isExtintor": true
+        },
+        {
+          "qty": 1,
+          "desc": "CO2 10 LIBRAS",
+          "tipo": "CO2",
+          "capacidad": "10 LIBRAS",
+          "serie": "",
+          "unitPrice": 4,
+          "total": 4,
+          "serviceType": "MANTENIMIENTO",
+          "isExtintor": true
+        },
+        {
+          "qty": 1,
+          "desc": "PQS 10 LIBRAS",
+          "tipo": "PQS",
+          "capacidad": "10 LIBRAS",
+          "serie": "",
+          "unitPrice": 4,
+          "total": 4,
+          "serviceType": "MANTENIMIENTO",
+          "isExtintor": true
+        },
+        {
+          "qty": 1,
+          "desc": "ESPUMA 2.5 GLNS",
+          "tipo": "ESPUMA",
+          "capacidad": "2.5 GLNS",
+          "serie": "",
+          "unitPrice": 8,
+          "total": 8,
+          "serviceType": "MANTENIMIENTO",
+          "isExtintor": true
+        }
+      ],
+      "subtotal": 36,
+      "iva": 5.4,
+      "total": 41.4,
+      "category": "MANGES",
+      "descripcionFact": "MANTENIMIENTO EXTINTORES",
+      "observacion": "",
+      "notaEntrega": "6772",
+      "ruc": "1791415132001",
+      "fecha": "16/04/2026",
+      "tecnico": "",
+      "firmaCliente": "",
+      "formaPago": ""
+    }
+  ],
+  "facturaMap": {
+    "INT FOOD SERVICES": {
+      "factManges": "",
+      "factMant": ""
+    }
+  },
+  "visitaStatus": {
+    "CN034": "visitado",
+    "T043": "visitado",
+    "M014": "visitado",
+    "K115": "visitado",
+    "CN035": "visitado",
+    "F003": "pendiente"
+  },
+  "extOverrides": {},
+  "neInicial": 6700,
+  "cotInicial": 1500
+}
