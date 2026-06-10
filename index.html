@@ -5,12 +5,12 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <script>
-// Versión: v20260606-010
-console.log('%c PREVIFUEGO v20260606-010 ', 'background:#c0392b;color:white;font-size:14px;font-weight:bold');
+// Versión: v20260610-001
+console.log('%c PREVIFUEGO v20260610-001 ', 'background:#c0392b;color:white;font-size:14px;font-weight:bold');
 // Forzar URL con timestamp para evitar caché de CDN
 (function(){
   if (!/[?&]v=/.test(location.search)) {
-    location.replace(location.pathname + '?v=20260606010');
+    location.replace(location.pathname + '?v=20260610001');
   }
 })();
 // Registrar Service Worker
@@ -1311,37 +1311,35 @@ async function leerFotosNE() {
   document.getElementById('fotoStatus').textContent = '🤖 Procesando fotos con Gemini...';
   let procesadas = 0, errores = 0;
 
+  try {
   for (const file of files) {
     try {
+      const mimeType = file.type || 'image/jpeg';
       const base64 = await fileToBase64(file);
-      const result = await callGemini(geminiKey, base64, file.type,
+      if (!base64) { errores++; continue; }
+      const result = await callGemini(geminiKey, base64, mimeType,
         `Eres un asistente de facturación de extintores de Previfuego (Ecuador).
-Analiza esta nota de entrega/servicio y extrae TODOS los datos posibles.
+Analiza esta imagen de una nota de entrega/servicio y extrae todos los datos.
 
 CAMPOS A EXTRAER:
-1. notaEntrega: número de nota (4-5 dígitos, busca "N°", "No.", "NOTA DE ENTREGA")
-2. localCode: código del local (K02, K105, M35, T032, V091, BS04, KN01, KN21, etc.)
-3. empresa: nombre de la empresa cliente (ej: "INT FOOD SERVICES CORP")
-4. ciudad: ciudad donde está el local
-5. localNombre: nombre/dirección del local
-6. categoria: "MANTGES" si es mantenimiento anual de extintores, "MANT" si son accesorios/señaléticas/lámparas/recargas extra/instalaciones
-7. descripcion: descripción del servicio (ej: "EXTINTORES MANTENIMIENTO ANUAL", "ACCESORIOS EXTINTORES Y SEÑALETICAS", "LAMPARA EMERGENCIA")
-8. extintores: lista de extintores [{tipo:"CO2", capacidad:"50LBS", cantidad:1, valorUnit:20}]
-9. subtotal: valor sin IVA
-10. iva: valor del IVA
-11. total: valor total con IVA
-12. observacion: observación (ej: "ACCESORIOS DAÑADOS DURANTE MANTENIMIENTO ANUAL", "SOLICITADO POR EL LOCAL")
+1. notaEntrega: número de nota (4-5 dígitos). Busca "N°", "No.", "NOTA DE ENTREGA", "NE", "NE#".
+2. localCode: código del local. Ejemplos reales: KFCK76, KFCK161, GUSG45, GUS G45, K02, K105, M35, T032, BS04, KN01, ILCI12.
+   - Puede aparecer con o sin espacio (ej: "GUS G45" = "GUSG45", "KFC K76" = "KFCK76").
+   - Devuelve el código SIN espacios, todo en mayúsculas.
+3. empresa: nombre empresa cliente (ej: "INT FOOD SERVICES CORP", "OPERADORA GUAYAQUIL S.A.")
+4. ciudad: ciudad del local.
+5. localNombre: nombre o dirección del local.
+6. categoria: "MANTGES" si es mantenimiento/recarga anual de extintores; "MANT" si es accesorio/señalética/lámpara/instalación adicional.
+7. descripcion: descripción breve del servicio (ej: "EXTINTORES MANTENIMIENTO ANUAL", "ACCESORIOS EXTINTORES Y SEÑALETICAS").
+8. extintores: array de extintores [{tipo:"CO2", capacidad:"50LBS", cantidad:1, valorUnit:20.00}]. Si no hay detalle, usa [].
+9. subtotal: monto sin IVA (número).
+10. iva: monto IVA (número).
+11. total: monto total con IVA (número).
+12. observacion: observación si existe, o "".
 
-Responde ÚNICAMENTE con JSON válido:
-{
-  "notaEntrega": "", "localCode": "", "empresa": "", "ciudad": "",
-  "localNombre": "", "categoria": "MANTGES",
-  "descripcion": "EXTINTORES MANTENIMIENTO ANUAL",
-  "extintores": [],
-  "subtotal": 0, "iva": 0, "total": 0,
-  "observacion": ""
-}
-Si no encuentras un campo, usa "" o 0.`
+Responde ÚNICAMENTE con JSON válido, sin texto extra:
+{"notaEntrega":"","localCode":"","empresa":"","ciudad":"","localNombre":"","categoria":"MANTGES","descripcion":"EXTINTORES MANTENIMIENTO ANUAL","extintores":[],"subtotal":0,"iva":0,"total":0,"observacion":""}
+Si no encuentras un campo, deja "" o 0.`
       );
 
       let json;
@@ -1354,11 +1352,16 @@ Si no encuentras un campo, usa "" o 0.`
       }
 
       if (json.localCode || json.notaEntrega) {
-        const rawNum = (json.localCode || '').replace(/\D/g, '');
-        const cot = cotizaciones.find(c => {
-          const cNum = c.localCode.replace(/\D/g, '');
-          return cNum === rawNum && rawNum !== '';
-        });
+        const rawCode = (json.localCode || '').toUpperCase().trim().replace(/\s+/g, '');
+        // Match by full normalised code (spaces removed, uppercase). Fallback: last digits only if unique.
+        let cot = rawCode ? cotizaciones.find(c =>
+          c.localCode.toUpperCase().replace(/\s+/g,'') === rawCode
+        ) : null;
+        if (!cot && rawCode) {
+          const rawNum = rawCode.replace(/\D/g, '');
+          const matches = rawNum ? cotizaciones.filter(c => c.localCode.replace(/\D/g,'') === rawNum) : [];
+          if (matches.length === 1) cot = matches[0]; // solo si es inequívoco
+        }
 
         if (cot) {
           // Update existing cotizacion
@@ -1418,13 +1421,15 @@ Si no encuentras un campo, usa "" o 0.`
     // Pausa entre fotos para no exceder el límite de tasa de Gemini
     if (files.length > 1) await new Promise(res => setTimeout(res, 1500));
   }
+  } finally {
+    _leerFotosEnProgreso = false;
+  }
 
   document.getElementById('fotoStatus').textContent =
     `✅ Listo: ${procesadas} notas procesadas${errores ? `, ${errores} errores` : ''}`;
 
   if (cotizaciones.length) enableGenerarBtns();
   autosave();   // guarda las notas recién registradas
-  _leerFotosEnProgreso = false;
 }
 
 async function callGemini(apiKey, base64, mimeType, prompt, retries = 4) {
