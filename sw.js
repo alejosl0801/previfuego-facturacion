@@ -1,5 +1,5 @@
-// Service Worker v20260610-002 — fuerza recarga al activarse
-const VER = 'v20260610-002';
+// Service Worker v20260610-005 — fuerza recarga al activarse
+const VER = 'v20260610-005';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil(
