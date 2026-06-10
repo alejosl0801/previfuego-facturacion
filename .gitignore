@@ -4,3 +4,4 @@ __pycache__/
 .muestras_fact/
 .ne_templates/
 inspect_raw.py
+.claude/
