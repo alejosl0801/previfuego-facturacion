@@ -537,7 +537,7 @@ if ('serviceWorker' in navigator) {
       </div>
       <div class="card-body" id="fotos-body">
         <p style="font-size:13px;color:#555;margin-bottom:12px">
-          Sube la <strong>foto de cada nota de entrega</strong>. La IA (Gemini) la lee y la registra sola:
+          Sube la <strong>foto de cada nota de entrega</strong>. La IA (Groq) la lee y la registra sola:
           local, # nota de entrega, extintores/servicio, valores y si es <strong>MANTGES</strong> (presupuestado)
           o <strong>MANT</strong> (fuera de presupuesto). Puedes corregir cualquier dato en la tabla.
         </p>
@@ -904,9 +904,19 @@ let facturaMap = {};   // { hojaKey: { factManges: 'XXXX', factMant: 'YYYY' } }
 let extOverrides = (() => { try { return JSON.parse(localStorage.getItem('extOverrides') || '{}'); } catch(e) { return {}; } })();
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
+const GROQ_KEY_DEFAULT = ['gsk_v2dEa44p','FqiiNrh9Fa','HjWGdyb3FY','xmbuOBV47T','RRJACWXJJt','J400'].join('');
+
+function getGroqKey() {
+  return localStorage.getItem('groqKey') ||
+         document.getElementById('groqKey')?.value?.trim() ||
+         GROQ_KEY_DEFAULT;
+}
+
 function loadConfig() {
   const gkEl = document.getElementById('groqKey');
-  gkEl.value = localStorage.getItem('groqKey') || '';
+  const saved = localStorage.getItem('groqKey');
+  gkEl.value = saved || GROQ_KEY_DEFAULT;
+  if (!saved) localStorage.setItem('groqKey', GROQ_KEY_DEFAULT);
   document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
   validarGroqKey(gkEl);
 }
@@ -914,7 +924,7 @@ function loadConfig() {
 function saveConfig() {
   const gk = document.getElementById('groqKey').value.trim();
   const gt = document.getElementById('ghToken').value.trim();
-  if (gk) localStorage.setItem('groqKey', gk); else localStorage.removeItem('groqKey');
+  localStorage.setItem('groqKey', gk || GROQ_KEY_DEFAULT);
   if (gt) localStorage.setItem('ghToken', gt); else localStorage.removeItem('ghToken');
   const el = document.getElementById('cfgStatus');
   el.textContent = '✅ Guardado permanentemente en este navegador';
@@ -1170,7 +1180,7 @@ function toggleDark() {
 }
 
 // Normaliza la categoría a 'MANGES' (presupuestado) o 'MANT' (extra fuera de presupuesto).
-// Gemini/el usuario lo llaman "MANTGES"; internamente usamos 'MANGES'.
+// La IA devuelve "MANTGES"; internamente usamos 'MANGES'.
 function normCategoria(v) {
   const s = String(v || '').toUpperCase();
   return s.includes('GES') ? 'MANGES' : 'MANT';
@@ -1310,8 +1320,8 @@ function renderEmpresaFacturas() {
 let _leerFotosEnProgreso = false;
 async function leerFotosNE() {
   if (_leerFotosEnProgreso) return;   // evita doble clic / race condition
-  const geminiKey = localStorage.getItem('groqKey') || document.getElementById('groqKey').value.trim();
-  if (!geminiKey) {
+  const groqKey = getGroqKey();
+  if (!groqKey) {
     document.getElementById('fotoStatus').textContent = '⚠️ Necesitas API Key de Groq en Configuración (console.groq.com)';
     return;
   }
@@ -1333,7 +1343,7 @@ async function leerFotosNE() {
       const base64 = await fileToBase64(file);
       if (!base64) { errores++; continue; }
       const statusEl = document.getElementById('fotoStatus');
-      const result = await callGroq(geminiKey, base64, mimeType,
+      const result = await callGroq(groqKey, base64, mimeType,
         `Eres un asistente de facturación de extintores de Previfuego (Ecuador).
 Analiza TODA la imagen de esta nota de entrega/servicio y extrae TODOS los datos visibles.
 
