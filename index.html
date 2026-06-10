@@ -5,21 +5,29 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <script>
-// Versión: v20260610-006
-const _VER = '20260610006';
-// 1. Matar SW viejo + limpiar cachés → luego redirigir a versión nueva
+// Versión: v20260610-007
+const _VER = '20260610007';
+// Mata SW viejo + limpia cachés + redirige con timestamp para romper CDN cache
 (function(){
+  // Timestamp por minuto → URL siempre nueva al primer acceso tras deploy
+  var _ts = Math.floor(Date.now() / 60000);
   function _go() {
-    const cur = (location.search.match(/[?&]v=([^&]*)/) || [])[1];
-    if (cur !== _VER) location.replace(location.pathname + '?v=' + _VER);
+    var v = (location.search.match(/[?&]v=([^&]*)/) || [])[1];
+    var t = (location.search.match(/[?&]t=([^&]*)/) || [])[1];
+    // Si la versión no coincide O el timestamp es viejo (>10 min), redirigir
+    if (v !== _VER || !t || (_ts - parseInt(t,10)) > 10) {
+      location.replace(location.pathname + '?v=' + _VER + '&t=' + _ts);
+    }
   }
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      if (!regs.length) { _go(); return; }
-      caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
-      Promise.all(regs.map(r => r.unregister())).then(() => _go());
+    navigator.serviceWorker.getRegistrations().then(function(regs){
+      if (regs.length) {
+        caches.keys().then(function(ks){ ks.forEach(function(k){ caches.delete(k); }); });
+        Promise.all(regs.map(function(r){ return r.unregister(); })).then(_go);
+      } else { _go(); }
     }).catch(_go);
   } else { _go(); }
+})();
 })();
 </script>
 <meta http-equiv="Expires" content="0">
@@ -1639,44 +1647,41 @@ async function ghGuardar(silent = false) {
 
   const path = ghFilePath();
   const payload = buildPayload();
-
   if (!silent && st) st.textContent = '⏳ Guardando...';
-  try {
-    // Check if file exists (need SHA to update)
-    let sha = null;
-    const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
-      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
-    });
-    if (check.ok) {
-      const existing = await check.json();
-      sha = existing.sha;
-    }
 
+  try {
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
     const notasTxt = cotizaciones.length ? ` · ${cotizaciones.length} notas` : '';
-    const body = {
-      message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio}${notasTxt}`,
-      content,
-      branch: GH_BRANCH
+    const ghHeaders = {
+      Authorization: `token ${token}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json'
     };
-    if (sha) body.sha = sha;
 
-    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/vnd.github+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
+    // Intento 1: PUT sin SHA (funciona si el archivo no existe → 201)
+    let body = { message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio}${notasTxt}`, content, branch: GH_BRANCH };
+    let r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+      method: 'PUT', headers: ghHeaders, body: JSON.stringify(body)
     });
 
+    // 409 = archivo existe, necesita SHA → buscarlo y reintentar
+    if (r.status === 409 || r.status === 422) {
+      const meta = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+      });
+      if (meta.ok) {
+        body.sha = (await meta.json()).sha;
+        r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+          method: 'PUT', headers: ghHeaders, body: JSON.stringify(body)
+        });
+      }
+    }
+
     if (r.ok) {
-      if (st) st.innerHTML =
-        `<span style="color:green">✅ Guardado en la nube${notasTxt} · ${new Date().toLocaleTimeString()}</span>`;
+      if (st) st.innerHTML = `<span style="color:green">✅ Guardado en la nube${notasTxt} · ${new Date().toLocaleTimeString()}</span>`;
     } else {
-      const err = await r.json();
-      throw new Error(err.message || r.status);
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${r.status}`);
     }
   } catch (e) {
     if (st) st.innerHTML = `<span style="color:red">❌ ${e.message}</span>`;
