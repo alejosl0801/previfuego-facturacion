@@ -380,6 +380,20 @@
   body.dark .acc-row.sel { background: #2d1f1e; }
   body.dark .acc-row-desc { color: #ccc; }
   body.dark .nov-btn { background: #1f2227; border-color: #3a3f47; color: #bbb; }
+  body.dark .output-card { background: #1f2227; border-color: #3a3f47; }
+  body.dark .output-card h3 { color: #e6e6e6; }
+  body.dark .output-card p { color: #888; }
+  body.dark .output-card.ready { background: #1a2e22; border-color: #27ae60; }
+  body.dark .empresa-section { background: #1f2227; border-color: #333; }
+  body.dark .empresa-header { background: #262a30; border-color: #333; }
+  body.dark .empresa-nombre { color: #e6e6e6; }
+  body.dark .fact-input-group label { color: #888; }
+  body.dark #certModal > div { background: #1f2227 !important; color: #e6e6e6; }
+  body.dark .status-ok { background: #1a2e22; color: #6bcb77; border-color: #27ae60; }
+  body.dark .status-error { background: #2e1a1a; color: #ff6b6b; border-color: #c0392b; }
+  body.dark .status-info { background: #1a2333; color: #85c1e9; border-color: #2980b9; }
+  body.dark .status-warn { background: #2a2210; color: #ffd93d; border-color: #f0b400; }
+  body.dark code { background: #2d323a !important; color: #d6d6d6; border-radius: 3px; padding: 1px 4px; }
 </style>
 </head>
 <body>
@@ -441,9 +455,10 @@
         <option value="12 DICIEMBRE">Diciembre</option>
       </select>
       <select id="selAnio" onchange="onMonthChange()">
+        <option value="2027">2027</option>
         <option value="2026">2026</option>
         <option value="2025">2025</option>
-        <option value="2027">2027</option>
+        <option value="2024">2024</option>
       </select>
     </div>
     <div id="perfilIndicator" class="perfil-indicator" onclick="mostrarSelectorPerfil()" title="Cambiar perfil">
@@ -668,7 +683,7 @@
 </div>
 
 <!-- CERT MODAL (3 pasos) -->
-<div id="certModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;">
+<div id="certModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)cerrarCertModal()">
   <div style="background:white;border-radius:12px;padding:22px;max-width:480px;width:93%;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -772,6 +787,12 @@ const MESES_NOMBRE = {
   '10 OCTUBRE':'OCTUBRE','11 NOVIEMBRE':'NOVIEMBRE','12 DICIEMBRE':'DICIEMBRE'
 };
 
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 // Mapa de prefijos de código local → empresa
 const EMPRESAS_MAP = {
   'K':    { empresa:'INT FOOD SERVICES CORP SA',              marca:'KFC',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
@@ -855,8 +876,7 @@ function costCenter(localCode) {
   if (!m) return localCode + 'EC';
   const prefix = m[1];
   const num = m[2];
-  // Single-letter prefixes: pad to 3 digits
-  const padded = prefix.length === 1 ? num.padStart(3, '0') : num;
+  const padded = prefix.length <= 2 ? num.padStart(3, '0') : num;
   return prefix + padded + 'EC';
 }
 
@@ -958,8 +978,8 @@ function parseCotizacion(arrayBuffer, filename) {
   }
 
   // Determine overall service category
-  const hasOnlyMaint = items.every(i => i.serviceType === 'MANTENIMIENTO');
-  const category = hasOnlyMaint ? 'MANGES' : 'MANT';
+  const hasOnlyBudgeted = items.length > 0 && items.every(i => i.serviceType === 'MANTENIMIENTO' || i.serviceType === 'RECARGA');
+  const category = hasOnlyBudgeted ? 'MANGES' : 'MANT';
 
   // Description for FORMATO_FACTURACIÓN
   let descripcionFact = 'EXTINTORES MANTENIMIENTO ANUAL';
@@ -1115,11 +1135,11 @@ function renderTabla() {
     html += `
       <tr class="${cls}">
         <td>${idx+1}</td>
-        <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.filename}">${c.filename.replace('.xlsx','')}</td>
+        <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.filename)}">${c.filename.replace('.xlsx','')}</td>
         <td><strong>${c.localCode}</strong></td>
         <td style="font-family:monospace;font-size:11px">${c.cc}</td>
         <td style="font-size:11px">
-          <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderEmpresaFacturas();autosave()">
+          <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderTabla();renderEmpresaFacturas();autosave()">
             ${Object.entries(EMPRESAS_MAP).map(([k,v]) =>
               `<option value="${k}" ${c.empresa===v?'selected':''}>${v.empresa}</option>`
             ).join('')}
@@ -1131,12 +1151,12 @@ function renderTabla() {
             <option value="MANT" ${c.category==='MANT'?'selected':''}>MANT (extra)</option>
           </select>
         </td>
-        <td style="font-size:11px;max-width:180px" contenteditable="true" onblur="cotizaciones[${idx}].descripcionFact=this.textContent.trim();autosave()">${c.descripcionFact}</td>
+        <td style="font-size:11px;max-width:180px" contenteditable="true" onblur="cotizaciones[${idx}].descripcionFact=this.textContent.trim();autosave()">${esc(c.descripcionFact)}</td>
         <td style="text-align:right">$${c.subtotal.toFixed(2)}</td>
         <td style="text-align:right">$${c.iva.toFixed(2)}</td>
         <td style="text-align:right;font-weight:700">$${c.total.toFixed(2)}</td>
-        <td><input type="text" value="${c.notaEntrega}" placeholder="ej: 6494" style="width:80px" onchange="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
-        <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim();autosave()">${c.observacion}</td>
+        <td><input type="text" value="${esc(c.notaEntrega)}" placeholder="ej: 6494" style="width:80px" onchange="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
+        <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim();autosave()">${esc(c.observacion)}</td>
       </tr>
     `;
   });
@@ -1403,6 +1423,7 @@ function buildPayload() {
       filename: c.filename, proformaNum: c.proformaNum, localCode: c.localCode,
       cc: c.cc, localName: c.localName, ciudad: c.ciudad,
       empresaHoja: c.empresa?.hoja || '',
+      empresaKey: (() => { const e = Object.entries(EMPRESAS_MAP).find(([,v]) => v === c.empresa); return e ? e[0] : ''; })(),
       items: c.items, subtotal: c.subtotal, iva: c.iva, total: c.total,
       category: c.category, descripcionFact: c.descripcionFact,
       observacion: c.observacion, notaEntrega: c.notaEntrega
@@ -1435,7 +1456,7 @@ function localRestore() {
     }
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
-      empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
+      empresa: (c.empresaKey ? EMPRESAS_MAP[c.empresaKey] : null) || Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
       notaEntrega: c.notaEntrega || ''
     }));
     return true;
@@ -1532,7 +1553,7 @@ async function ghCargar() {
     visitaStatus = json.visitaStatus || {};
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
-      empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
+      empresa: (c.empresaKey ? EMPRESAS_MAP[c.empresaKey] : null) || Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
       notaEntrega: c.notaEntrega || ''
     }));
 
@@ -1577,6 +1598,8 @@ async function cargarPlan() {
 
   document.getElementById('planContainer').innerHTML =
     '<p style="color:#999;font-size:13px">Cargando base de datos…</p>';
+  const _ls = document.getElementById('loadStatus');
+  if (_ls) _ls.innerHTML = '<div class="status-bar status-info">⏳ Cargando base de datos de extintores…</div>';
 
   try {
     const resp = await fetch(`BASE_DATOS_KFC.xlsx?t=${Date.now()}`);
@@ -1636,7 +1659,10 @@ async function cargarPlan() {
         };
       });
 
+    const _ls2 = document.getElementById('loadStatus');
+    if (_ls2) _ls2.innerHTML = '';
     renderPlan();
+    renderBD();
   } catch(e) {
     console.error('cargarPlan:', e);
     document.getElementById('planContainer').innerHTML =
@@ -1899,7 +1925,7 @@ async function generarNELocal(codigo, neNum) {
 
     let subtotalCalc = 0;
     items.forEach((item, i) => {
-      if (i >= 11) return; // max 11 item rows (14-24)
+      if (i >= 11) { if (i === 11) log(`⚠️ NE ${codigo}: ${items.length - 11} tipos de extintor omitidos (máx 11 filas)`, 'warn'); return; }
       const r = 14 + i;
       const desc  = tipoExtDescripcion(item.tipo, item.cap);
       const lineT = item.qty * item.price;
@@ -1926,7 +1952,7 @@ async function generarNELocal(codigo, neNum) {
     ws['N32'] = { t:'n', v: tot, f:'SUM(N31)' };
 
     // ── Amount in words ──────────────────────────────────────────────────────
-    ws['B29'] = { t:'s', v: numeroEnLetras(sub) };
+    ws['B29'] = { t:'s', v: numeroEnLetras(tot) };
 
     XLSX.writeFile(wb, `NE-${neNum}-${local.codigo}.xlsx`);
     log(`✅ NE #${neNum} — ${local.codigo} descargada`, 'ok');
@@ -1938,7 +1964,8 @@ async function generarNELocal(codigo, neNum) {
 
 function tipoExtDescripcion(tipo, cap) {
   const tm = { CO2:'GAS CARBONICO', PQS:'POLVO QUIMICO SECO',
-                K:'TIPO K (ACETATO DE POTASIO)', FOAM:'ESPUMA (AGUA QUIMICA)' };
+                K:'TIPO K (ACETATO DE POTASIO)', FOAM:'ESPUMA (AGUA QUIMICA)',
+                AGUA:'AGUA QUIMICA', HCFC:'HCFC-123 (HALOTRON)' };
   const td = tm[(tipo || '').toUpperCase()] || tipo;
   const cd = (cap || '').replace(/\bLBS\b/gi,'LIBRAS').replace(/\b(?:GLNS|GLS|GL)\b/gi,'GALONES');
   return `EXTINTOR ${cd} - ${td}`;
@@ -1977,6 +2004,7 @@ function getMesLabel() {
 }
 
 function generarDetalle() {
+  if (!cotizaciones.length) { log('⚠️ No hay datos para generar DETALLE', 'warn'); return; }
   log('Generando DETALLE FACT MENSUAL...');
   const wb = XLSX.utils.book_new();
 
@@ -2000,11 +2028,11 @@ function generarDetalle() {
     mangesRows.push([
       emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
       c.localCode,
-      null,
-      first ? first.qty : 1,
+      c.descripcionFact || 'EXTINTORES MANTENIMIENTO ANUAL',
+      extItems.reduce((s,i) => s + (i.qty||1), 0) || (first ? first.qty : 1),
       first ? first.tipo : '-',
       first ? first.capacidad : '-',
-      'M', null,
+      extItems.some(i => i.serviceType === 'RECARGA') ? 'R' : 'M', null,
       first ? first.unitPrice : 0,
       c.subtotal, c.iva, c.total,
       c.notaEntrega || ''
@@ -2044,7 +2072,7 @@ function generarDetalle() {
       c.localCode,
       c.descripcionFact,
       '-', '-', '-', null,
-      c.subtotal, c.subtotal, c.iva, c.total,
+      null, c.subtotal, c.iva, c.total,
       c.notaEntrega || '',
       c.observacion || 'SOLICITADO POR EL LOCAL', null
     ]);
@@ -2111,6 +2139,7 @@ function generarDistribucion() {
     log(`  Hoja: ${sheetName} (${data.items.length} líneas)`, 'ok');
   }
 
+  if (!wb.SheetNames.length) { log('⚠️ No hay datos para generar DISTRIBUCIÓN', 'warn'); return; }
   XLSX.writeFile(wb, `DISTRIBUCION ${getMesLabel()}.xlsx`);
   log(`✅ DISTRIBUCIÓN descargado (${sheetCount} hojas)`, 'ok');
   markOutput('out2');
@@ -2164,6 +2193,7 @@ function generarFormatoFact() {
     log(`  Hoja: ${hoja} (${data.items.length} líneas)`, 'ok');
   }
 
+  if (!wb.SheetNames.length) { log('⚠️ No hay datos para generar FORMATO_FACTURACIÓN', 'warn'); return; }
   XLSX.writeFile(wb, `FORMATO_FACTURACIÓN ${getMesLabel()}.xlsx`);
   log('✅ FORMATO_FACTURACIÓN descargado', 'ok');
   markOutput('out3');
@@ -2616,14 +2646,20 @@ function initSignatureCanvas() {
 function clearSignature() {
   if (!sigCtx) return;
   const c = document.getElementById('sigCanvas');
-  sigCtx.fillStyle = '#fff'; sigCtx.fillRect(0, 0, c.width, c.height);
+  if (!c) return;
+  const W = c.offsetWidth || parseInt(c.style.width) || 436;
+  const H = c.offsetHeight || parseInt(c.style.height) || 140;
+  sigCtx.fillStyle = '#fff'; sigCtx.fillRect(0, 0, W, H);
 }
 
 function getSignatureB64() {
   const c = document.getElementById('sigCanvas');
   if (!c || !sigCtx) return null;
   const data = sigCtx.getImageData(0, 0, c.width, c.height).data;
-  const hasInk = Array.from(data).some((v,i) => (i%4 !== 3) && v < 200);
+  let hasInk = false;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] < 200 || data[i+1] < 200 || data[i+2] < 200) { hasInk = true; break; }
+  }
   if (!hasInk) return null;
   return c.toDataURL('image/png').split(',')[1];
 }
@@ -2716,6 +2752,10 @@ async function generarCertLocal() {
 
   try { if (doc) await subirCertGitHub(local.codigo, anio, mesVal, doc); } catch(e) { console.warn('subirCert:', e); }
 
+  if (certModalCodigo && visitaStatus[certModalCodigo] !== 'visitado') {
+    visitaStatus[certModalCodigo] = 'visitado';
+    renderPlan();
+  }
   cerrarCertModal();
 }
 
@@ -2749,7 +2789,6 @@ function showStatus(elId, type, msg) {
   el.style.display = 'flex';
 }
 
-function setStep(n) { /* obsoleto: la app ya no usa pasos lineales */ }
 
 function enableGenerarBtns() {
   ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => {
@@ -2798,7 +2837,7 @@ function init() {
   cargarPlan();
   renderTabla();
   renderEmpresaFacturas();
-  enableGenerarBtns();
+  if (cotizaciones.length) enableGenerarBtns();
   if (getGhToken()) ghCargar();
 
   // Preparar vista interna con el perfil guardado sin mostrar aún
@@ -2822,6 +2861,10 @@ function init() {
   mostrarSelectorPerfil();
 }
 
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('certModal').style.display !== 'none') cerrarCertModal();
+});
 init();
 </script>
 </body>
