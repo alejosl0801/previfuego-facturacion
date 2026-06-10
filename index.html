@@ -492,7 +492,7 @@
       </div>
       <div class="card-body" id="fotos-body">
         <p style="font-size:13px;color:#555;margin-bottom:12px">
-          Sube la <strong>foto de cada nota de entrega</strong>. La IA (Gemini) la lee y la registra sola:
+          Sube la <strong>foto de cada nota de entrega</strong>. La IA (Groq) la lee y la registra sola:
           local, # nota de entrega, extintores/servicio, valores y si es <strong>MANTGES</strong> (presupuestado)
           o <strong>MANT</strong> (fuera de presupuesto). Puedes corregir cualquier dato en la tabla.
         </p>
@@ -638,8 +638,8 @@
       <div class="card-body">
         <div class="form-row">
           <div class="form-group" style="flex:2">
-            <label>🟢 API Key Gemini — requerida para leer fotos de notas de entrega</label>
-            <input type="text" id="geminiKey" placeholder="AIza..." autocomplete="off" oninput="saveConfig()" />
+            <label>🟢 API Key Groq — requerida para leer fotos de notas de entrega</label>
+            <input type="text" id="groqKey" placeholder="gsk_..." autocomplete="off" oninput="saveConfig()" />
           </div>
           <div class="form-group" style="flex:2">
             <label>⚫ GitHub Token — respalda tus datos en la nube (opcional)</label>
@@ -804,14 +804,14 @@ let facturaMap = {};   // { hojaKey: { factManges: 'XXXX', factMant: 'YYYY' } }
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 function loadConfig() {
-  document.getElementById('geminiKey').value = localStorage.getItem('geminiKey') || '';
+  document.getElementById('groqKey').value = localStorage.getItem('groqKey') || '';
   document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
 }
 
 function saveConfig() {
-  const gk = document.getElementById('geminiKey').value.trim();
+  const gk = document.getElementById('groqKey').value.trim();
   const gt = document.getElementById('ghToken').value.trim();
-  if (gk) localStorage.setItem('geminiKey', gk);
+  if (gk) localStorage.setItem('groqKey', gk);
   if (gt) localStorage.setItem('ghToken', gt);
   const el = document.getElementById('cfgStatus');
   el.textContent = '✅ Guardado permanentemente en este navegador';
@@ -1049,7 +1049,7 @@ function toggleDark() {
 }
 
 // Normaliza la categoría a 'MANGES' (presupuestado) o 'MANT' (extra fuera de presupuesto).
-// Gemini/el usuario lo llaman "MANTGES"; internamente usamos 'MANGES'.
+// La IA devuelve "MANTGES"; internamente usamos 'MANGES'.
 function normCategoria(v) {
   const s = String(v || '').toUpperCase();
   return s.includes('GES') ? 'MANGES' : 'MANT';
@@ -1187,9 +1187,9 @@ function renderEmpresaFacturas() {
 
 // ─── LEER FOTOS NE ────────────────────────────────────────────────────────────
 async function leerFotosNE() {
-  const geminiKey = localStorage.getItem('geminiKey') || document.getElementById('geminiKey').value.trim();
-  if (!geminiKey) {
-    document.getElementById('fotoStatus').textContent = '⚠️ Necesitas API Key de Gemini en Configuración';
+  const groqKey = localStorage.getItem('groqKey') || document.getElementById('groqKey').value.trim();
+  if (!groqKey) {
+    document.getElementById('fotoStatus').textContent = '⚠️ Necesitas API Key de Groq en Configuración';
     return;
   }
 
@@ -1199,13 +1199,13 @@ async function leerFotosNE() {
     return;
   }
 
-  document.getElementById('fotoStatus').textContent = '🤖 Procesando fotos con Gemini...';
+  document.getElementById('fotoStatus').textContent = '🤖 Procesando fotos con Groq...';
   let procesadas = 0, errores = 0;
 
   for (const file of files) {
     const base64 = await fileToBase64(file);
     try {
-      const result = await callGemini(geminiKey, base64, file.type,
+      const result = await callGroq(groqKey, base64, file.type,
         `Eres un asistente de facturación de extintores de Previfuego (Ecuador).
 Analiza esta nota de entrega/servicio y extrae TODOS los datos posibles.
 
@@ -1301,7 +1301,7 @@ Si no encuentras un campo, usa "" o 0.`
         renderEmpresaFacturas();
       }
     } catch(e) {
-      console.warn('Gemini error:', file.name, e);
+      console.warn('Groq error:', file.name, e);
       errores++;
     }
   }
@@ -1313,24 +1313,32 @@ Si no encuentras un campo, usa "" o 0.`
   autosave();   // guarda las notas recién registradas
 }
 
-async function callGemini(apiKey, base64, mimeType, prompt) {
-  const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: mimeType, data: base64 } }
-          ]
-        }]
-      })
-    }
-  );
+async function callGroq(apiKey, base64, mimeType, prompt) {
+  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } }
+        ]
+      }],
+      max_tokens: 1024,
+      temperature: 0
+    })
+  });
   const data = await r.json();
-  return data.candidates[0].content.parts[0].text;
+  if (!r.ok) {
+    const msg = data?.error?.message || `HTTP ${r.status}`;
+    throw new Error(`Groq API error: ${msg}`);
+  }
+  return data.choices[0].message.content;
 }
 
 function fileToBase64(file) {
