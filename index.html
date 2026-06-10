@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <script>
-// Versión: v20260610-003
-console.log('%c PREVIFUEGO v20260610-003 ', 'background:#c0392b;color:white;font-size:14px;font-weight:bold');
+// Versión: v20260610-004
+console.log('%c PREVIFUEGO v20260610-004 ', 'background:#c0392b;color:white;font-size:14px;font-weight:bold');
 // Forzar URL con versión exacta para evitar caché de CDN
 (function(){
-  const VER = '20260610003';
+  const VER = '20260610004';
   const cur = (location.search.match(/[?&]v=([^&]*)/) || [])[1];
   if (cur !== VER) location.replace(location.pathname + '?v=' + VER);
 })();
@@ -696,8 +696,9 @@ if ('serviceWorker' in navigator) {
       <div class="card-body">
         <div class="form-row">
           <div class="form-group" style="flex:2">
-            <label>🟠 API Key Groq — requerida para leer fotos de notas de entrega (gratis en console.groq.com)</label>
-            <input type="password" id="geminiKey" placeholder="gsk_..." autocomplete="off" oninput="saveConfig()" />
+            <label>🟠 API Key Groq — requerida para leer fotos con IA (<a href="https://console.groq.com/keys" target="_blank">console.groq.com</a> → API Keys → Create, gratis)</label>
+            <input type="password" id="groqKey" placeholder="gsk_..." autocomplete="off" oninput="saveConfig(); validarGroqKey(this)" />
+            <span id="groqKeyStatus" style="font-size:11px"></span>
           </div>
           <div class="form-group" style="flex:2">
             <label>⚫ GitHub Token — respalda tus datos en la nube (opcional)</label>
@@ -904,19 +905,33 @@ let extOverrides = (() => { try { return JSON.parse(localStorage.getItem('extOve
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 function loadConfig() {
-  document.getElementById('geminiKey').value = localStorage.getItem('geminiKey') || '';
+  const gkEl = document.getElementById('groqKey');
+  gkEl.value = localStorage.getItem('groqKey') || '';
   document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
+  validarGroqKey(gkEl);
 }
 
 function saveConfig() {
-  const gk = document.getElementById('geminiKey').value.trim();
+  const gk = document.getElementById('groqKey').value.trim();
   const gt = document.getElementById('ghToken').value.trim();
-  if (gk) localStorage.setItem('geminiKey', gk);
-  if (gt) localStorage.setItem('ghToken', gt);
+  if (gk) localStorage.setItem('groqKey', gk); else localStorage.removeItem('groqKey');
+  if (gt) localStorage.setItem('ghToken', gt); else localStorage.removeItem('ghToken');
   const el = document.getElementById('cfgStatus');
   el.textContent = '✅ Guardado permanentemente en este navegador';
   clearTimeout(saveConfig._t);
   saveConfig._t = setTimeout(() => el.textContent = '', 3000);
+}
+
+function validarGroqKey(input) {
+  const v = input.value.trim();
+  const el = document.getElementById('groqKeyStatus');
+  if (!el) return;
+  if (!v) { el.textContent = ''; return; }
+  if (v.startsWith('gsk_') && v.length > 20) {
+    el.textContent = '✅ Formato válido'; el.style.color = '#27ae60';
+  } else {
+    el.textContent = '⚠️ Debe empezar con gsk_'; el.style.color = '#e74c3c';
+  }
 }
 
 function getGhToken() {
@@ -1295,7 +1310,7 @@ function renderEmpresaFacturas() {
 let _leerFotosEnProgreso = false;
 async function leerFotosNE() {
   if (_leerFotosEnProgreso) return;   // evita doble clic / race condition
-  const geminiKey = localStorage.getItem('geminiKey') || document.getElementById('geminiKey').value.trim();
+  const geminiKey = localStorage.getItem('groqKey') || document.getElementById('groqKey').value.trim();
   if (!geminiKey) {
     document.getElementById('fotoStatus').textContent = '⚠️ Necesitas API Key de Groq en Configuración (console.groq.com)';
     return;
@@ -1308,7 +1323,7 @@ async function leerFotosNE() {
   }
 
   _leerFotosEnProgreso = true;
-  document.getElementById('fotoStatus').textContent = '🤖 Procesando fotos con Gemini...';
+  document.getElementById('fotoStatus').textContent = `🤖 Procesando ${files.length} foto${files.length>1?'s':''} con Groq IA...`;
   let procesadas = 0, errores = 0;
 
   try {
@@ -1317,6 +1332,7 @@ async function leerFotosNE() {
       const mimeType = file.type || 'image/jpeg';
       const base64 = await fileToBase64(file);
       if (!base64) { errores++; continue; }
+      const statusEl = document.getElementById('fotoStatus');
       const result = await callGroq(geminiKey, base64, mimeType,
         `Eres un asistente de facturación de extintores de Previfuego (Ecuador).
 Analiza TODA la imagen de esta nota de entrega/servicio y extrae TODOS los datos visibles.
@@ -1347,7 +1363,8 @@ CAMPOS OBLIGATORIOS:
 
 Responde ÚNICAMENTE con JSON válido sin texto extra ni markdown:
 {"notaEntrega":"","localCode":"","empresa":"","ruc":"","ciudad":"","localNombre":"","fecha":"","categoria":"MANTGES","descripcion":"EXTINTORES MANTENIMIENTO ANUAL","extintores":[],"subtotal":0,"iva":0,"total":0,"formaPago":"","observacion":"","tecnico":"","firmaCliente":""}
-Si no encuentras un campo, deja "" o 0.`
+Si no encuentras un campo, deja "" o 0.`,
+        msg => { if (statusEl) statusEl.textContent = msg; }
       );
 
       let json;
@@ -1458,8 +1475,10 @@ Si no encuentras un campo, deja "" o 0.`
   autosave();   // guarda las notas recién registradas
 }
 
-async function callGroq(apiKey, base64, mimeType, prompt, retries = 3) {
-  for (let attempt = 0; attempt <= retries; attempt++) {
+// onStatus: callback(msg) para reportar progreso al caller (evita acoplamiento al DOM)
+async function callGroq(apiKey, base64, mimeType, prompt, onStatus) {
+  const MAX_ATTEMPTS = 4;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     let r;
     try {
       r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -1471,7 +1490,7 @@ async function callGroq(apiKey, base64, mimeType, prompt, retries = 3) {
         body: JSON.stringify({
           model: 'meta-llama/llama-4-scout-17b-16e-instruct',
           temperature: 0.1,
-          max_tokens: 1500,
+          max_tokens: 2000,
           messages: [{
             role: 'user',
             content: [
@@ -1486,18 +1505,23 @@ async function callGroq(apiKey, base64, mimeType, prompt, retries = 3) {
     }
 
     if (r.status === 429) {
-      if (attempt < retries) {
-        const wait = 3000 * Math.pow(2, attempt); // 3s, 6s, 12s
-        document.getElementById('fotoStatus').textContent =
-          `⏳ Límite Groq — esperando ${wait/1000}s (intento ${attempt+1}/${retries})…`;
+      if (attempt < MAX_ATTEMPTS) {
+        const wait = 3000 * Math.pow(2, attempt - 1); // 3s, 6s, 12s
+        if (onStatus) onStatus(`⏳ Groq límite — reintentando en ${wait/1000}s (${attempt}/${MAX_ATTEMPTS})…`);
         await new Promise(res => setTimeout(res, wait));
         continue;
       }
-      throw new Error('Límite de tasa Groq excedido — intenta de nuevo en unos segundos');
+      throw new Error('Groq: límite de tasa excedido, espera unos segundos y vuelve a intentar');
+    }
+
+    if (r.status === 401) throw new Error('Groq: API Key inválida — verifica que empiece con gsk_');
+    if (r.status === 400) {
+      let data2; try { data2 = await r.json(); } catch(e) { throw new Error('Groq: request inválido (400)'); }
+      throw new Error(`Groq: ${data2?.error?.message || 'request inválido (400)'}`);
     }
 
     let data;
-    try { data = await r.json(); } catch(e) { throw new Error(`Groq respuesta no-JSON (HTTP ${r.status})`); }
+    try { data = await r.json(); } catch(e) { throw new Error(`Groq: respuesta no-JSON (HTTP ${r.status})`); }
 
     if (!r.ok || !data.choices?.[0]?.message?.content) {
       const msg = data?.error?.message || `HTTP ${r.status}`;
@@ -1540,7 +1564,10 @@ function buildPayload() {
       empresaHoja: c.empresa?.hoja || '',
       items: c.items, subtotal: c.subtotal, iva: c.iva, total: c.total,
       category: c.category, descripcionFact: c.descripcionFact,
-      observacion: c.observacion, notaEntrega: c.notaEntrega
+      observacion: c.observacion, notaEntrega: c.notaEntrega,
+      ruc: c.ruc || '', fecha: c.fecha || '',
+      tecnico: c.tecnico || '', firmaCliente: c.firmaCliente || '',
+      formaPago: c.formaPago || ''
     })),
     facturaMap,
     visitaStatus,
@@ -1581,7 +1608,10 @@ function localRestore() {
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
       empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
-      notaEntrega: c.notaEntrega || ''
+      notaEntrega: c.notaEntrega || '',
+      ruc: c.ruc || '', fecha: c.fecha || '',
+      tecnico: c.tecnico || '', firmaCliente: c.firmaCliente || '',
+      formaPago: c.formaPago || ''
     }));
     return true;
   } catch(e) { return false; }
@@ -1667,7 +1697,10 @@ async function ghCargar() {
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
       empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
-      notaEntrega: c.notaEntrega || ''
+      notaEntrega: c.notaEntrega || '',
+      ruc: c.ruc || '', fecha: c.fecha || '',
+      tecnico: c.tecnico || '', firmaCliente: c.firmaCliente || '',
+      formaPago: c.formaPago || ''
     }));
     if (json.neInicial) {
       const inp = document.getElementById('neInicial');
