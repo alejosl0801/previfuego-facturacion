@@ -5,18 +5,22 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <script>
-// Versión: v20260610-005
-console.log('%c PREVIFUEGO v20260610-005 ', 'background:#c0392b;color:white;font-size:14px;font-weight:bold');
-// Forzar URL con versión exacta para evitar caché de CDN
+// Versión: v20260610-006
+const _VER = '20260610006';
+// 1. Matar SW viejo + limpiar cachés → luego redirigir a versión nueva
 (function(){
-  const VER = '20260610005';
-  const cur = (location.search.match(/[?&]v=([^&]*)/) || [])[1];
-  if (cur !== VER) location.replace(location.pathname + '?v=' + VER);
+  function _go() {
+    const cur = (location.search.match(/[?&]v=([^&]*)/) || [])[1];
+    if (cur !== _VER) location.replace(location.pathname + '?v=' + _VER);
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      if (!regs.length) { _go(); return; }
+      caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
+      Promise.all(regs.map(r => r.unregister())).then(() => _go());
+    }).catch(_go);
+  } else { _go(); }
 })();
-// Registrar Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/previfuego-facturacion/sw.js');
-}
 </script>
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -854,14 +858,6 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <script>
-// Desregistrar cualquier Service Worker obsoleto (evita errores de Cache API)
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(r => r.unregister());
-  });
-  caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
-}
-
 // ─── DATOS GLOBALES ───────────────────────────────────────────────────────────
 const MESES_NOMBRE = {
   '01 ENERO':'ENERO','02 FEBRERO':'FEBRERO','03 MARZO':'MARZO',
