@@ -7,11 +7,11 @@
 <script>
 // Versión: v20260610-001
 console.log('%c PREVIFUEGO v20260610-001 ', 'background:#c0392b;color:white;font-size:14px;font-weight:bold');
-// Forzar URL con timestamp para evitar caché de CDN
+// Forzar URL con versión exacta para evitar caché de CDN
 (function(){
-  if (!/[?&]v=/.test(location.search)) {
-    location.replace(location.pathname + '?v=20260610001');
-  }
+  const VER = '20260610001';
+  const cur = (location.search.match(/[?&]v=([^&]*)/) || [])[1];
+  if (cur !== VER) location.replace(location.pathname + '?v=' + VER);
 })();
 // Registrar Service Worker
 if ('serviceWorker' in navigator) {
