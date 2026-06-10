@@ -5,8 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <script>
-// Versión: v20260610-007
-const _VER = '20260610010';
+const _VER = '20260610011';
 // Mata SW viejo + limpia cachés + redirige con timestamp para romper CDN cache
 (function(){
   // Timestamp por minuto → URL siempre nueva al primer acceso tras deploy
@@ -27,7 +26,6 @@ const _VER = '20260610010';
       } else { _go(); }
     }).catch(_go);
   } else { _go(); }
-})();
 })();
 </script>
 <meta http-equiv="Expires" content="0">
@@ -875,13 +873,27 @@ const MESES_NOMBRE = {
 };
 
 // Mapa de prefijos de código local → empresa
+// Marcas del Grupo KFC sin razón social propia (Cinnabon, Baskin, Il Cappo,
+// El Español, Casa Res, Dolce Incontro, Cafa, Heladerías) facturan vía INT FOOD.
+// American Deli (A/B/F) factura vía DELI INTERNACIONAL.
 const EMPRESAS_MAP = {
   'K':    { empresa:'INT FOOD SERVICES CORP SA',                    marca:'KFC',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
   'G':    { empresa:'INT FOOD SERVICES CORP SA',                    marca:'GUS',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'CN':   { empresa:'INT FOOD SERVICES CORP SA',                    marca:'CINNABON',           ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'BS':   { empresa:'INT FOOD SERVICES CORP SA',                    marca:'BASKIN ROBBINS',     ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'I':    { empresa:'INT FOOD SERVICES CORP SA',                    marca:'IL CAPPO',           ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'E':    { empresa:'INT FOOD SERVICES CORP SA',                    marca:'EL ESPAÑOL',         ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'R':    { empresa:'INT FOOD SERVICES CORP SA',                    marca:'CASA RES',           ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'DI':   { empresa:'INT FOOD SERVICES CORP SA',                    marca:'DOLCE INCONTRO',     ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'CA':   { empresa:'INT FOOD SERVICES CORP SA',                    marca:'CAFA',               ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'H':    { empresa:'INT FOOD SERVICES CORP SA',                    marca:'HELADERIAS',         ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
   'M':    { empresa:'SHEMLON SA',                                   marca:'MENESTRAS DEL NEGRO',ruc:'1792049504001', hoja:'SHEMLON' },
   'J':    { empresa:'SHEMLON SA',                                   marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
   'CJNC': { empresa:'SHEMLON SA',                                   marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
   'T':    { empresa:'DELI INTERNACIONAL SA',                        marca:'TROPIBURGER',        ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
+  'A':    { empresa:'DELI INTERNACIONAL SA',                        marca:'AMERICAN DELI',      ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
+  'B':    { empresa:'DELI INTERNACIONAL SA',                        marca:'AMERICAN DELI',      ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
+  'F':    { empresa:'DELI INTERNACIONAL SA',                        marca:'AMERICAN DELI',      ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
   'ILCI': { empresa:'PRODUCCIONES Y EVENTOS NOVOEVENTOS SA',        marca:'IVORY',              ruc:'1792025435001', hoja:'NOVOEVENTOS' },
   'V':    { empresa:'PROMOTORA ECUATORIANA DE CAFE DE COLOMBIA SA', marca:'JUAN VALDEZ',        ruc:'1792141486001', hoja:'PROCAFECOL' },
   'JV':   { empresa:'PROMOTORA ECUATORIANA DE CAFE DE COLOMBIA SA', marca:'JUAN VALDEZ',        ruc:'1792141486001', hoja:'PROCAFECOL' },
@@ -978,7 +990,7 @@ function costCenter(localCode) {
 function getEmpresa(localCode) {
   const code = localCode.toUpperCase();
   // Try multi-char prefixes first (longest match)
-  const prefixes = ['CJNC','ILCI','JV','IV','KN','K','G','M','J','T','V'];
+  const prefixes = ['CJNC','ILCI','JV','IV','KN','CN','BS','DI','CA','K','G','M','J','T','V','I','A','B','E','F','H','R'];
   for (const p of prefixes) {
     if (code.startsWith(p)) return EMPRESAS_MAP[p] || null;
   }
@@ -1160,17 +1172,25 @@ function applyPerfil() {
 
 // ─── CAMBIO DE MES ────────────────────────────────────────────────────────────
 function onMonthChange() {
-  // Recalcular cotInicial por defecto según el nuevo mes (solo si no hay sesión guardada para ese mes)
+  // Recalcular cotInicial por defecto según el nuevo mes (localRestore lo
+  // sobreescribe si el nuevo mes tiene sesión guardada)
   const mesVal = document.getElementById('selMes').value;
   const mesNum = parseInt(mesVal.substring(0, 2));
   const cotInicialInp = document.getElementById('cotInicial');
   if (cotInicialInp) cotInicialInp.value = 1200 + mesNum * 50;
 
-  if (!cotizaciones.length) localRestore();
+  // Vaciar el estado del mes anterior y cargar la sesión guardada del nuevo mes;
+  // sin esto los registros del mes viejo se quedaban en pantalla y el autosave
+  // los escribía bajo la clave del mes nuevo.
+  cotizaciones = [];
+  facturaMap = {};
+  visitaStatus = {};
+  localRestore();
   cargarPlan();
   renderTabla();
   renderEmpresaFacturas();
   renderBD();
+  ghCargar();   // intenta la versión de la nube (raw público); si falla, queda lo local
 }
 
 // ─── MODO OSCURO ──────────────────────────────────────────────────────────────
@@ -1239,11 +1259,12 @@ function renderTabla() {
         <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.filename}">${c.filename.replace('.xlsx','')}</td>
         <td style="font-family:monospace;font-size:11px;font-weight:700;min-width:80px"
             contenteditable="true"
-            onblur="(function(el,i){const v=el.textContent.trim().toUpperCase().replace(/\s+/g,'');if(!v)return;cotizaciones[i].localCode=v;cotizaciones[i].cc=costCenter(v);const emp=getEmpresa(v);if(emp)cotizaciones[i].empresa=emp;renderTabla();renderEmpresaFacturas();autosave();})(this,${idx})"
+            onblur="(function(el,i){const v=normalizeLocalCode(el.textContent.trim().toUpperCase().replace(/\s+/g,''));if(!v)return;cotizaciones[i].localCode=v;cotizaciones[i].cc=costCenter(v);const emp=getEmpresa(v);if(emp)cotizaciones[i].empresa=emp;renderTabla();renderEmpresaFacturas();autosave();})(this,${idx})"
             >${c.localCode}</td>
         <td style="font-family:monospace;font-size:11px">${c.cc}</td>
         <td style="font-size:11px">
           <select style="font-size:11px;padding:2px 4px;min-width:160px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderEmpresaFacturas();autosave()">
+            ${c.empresa ? '' : '<option value="" selected disabled>❓ Elegir empresa…</option>'}
             ${EMPRESAS_OPTS.map(({ key, label }) =>
               `<option value="${key}" ${c.empresa?.empresa===label?'selected':''}>${label}</option>`
             ).join('')}
@@ -1391,7 +1412,7 @@ Si no encuentras un campo, deja "" o 0.`,
       }
 
       if (json.localCode || json.notaEntrega) {
-        const rawCode = (json.localCode || '').toUpperCase().trim().replace(/\s+/g, '');
+        const rawCode = normalizeLocalCode((json.localCode || '').toUpperCase().trim().replace(/\s+/g, ''));
         // Match by full normalised code (spaces removed, uppercase). Fallback: last digits only if unique.
         let cot = rawCode ? cotizaciones.find(c =>
           c.localCode.toUpperCase().replace(/\s+/g,'') === rawCode
@@ -1429,7 +1450,7 @@ Si no encuentras un campo, deja "" o 0.`,
           document.getElementById('fotoStatus').textContent =
             `🤖 [${procesadas}/${files.length}] ✅ ${json.localCode||'?'} NE:${json.notaEntrega||'?'} $${json.total||0}`;
         } else if (json.subtotal > 0 || json.total > 0) {
-          const localCodeClean = (json.localCode || '').toUpperCase().trim().replace(/\s+/g,'');
+          const localCodeClean = normalizeLocalCode((json.localCode || '').toUpperCase().trim().replace(/\s+/g,''));
           const emp = getEmpresa(localCodeClean);
           cotizaciones.push({
             filename: `foto-${file.name}`,
@@ -2176,28 +2197,38 @@ async function generarNELocal(codigo, neNum) {
     const wb   = XLSX.read(buf, { type: 'array', cellStyles: true });
     const ws   = wb.Sheets[wb.SheetNames[0]];
 
+    // Escribe valor conservando el estilo de la celda de la plantilla
+    // (reemplazar la celda completa borraba bordes, colores y formato).
+    function setCell(ref, t, v, f) {
+      const prev = ws[ref] || {};
+      const cell = { t, v };
+      if (f) cell.f = f;
+      if (prev.s !== undefined) cell.s = prev.s;
+      ws[ref] = cell;
+    }
+
     // ── Date ────────────────────────────────────────────────────────────────
     const today = new Date();
     const MNAMES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
                     'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
     const fechaStr = `${today.getDate()} DE ${MNAMES[today.getMonth()]} DEL ${today.getFullYear()}`;
-    ws['I10'] = { t:'s', v: fechaStr };
+    setCell('I10', 's', fechaStr);
 
     // ── Company name & RUC: only override when using a dedicated template ──
     // INT fallback keeps "INT FOOD SERVICES" since KFC/GUS/CN/BS/I all bill via INT
     const emp = local.empresa || {};
     const hasOwnTemplate = emp.hoja && NE_TEMPLATE_MAP[emp.hoja] && NE_TEMPLATE_MAP[emp.hoja] !== 'INT';
     if (hasOwnTemplate) {
-      if (emp.empresa) ws['B10'] = { t:'s', v: emp.empresa };
-      if (emp.ruc)     ws['L11'] = { t:'s', v: emp.ruc };
+      if (emp.empresa) setCell('B10', 's', emp.empresa);
+      if (emp.ruc)     setCell('L11', 's', emp.ruc);
     }
 
     // ── Service type ─────────────────────────────────────────────────────────
-    ws['C13'] = { t:'s', v: local.esRecarga ? 'RECARGA' : 'MANTENIMIENTO' };
+    setCell('C13', 's', local.esRecarga ? 'RECARGA' : 'MANTENIMIENTO');
 
-    // ── Clear old sample rows 14-24 ──────────────────────────────────────────
+    // ── Vaciar filas de ejemplo 14-24 conservando su formato ─────────────────
     for (let r = 14; r <= 24; r++) {
-      ['A','B','C','L','M','N'].forEach(col => { delete ws[col + r]; });
+      ['A','B','C','L','M','N'].forEach(col => { setCell(col + r, 's', ''); });
     }
 
     // ── Build grouped items ──────────────────────────────────────────────────
@@ -2219,29 +2250,29 @@ async function generarNELocal(codigo, neNum) {
       const desc  = tipoExtDescripcion(item.tipo, item.cap);
       const lineT = parseFloat((item.qty * item.price).toFixed(2));
       subtotalCalc += lineT;
-      ws[`A${r}`] = { t:'n', v: item.qty };
-      ws[`B${r}`] = { t:'n', v: item.qty };
-      ws[`C${r}`] = { t:'s', v: desc };
-      ws[`L${r}`] = { t:'s', v: '$' };
-      ws[`M${r}`] = { t:'n', v: item.price };
-      ws[`N${r}`] = { t:'n', v: lineT, f: `M${r}*A${r}` };
+      setCell(`A${r}`, 'n', item.qty);
+      setCell(`B${r}`, 'n', item.qty);
+      setCell(`C${r}`, 's', desc);
+      setCell(`L${r}`, 's', '$');
+      setCell(`M${r}`, 'n', item.price);
+      setCell(`N${r}`, 'n', lineT, `M${r}*A${r}`);
     });
 
     // ── Local info (row 25) ──────────────────────────────────────────────────
     const localLabel = local.nombre.replace(local.codigo + ' - ', '');
-    ws['C25'] = { t:'s', v: `LOCAL: ${local.codigo} - ${localLabel}` };
+    setCell('C25', 's', `LOCAL: ${local.codigo} - ${localLabel}`);
 
     // ── Totals ───────────────────────────────────────────────────────────────
     const sub = parseFloat(subtotalCalc.toFixed(2));
     const iva = parseFloat((sub * 0.15).toFixed(2));
     const tot = parseFloat((sub + iva).toFixed(2));
-    ws['N27'] = { t:'n', v: sub, f:'SUM(N14:N25)' };
-    ws['N29'] = { t:'n', v: iva, f:'N27*0.15' };
-    ws['N31'] = { t:'n', v: tot, f:'N27+N29' };
-    ws['N32'] = { t:'n', v: tot };
+    setCell('N27', 'n', sub, 'SUM(N14:N25)');
+    setCell('N29', 'n', iva, 'N27*0.15');
+    setCell('N31', 'n', tot, 'N27+N29');
+    setCell('N32', 'n', tot);
 
     // ── Amount in words ──────────────────────────────────────────────────────
-    ws['B29'] = { t:'s', v: numeroEnLetras(sub) };
+    setCell('B29', 's', numeroEnLetras(sub));
 
     XLSX.writeFile(wb, `NE-${neNum}-${local.codigo}.xlsx`);
     log(`✅ NE #${neNum} — ${local.codigo} descargada`, 'ok');
@@ -2492,11 +2523,11 @@ function generarDistribucion() {
 
   let sheetCount = 0;
   for (const [, data] of Object.entries(byHoja)) {
-    const factNum  = data.category === 'MANGES'
-      ? (facturaMap[data.hoja]?.factManges || 'XXXX')
-      : (facturaMap[data.hoja]?.factMant   || 'XXXX');
-    const empNombre = data.empresa?.empresa || data.hoja;
     const tipo      = data.category === 'MANGES' ? 'MANTGES' : 'MANT';
+    const factNum  = data.category === 'MANGES'
+      ? (facturaMap[data.hoja]?.factManges || `XXXX ${tipo}`)
+      : (facturaMap[data.hoja]?.factMant   || `XXXX ${tipo}`);
+    const empNombre = data.empresa?.empresa || data.hoja;
 
     const NC = 5;
     const titleRow = [`DISTRIBUCIÓN ${tipo} — ${empNombre} — FACT. ${factNum} — ${periodo}`, null, null, null, null];
@@ -2521,7 +2552,11 @@ function generarDistribucion() {
       merges:[{ s:{r:0,c:0}, e:{r:0,c:NC-1} }]
     });
 
-    const sheetName = (`FACT ${factNum}`).slice(0, 31);
+    let sheetName = (`FACT ${factNum}`).slice(0, 31);
+    let suffix = 2;
+    while (wb.SheetNames.includes(sheetName)) {
+      sheetName = (`FACT ${factNum} (${suffix++})`).slice(0, 31);
+    }
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
     sheetCount++;
     log(`  Hoja: ${sheetName} (${data.items.length} líneas)`, 'ok');
@@ -2765,7 +2800,7 @@ async function hacerPDF(opts) {
 
   const gmap = {};
   (exts||[]).forEach(e => {
-    const cap=(e.cap||e.capacidad||'').toUpperCase(), tip=(e.tipo||'').toUpperCase();
+    const cap=(e.cap||e.capacidad||'').toUpperCase(), tip=normTipo(e.tipo);
     const k=cap+'|'+tip;
     if (!gmap[k]) gmap[k]={cnt:0,cap,tip};
     gmap[k].cnt++;
@@ -3078,10 +3113,10 @@ function renderAccCatalog() {
 
   // Determinar tipos de extintores que tiene el local actual
   const local = planMes.find(l => l.codigo === certModalCodigo);
-  const tipos = new Set((local?.extintores || []).map(e => (e.tipo||'').toUpperCase()));
+  const tipos = new Set((local?.extintores || []).map(e => normTipo(e.tipo)));
   const tienePQS   = tipos.has('PQS') || tipos.size === 0;   // si no hay datos, mostrar todo
   const tieneCO2   = tipos.has('CO2') || tipos.size === 0;
-  const tieneTIPOK = tipos.has('TIPO K') || tipos.size === 0;
+  const tieneTIPOK = tipos.has('K') || tipos.size === 0;
 
   // Filtrar accesorios relevantes al tipo de extintor
   const relevant = ACCESSORIES.map((a, i) => ({ ...a, i })).filter(a => {
@@ -3172,18 +3207,19 @@ async function subirCertGitHub(localCode, anio, mesVal, doc, fileName) {
   const path = `certificados/${mes}-${anio}/${name}`;
   // jsPDF → base64 (sin el prefijo data:)
   const content = doc.output('datauristring').split(',')[1];
-  let sha = null;
-  const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
-    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
-  });
-  if (check.ok) { const d = await check.json(); sha = d.sha; }
+  const hdrs = { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' };
+  const url  = `https://api.github.com/repos/${GH_REPO}/contents/${path}`;
+  // PUT directo (201 si es nuevo); si ya existe (409/422) → buscar SHA y reintentar.
+  // Evita el GET previo que llenaba la consola de 404.
   const body = { message: `cert: ${fileName}`, content, branch: GH_BRANCH };
-  if (sha) body.sha = sha;
-  await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
-    method: 'PUT',
-    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
+  let r = await fetch(url, { method: 'PUT', headers: hdrs, body: JSON.stringify(body) });
+  if (r.status === 409 || r.status === 422) {
+    const meta = await fetch(`${url}?ref=${GH_BRANCH}`, { headers: hdrs });
+    if (meta.ok) {
+      body.sha = (await meta.json()).sha;
+      await fetch(url, { method: 'PUT', headers: hdrs, body: JSON.stringify(body) });
+    }
+  }
 }
 
 // ─── UI HELPERS ───────────────────────────────────────────────────────────────
@@ -3250,7 +3286,7 @@ function init() {
   renderTabla();
   renderEmpresaFacturas();
   enableGenerarBtns();
-  if (getGhToken()) ghCargar();
+  ghCargar();   // raw público — funciona con o sin token
 
   // Preparar vista interna con el perfil guardado sin mostrar aún
   const isAdmin = currentProfile === 'admin';
