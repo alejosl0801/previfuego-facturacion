@@ -2013,80 +2013,112 @@ function generarDetalle() {
   if (!cotizaciones.length) { log('⚠️ No hay datos para generar DETALLE', 'warn'); return; }
   log('Generando DETALLE FACT MENSUAL...');
   const wb = XLSX.utils.book_new();
+  const dateStr = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric' });
 
   // ── MANGES sheet ──────────────────────────────────────────────────────────
-  const mangesRows = [
-    ['DATOS DE LA EMPRESA', null, null, null, null,
-     'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null, null,
-     'DETALLE DE COSTOS', null, null, null, null],
-    ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO',
-     'EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R',
-     'JEFE DE OPERACIONES QUE AUTORIZA',
-     'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
-  ];
+  {
+    const rows = [
+      ['DATOS DE LA EMPRESA',null,null,null,null,
+       'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null,null,
+       'DETALLE DE COSTOS',null,null,null,null],
+      ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO',
+       'EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R',
+       'JEFE DE OPERACIONES QUE AUTORIZA',
+       'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
+    ];
+    const byHoja = {}; const hojaOrder = [];
+    cotizaciones.filter(c => c.category === 'MANGES').forEach(c => {
+      const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+      if (!byHoja[hoja]) { byHoja[hoja] = []; hojaOrder.push(hoja); }
+      byHoja[hoja].push(c);
+    });
+    hojaOrder.forEach(hoja => {
+      const group = byHoja[hoja];
+      const groupStart = rows.length;
+      group.forEach(c => {
+        const emp = c.empresa || {};
+        const extItems = (c.items || []).filter(i => i.isExtintor);
+        if (!extItems.length) {
+          const r = rows.length + 1;
+          rows.push([emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
+            c.localCode, null, 0, '-', '-', 'M', null, 0,
+            {f:`SUM(L${r}:L${r})`}, {f:`M${r}*0.15`}, {f:`N${r}+M${r}`},
+            c.notaEntrega||'']);
+          return;
+        }
+        const cotFirst = rows.length;
+        extItems.forEach((item, i) => {
+          rows.push(i === 0
+            ? [emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
+               c.localCode, null,
+               item.qty, item.tipo, item.capacidad,
+               item.serviceType === 'RECARGA' ? 'R' : 'M', null, item.unitPrice,
+               null, null, null, c.notaEntrega||'']
+            : [null,null,null,null,null,null,
+               item.qty, item.tipo, item.capacidad,
+               item.serviceType === 'RECARGA' ? 'R' : 'M', null, item.unitPrice,
+               null,null,null,null]);
+        });
+        const fr = cotFirst + 1, lr = rows.length;
+        rows[cotFirst][12] = {f:`SUM(L${fr}:L${lr})`};
+        rows[cotFirst][13] = {f:`M${fr}*0.15`};
+        rows[cotFirst][14] = {f:`N${fr}+M${fr}`};
+      });
+      const gs = groupStart + 1, ge = rows.length;
+      const factNum = (facturaMap[hoja]?.factManges || '').trim().split(' ')[0];
+      rows.push([null,null,null,null,null,null,
+        dateStr, null, `FACT 001-002-${factNum}`, null, null,
+        'TOTAL:',
+        {f:`SUM(M${gs}:M${ge})`}, {f:`SUM(N${gs}:N${ge})`}, {f:`SUM(O${gs}:O${ge})`},
+        null]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [15,20,20,12,12,25,8,8,10,4,20,8,8,8,8,10].map(w=>({wpx:w*6}));
+    XLSX.utils.book_append_sheet(wb, ws, 'MANGES');
+    log(`  MANGES: ${hojaOrder.length} empresas`, 'ok');
+  }
 
-  const mangesCots = cotizaciones.filter(c => c.category === 'MANGES');
-  mangesCots.forEach(c => {
-    const emp = c.empresa || {};
-    const extItems = c.items.filter(i => i.isExtintor);
-    // First row: with empresa info + totals
-    const first = extItems[0];
-    mangesRows.push([
-      emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
-      c.localCode,
-      c.descripcionFact || 'EXTINTORES MANTENIMIENTO ANUAL',
-      extItems.reduce((s,i) => s + (i.qty||1), 0) || (first ? first.qty : 1),
-      first ? first.tipo : '-',
-      first ? first.capacidad : '-',
-      extItems.some(i => i.serviceType === 'RECARGA') ? 'R' : 'M', null,
-      first ? first.unitPrice : 0,
-      c.subtotal, c.iva, c.total,
-      c.notaEntrega || ''
-    ]);
-    // Remaining items
-    for (let i = 1; i < extItems.length; i++) {
-      const item = extItems[i];
-      mangesRows.push([
-        null, null, null, null, null, null,
-        item.qty, item.tipo, item.capacidad, 'M', null,
-        item.unitPrice, null, null, null, null
-      ]);
-    }
-  });
-
-  const wsManges = XLSX.utils.aoa_to_sheet(mangesRows);
-  wsManges['!cols'] = [15,20,20,12,12,25,8,8,10,4,20,8,8,8,8,10].map(w => ({ wpx: w * 6 }));
-  XLSX.utils.book_append_sheet(wb, wsManges, 'MANGES');
-  log(`  MANGES: ${mangesCots.length} locales`, 'ok');
-
-  // ── MANT sheet ───────────────────────────────────────────────────────────
-  const mantRows = [
-    ['DATOS DE LA EMPRESA', null, null, null, null,
-     'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null,
-     'DETALLE DE COSTOS', null, null, null, null, 'OBSERVACION', null],
-    ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO',
-     'EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD',
-     'JEFE DE OPERACIONES QUE AUTORIZA',
-     'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA', null, null]
-  ];
-
-  const mantCots = cotizaciones.filter(c => c.category === 'MANT');
-  mantCots.forEach(c => {
-    const emp = c.empresa || {};
-    mantRows.push([
-      emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
-      c.localCode,
-      c.descripcionFact,
-      '-', '-', '-', null,
-      null, c.subtotal, c.iva, c.total,
-      c.notaEntrega || '',
-      c.observacion || 'SOLICITADO POR EL LOCAL', null
-    ]);
-  });
-
-  const wsMant = XLSX.utils.aoa_to_sheet(mantRows);
-  XLSX.utils.book_append_sheet(wb, wsMant, 'MANT');
-  log(`  MANT: ${mantCots.length} locales`, 'ok');
+  // ── MANT sheet ────────────────────────────────────────────────────────────
+  {
+    const rows = [
+      ['DATOS DE LA EMPRESA',null,null,null,null,
+       'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null,
+       'DETALLE DE COSTOS',null,null,null,null,'OBSERVACION',null],
+      ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO',
+       'EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD',
+       'JEFE DE OPERACIONES QUE AUTORIZA',
+       'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA',null,null]
+    ];
+    const byHoja = {}; const hojaOrder = [];
+    cotizaciones.filter(c => c.category === 'MANT').forEach(c => {
+      const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+      if (!byHoja[hoja]) { byHoja[hoja] = []; hojaOrder.push(hoja); }
+      byHoja[hoja].push(c);
+    });
+    hojaOrder.forEach(hoja => {
+      const group = byHoja[hoja];
+      const groupStart = rows.length;
+      group.forEach(c => {
+        const emp = c.empresa || {};
+        const r = rows.length + 1;
+        rows.push([emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
+          c.localCode, c.descripcionFact,
+          '-', '-', '-', null,
+          c.subtotal, {f:`SUM(K${r})`}, {f:`L${r}*0.15`}, {f:`M${r}+L${r}`},
+          c.notaEntrega||'', c.observacion||'', null]);
+      });
+      const gs = groupStart + 1, ge = rows.length;
+      const factNum = (facturaMap[hoja]?.factMant || '').trim().split(' ')[0];
+      rows.push([null,null,null,null,null,null,
+        dateStr, null, `FACT 001-002-${factNum}`, null,
+        'TOTAL:',
+        {f:`SUM(L${gs}:L${ge})`}, {f:`SUM(M${gs}:M${ge})`}, {f:`SUM(N${gs}:N${ge})`},
+        null,null,null]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'MANT');
+    log(`  MANT: ${hojaOrder.length} empresas`, 'ok');
+  }
 
   XLSX.writeFile(wb, `DETALLE FACT MENSUAL ${getMesLabel()}.xlsx`);
   log('✅ DETALLE FACT MENSUAL descargado', 'ok');
@@ -2094,60 +2126,43 @@ function generarDetalle() {
 }
 
 function generarDistribucion() {
+  if (!cotizaciones.length) { log('⚠️ No hay datos para generar DISTRIBUCIÓN', 'warn'); return; }
   log('Generando DISTRIBUCIÓN...');
   const wb = XLSX.utils.book_new();
 
-  // Group by empresa + category (each becomes an invoice)
-  const byHoja = {};
+  const byKey = {}; const keyOrder = [];
   cotizaciones.forEach(c => {
     const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+    const factFull = c.category === 'MANGES'
+      ? (facturaMap[hoja]?.factManges || '')
+      : (facturaMap[hoja]?.factMant || '');
+    const num = factFull.trim().split(' ')[0];
     const key = hoja + '|' + c.category;
-    if (!byHoja[key]) byHoja[key] = { hoja, category: c.category, empresa: c.empresa, items: [] };
-    byHoja[key].items.push(c);
+    if (!byKey[key]) { byKey[key] = { num, items: [] }; keyOrder.push(key); }
+    byKey[key].items.push(c);
   });
 
-  let sheetCount = 0;
-  for (const [key, data] of Object.entries(byHoja)) {
-    const factNum = data.category === 'MANGES'
-      ? (facturaMap[data.hoja]?.factManges || 'XXXX MANTGES')
-      : (facturaMap[data.hoja]?.factMant || 'XXXX MANTT');
-
-    const rows = [
-      ['C.C.', 'DESCRIPCION', 'SUBTOTAL', 'IVA', 'TOTAL']
-    ];
-
+  keyOrder.forEach(key => {
+    const data = byKey[key];
+    const rows = [['C.C.', 'DESCRIPCION', 'SUBTOTAL', 'IVA', 'TOTAL']];
     data.items.forEach(c => {
-      rows.push([
-        c.cc,
-        c.descripcionFact,
-        c.subtotal,
-        c.iva,
-        c.total
-      ]);
+      const r = rows.length + 1;
+      rows.push([c.cc, c.descripcionFact, c.subtotal,
+        {f:`C${r}*0.15`}, {f:`SUM(D${r},C${r})`}]);
     });
-
-    const totSub = data.items.reduce((s,c) => s + c.subtotal, 0);
-    const totIva = data.items.reduce((s,c) => s + c.iva, 0);
-    const totTot = data.items.reduce((s,c) => s + c.total, 0);
-    rows.push([null, 'TOTAL:', totSub, totIva, totTot]);
-
-    const sheetName = ('FACT ' + factNum).slice(0, 31);
+    const last = rows.length;
+    rows.push([null, 'TOTAL:',
+      {f:`SUM(C2:C${last})`}, {f:`SUM(D2:D${last})`}, {f:`SUM(E2:E${last})`}]);
+    const sheetName = `FACT ${data.num}`.slice(0, 31);
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{ wpx: 80 }, { wpx: 200 }, { wpx: 70 }, { wpx: 60 }, { wpx: 70 }];
-
-    // Style header
-    ['A1','B1','C1','D1','E1'].forEach(ref => {
-      if (ws[ref]) ws[ref].s = { font: { bold: true }, fill: { fgColor: { rgb: 'C0392B' } } };
-    });
-
+    ws['!cols'] = [{wpx:80},{wpx:200},{wpx:70},{wpx:60},{wpx:70}];
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    sheetCount++;
     log(`  Hoja: ${sheetName} (${data.items.length} líneas)`, 'ok');
-  }
+  });
 
   if (!wb.SheetNames.length) { log('⚠️ No hay datos para generar DISTRIBUCIÓN', 'warn'); return; }
   XLSX.writeFile(wb, `DISTRIBUCION ${getMesLabel()}.xlsx`);
-  log(`✅ DISTRIBUCIÓN descargado (${sheetCount} hojas)`, 'ok');
+  log(`✅ DISTRIBUCIÓN descargado (${keyOrder.length} hojas)`, 'ok');
   markOutput('out2');
 }
 
@@ -2155,49 +2170,35 @@ function generarFormatoFact() {
   log('Generando FORMATO_FACTURACIÓN...');
   const wb = XLSX.utils.book_new();
 
-  // Group by empresa hoja
-  const byHoja = {};
+  const byHoja = {}; const hojaOrder = [];
   cotizaciones.forEach(c => {
     const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-    if (!byHoja[hoja]) byHoja[hoja] = { empresa: c.empresa, items: [] };
-    byHoja[hoja].items.push(c);
+    if (!byHoja[hoja]) { byHoja[hoja] = []; hojaOrder.push(hoja); }
+    byHoja[hoja].push(c);
   });
 
-  for (const [hoja, data] of Object.entries(byHoja)) {
+  hojaOrder.forEach(hoja => {
+    const items = byHoja[hoja];
     const rows = [
       ['C.COSTO', 'DESCRIPCION FACTURA + # ACTA/ORDEN DE TRABAJO',
        'N° FACTURA', 'SUBTOTAL', 'IVA', 'TOTAL', 'ACTA']
     ];
-
-    data.items.forEach(c => {
+    items.forEach(c => {
       const factNum = c.category === 'MANGES'
         ? (facturaMap[hoja]?.factManges || '')
         : (facturaMap[hoja]?.factMant || '');
-
-      rows.push([
-        c.cc,
-        c.descripcionFact,
-        factNum,
-        c.subtotal,
-        c.iva,
-        c.total,
-        c.notaEntrega || null
-      ]);
+      const r = rows.length + 1;
+      rows.push([c.cc, c.descripcionFact, factNum, c.subtotal,
+        {f:`D${r}*0.15`}, {f:`SUM(E${r},D${r})`}, null]);
     });
-
-    const totSub = data.items.reduce((s,c) => s + c.subtotal, 0);
-    const totIva = data.items.reduce((s,c) => s + c.iva, 0);
-    const totTot = data.items.reduce((s,c) => s + c.total, 0);
-    rows.push([null, 'TOTALES', null, totSub, totIva, totTot, null]);
-
+    const last = rows.length;
+    rows.push([null, 'TOTALES', null,
+      {f:`SUM(D2:D${last})`}, {f:`SUM(E2:E${last})`}, {f:`SUM(F2:F${last})`}, null]);
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [
-      { wpx: 70 }, { wpx: 240 }, { wpx: 120 },
-      { wpx: 70 }, { wpx: 60 }, { wpx: 70 }, { wpx: 80 }
-    ];
+    ws['!cols'] = [{wpx:70},{wpx:240},{wpx:120},{wpx:70},{wpx:60},{wpx:70},{wpx:80}];
     XLSX.utils.book_append_sheet(wb, ws, hoja.slice(0, 31));
-    log(`  Hoja: ${hoja} (${data.items.length} líneas)`, 'ok');
-  }
+    log(`  Hoja: ${hoja} (${items.length} líneas)`, 'ok');
+  });
 
   if (!wb.SheetNames.length) { log('⚠️ No hay datos para generar FORMATO_FACTURACIÓN', 'warn'); return; }
   XLSX.writeFile(wb, `FORMATO_FACTURACIÓN ${getMesLabel()}.xlsx`);
