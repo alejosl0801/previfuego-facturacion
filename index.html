@@ -1998,10 +1998,10 @@ function numeroEnLetras(num) {
   return `                ${txt} CON ${String(dec).padStart(2,'0')}/100 USD`;
 }
 
-function generarTodo() {
-  generarDetalle();
-  generarDistribucion();
-  generarFormatoFact();
+async function generarTodo() {
+  await generarDetalle();
+  await generarDistribucion();
+  await generarFormatoFact();
 }
 
 function getMesLabel() {
@@ -2009,23 +2009,51 @@ function getMesLabel() {
   return MESES_NOMBRE[mes] || (mes ? mes : 'TODOS');
 }
 
-function generarDetalle() {
+function _cloneSheet(ws) {
+  const out = {};
+  for (const k of Object.keys(ws)) {
+    out[k] = k.startsWith('!') ? JSON.parse(JSON.stringify(ws[k])) : Object.assign({}, ws[k]);
+  }
+  return out;
+}
+
+function _clearSheetRows(ws, fromRow) {
+  if (!ws['!ref']) return;
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let r = fromRow - 1; r <= range.e.r; r++) {
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      delete ws[XLSX.utils.encode_cell({ r, c })];
+    }
+  }
+  range.e.r = Math.max(range.s.r, fromRow - 2);
+  ws['!ref'] = XLSX.utils.encode_range(range);
+}
+
+async function _fetchTemplate(path) {
+  const resp = await fetch(path);
+  if (!resp.ok) throw new Error(resp.status);
+  return XLSX.read(new Uint8Array(await resp.arrayBuffer()), { type: 'array' });
+}
+
+async function generarDetalle() {
   if (!cotizaciones.length) { log('⚠️ No hay datos para generar DETALLE', 'warn'); return; }
   log('Generando DETALLE FACT MENSUAL...');
-  const wb = XLSX.utils.book_new();
   const dateStr = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric' });
 
-  // ── MANGES sheet ──────────────────────────────────────────────────────────
+  let wb;
+  try {
+    wb = await _fetchTemplate('templates/DETALLE_FACT_MENSUAL.xlsx');
+    log('  Plantilla cargada', 'ok');
+  } catch(e) {
+    log('⚠️ No se pudo cargar plantilla: ' + e.message, 'warn');
+    wb = XLSX.utils.book_new();
+  }
+
+  // ── MANGES ──────────────────────────────────────────────────────────────────
   {
-    const rows = [
-      ['DATOS DE LA EMPRESA',null,null,null,null,
-       'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null,null,
-       'DETALLE DE COSTOS',null,null,null,null],
-      ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO',
-       'EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R',
-       'JEFE DE OPERACIONES QUE AUTORIZA',
-       'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
-    ];
+    // data[] rows go into Excel starting at row 3 (rows 1-2 are headers in template)
+    // Excel row of data[i] = i + 3
+    const data = [];
     const byHoja = {}; const hojaOrder = [];
     cotizaciones.filter(c => c.category === 'MANGES').forEach(c => {
       const hoja = c.empresa?.hoja || 'SIN EMPRESA';
@@ -2034,21 +2062,20 @@ function generarDetalle() {
     });
     hojaOrder.forEach(hoja => {
       const group = byHoja[hoja];
-      const groupStart = rows.length;
+      const gs = data.length + 3; // Excel row of group start
       group.forEach(c => {
         const emp = c.empresa || {};
         const extItems = (c.items || []).filter(i => i.isExtintor);
         if (!extItems.length) {
-          const r = rows.length + 1;
-          rows.push([emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
+          const r = data.length + 3;
+          data.push([emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
             c.localCode, null, 0, '-', '-', 'M', null, 0,
-            {f:`SUM(L${r}:L${r})`}, {f:`M${r}*0.15`}, {f:`N${r}+M${r}`},
-            c.notaEntrega||'']);
+            {f:`SUM(L${r}:L${r})`}, {f:`M${r}*0.15`}, {f:`N${r}+M${r}`}, c.notaEntrega||'']);
           return;
         }
-        const cotFirst = rows.length;
+        const cotFirst = data.length; // index into data[] of this cotización's first row
         extItems.forEach((item, i) => {
-          rows.push(i === 0
+          data.push(i === 0
             ? [emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
                c.localCode, null,
                item.qty, item.tipo, item.capacidad,
@@ -2059,36 +2086,35 @@ function generarDetalle() {
                item.serviceType === 'RECARGA' ? 'R' : 'M', null, item.unitPrice,
                null,null,null,null]);
         });
-        const fr = cotFirst + 1, lr = rows.length;
-        rows[cotFirst][12] = {f:`SUM(L${fr}:L${lr})`};
-        rows[cotFirst][13] = {f:`M${fr}*0.15`};
-        rows[cotFirst][14] = {f:`N${fr}+M${fr}`};
+        // fr/lr: Excel rows spanning this cotización's items
+        const fr = cotFirst + 3, lr = data.length + 2;
+        data[cotFirst][12] = {f:`SUM(L${fr}:L${lr})`};
+        data[cotFirst][13] = {f:`M${fr}*0.15`};
+        data[cotFirst][14] = {f:`N${fr}+M${fr}`};
       });
-      const gs = groupStart + 1, ge = rows.length;
+      const ge = data.length + 2; // Excel row of last data row before totals
       const factNum = (facturaMap[hoja]?.factManges || '').trim().split(' ')[0];
-      rows.push([null,null,null,null,null,null,
-        dateStr, null, `FACT 001-002-${factNum}`, null, null,
-        'TOTAL:',
-        {f:`SUM(M${gs}:M${ge})`}, {f:`SUM(N${gs}:N${ge})`}, {f:`SUM(O${gs}:O${ge})`},
-        null]);
+      data.push([null,null,null,null,null,null,
+        dateStr, null, `FACT 001-002-${factNum}`, null, null, 'TOTAL:',
+        {f:`SUM(M${gs}:M${ge})`}, {f:`SUM(N${gs}:N${ge})`}, {f:`SUM(O${gs}:O${ge})`}, null]);
     });
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [15,20,20,12,12,25,8,8,10,4,20,8,8,8,8,10].map(w=>({wpx:w*6}));
-    XLSX.utils.book_append_sheet(wb, ws, 'MANGES');
+    let ws = wb.Sheets['MANGES'];
+    if (!ws) {
+      ws = XLSX.utils.aoa_to_sheet([
+        ['DATOS DE LA EMPRESA',null,null,null,null,'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null,null,'DETALLE DE COSTOS',null,null,null,null],
+        ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO','EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R','JEFE DE OPERACIONES QUE AUTORIZA','VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
+      ]);
+      XLSX.utils.book_append_sheet(wb, ws, 'MANGES');
+    } else {
+      _clearSheetRows(ws, 3);
+    }
+    if (data.length) XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A3' });
     log(`  MANGES: ${hojaOrder.length} empresas`, 'ok');
   }
 
-  // ── MANT sheet ────────────────────────────────────────────────────────────
+  // ── MANT ────────────────────────────────────────────────────────────────────
   {
-    const rows = [
-      ['DATOS DE LA EMPRESA',null,null,null,null,
-       'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null,
-       'DETALLE DE COSTOS',null,null,null,null,'OBSERVACION',null],
-      ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO',
-       'EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD',
-       'JEFE DE OPERACIONES QUE AUTORIZA',
-       'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA',null,null]
-    ];
+    const data = [];
     const byHoja = {}; const hojaOrder = [];
     cotizaciones.filter(c => c.category === 'MANT').forEach(c => {
       const hoja = c.empresa?.hoja || 'SIN EMPRESA';
@@ -2097,26 +2123,33 @@ function generarDetalle() {
     });
     hojaOrder.forEach(hoja => {
       const group = byHoja[hoja];
-      const groupStart = rows.length;
+      const gs = data.length + 3;
       group.forEach(c => {
         const emp = c.empresa || {};
-        const r = rows.length + 1;
-        rows.push([emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
-          c.localCode, c.descripcionFact,
-          '-', '-', '-', null,
+        const r = data.length + 3;
+        data.push([emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
+          c.localCode, c.descripcionFact, '-', '-', '-', null,
           c.subtotal, {f:`SUM(K${r})`}, {f:`L${r}*0.15`}, {f:`M${r}+L${r}`},
           c.notaEntrega||'', c.observacion||'', null]);
       });
-      const gs = groupStart + 1, ge = rows.length;
+      const ge = data.length + 2;
       const factNum = (facturaMap[hoja]?.factMant || '').trim().split(' ')[0];
-      rows.push([null,null,null,null,null,null,
-        dateStr, null, `FACT 001-002-${factNum}`, null,
-        'TOTAL:',
+      data.push([null,null,null,null,null,null,
+        dateStr, null, `FACT 001-002-${factNum}`, null, 'TOTAL:',
         {f:`SUM(L${gs}:L${ge})`}, {f:`SUM(M${gs}:M${ge})`}, {f:`SUM(N${gs}:N${ge})`},
         null,null,null]);
     });
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    XLSX.utils.book_append_sheet(wb, ws, 'MANT');
+    let ws = wb.Sheets['MANT'];
+    if (!ws) {
+      ws = XLSX.utils.aoa_to_sheet([
+        ['DATOS DE LA EMPRESA',null,null,null,null,'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null,'DETALLE DE COSTOS',null,null,null,null,'OBSERVACION',null],
+        ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO','EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD','JEFE DE OPERACIONES QUE AUTORIZA','VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA',null,null]
+      ]);
+      XLSX.utils.book_append_sheet(wb, ws, 'MANT');
+    } else {
+      _clearSheetRows(ws, 3);
+    }
+    if (data.length) XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A3' });
     log(`  MANT: ${hojaOrder.length} empresas`, 'ok');
   }
 
@@ -2125,11 +2158,20 @@ function generarDetalle() {
   markOutput('out1');
 }
 
-function generarDistribucion() {
+async function generarDistribucion() {
   if (!cotizaciones.length) { log('⚠️ No hay datos para generar DISTRIBUCIÓN', 'warn'); return; }
   log('Generando DISTRIBUCIÓN...');
-  const wb = XLSX.utils.book_new();
 
+  let templateSheet = null;
+  try {
+    const tWb = await _fetchTemplate('templates/DISTRIBUCION.xlsx');
+    templateSheet = tWb.Sheets[tWb.SheetNames[0]];
+    log('  Plantilla cargada', 'ok');
+  } catch(e) {
+    log('⚠️ No se pudo cargar plantilla: ' + e.message, 'warn');
+  }
+
+  const wb = XLSX.utils.book_new();
   const byKey = {}; const keyOrder = [];
   cotizaciones.forEach(c => {
     const hoja = c.empresa?.hoja || 'SIN EMPRESA';
@@ -2143,21 +2185,28 @@ function generarDistribucion() {
   });
 
   keyOrder.forEach(key => {
-    const data = byKey[key];
-    const rows = [['C.C.', 'DESCRIPCION', 'SUBTOTAL', 'IVA', 'TOTAL']];
-    data.items.forEach(c => {
-      const r = rows.length + 1;
-      rows.push([c.cc, c.descripcionFact, c.subtotal,
-        {f:`C${r}*0.15`}, {f:`SUM(D${r},C${r})`}]);
+    const { num, items } = byKey[key];
+    // data[] rows go into Excel starting at row 2 (row 1 is header)
+    // Excel row of data[i] = i + 2
+    let ws;
+    if (templateSheet) {
+      ws = _cloneSheet(templateSheet);
+      _clearSheetRows(ws, 2);
+    } else {
+      ws = XLSX.utils.aoa_to_sheet([['C.C.', 'DESCRIPCION', 'SUBTOTAL', 'IVA', 'TOTAL']]);
+    }
+    const data = [];
+    items.forEach(c => {
+      const r = data.length + 2;
+      data.push([c.cc, c.descripcionFact, c.subtotal, {f:`C${r}*0.15`}, {f:`SUM(D${r},C${r})`}]);
     });
-    const last = rows.length;
-    rows.push([null, 'TOTAL:',
+    const last = data.length + 1; // Excel row of last data row
+    data.push([null, 'TOTAL:',
       {f:`SUM(C2:C${last})`}, {f:`SUM(D2:D${last})`}, {f:`SUM(E2:E${last})`}]);
-    const sheetName = `FACT ${data.num}`.slice(0, 31);
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wpx:80},{wpx:200},{wpx:70},{wpx:60},{wpx:70}];
+    XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A2' });
+    const sheetName = `FACT ${num}`.slice(0, 31);
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    log(`  Hoja: ${sheetName} (${data.items.length} líneas)`, 'ok');
+    log(`  Hoja: ${sheetName} (${items.length} líneas)`, 'ok');
   });
 
   if (!wb.SheetNames.length) { log('⚠️ No hay datos para generar DISTRIBUCIÓN', 'warn'); return; }
@@ -2166,10 +2215,19 @@ function generarDistribucion() {
   markOutput('out2');
 }
 
-function generarFormatoFact() {
+async function generarFormatoFact() {
   log('Generando FORMATO_FACTURACIÓN...');
-  const wb = XLSX.utils.book_new();
 
+  let templateSheet = null;
+  try {
+    const tWb = await _fetchTemplate('templates/FORMATO_FACTURACION.xlsx');
+    templateSheet = tWb.Sheets[tWb.SheetNames[0]];
+    log('  Plantilla cargada', 'ok');
+  } catch(e) {
+    log('⚠️ No se pudo cargar plantilla: ' + e.message, 'warn');
+  }
+
+  const wb = XLSX.utils.book_new();
   const byHoja = {}; const hojaOrder = [];
   cotizaciones.forEach(c => {
     const hoja = c.empresa?.hoja || 'SIN EMPRESA';
@@ -2179,23 +2237,30 @@ function generarFormatoFact() {
 
   hojaOrder.forEach(hoja => {
     const items = byHoja[hoja];
-    const rows = [
-      ['C.COSTO', 'DESCRIPCION FACTURA + # ACTA/ORDEN DE TRABAJO',
-       'N° FACTURA', 'SUBTOTAL', 'IVA', 'TOTAL', 'ACTA']
-    ];
+    // data[] rows go into Excel starting at row 2 (row 1 is header)
+    // Excel row of data[i] = i + 2
+    let ws;
+    if (templateSheet) {
+      ws = _cloneSheet(templateSheet);
+      _clearSheetRows(ws, 2);
+    } else {
+      ws = XLSX.utils.aoa_to_sheet([
+        ['C.COSTO','DESCRIPCION FACTURA + # ACTA/ORDEN DE TRABAJO','N° FACTURA','SUBTOTAL','IVA','TOTAL','ACTA']
+      ]);
+    }
+    const data = [];
     items.forEach(c => {
       const factNum = c.category === 'MANGES'
         ? (facturaMap[hoja]?.factManges || '')
         : (facturaMap[hoja]?.factMant || '');
-      const r = rows.length + 1;
-      rows.push([c.cc, c.descripcionFact, factNum, c.subtotal,
+      const r = data.length + 2;
+      data.push([c.cc, c.descripcionFact, factNum, c.subtotal,
         {f:`D${r}*0.15`}, {f:`SUM(E${r},D${r})`}, null]);
     });
-    const last = rows.length;
-    rows.push([null, 'TOTALES', null,
+    const last = data.length + 1;
+    data.push([null, 'TOTALES', null,
       {f:`SUM(D2:D${last})`}, {f:`SUM(E2:E${last})`}, {f:`SUM(F2:F${last})`}, null]);
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wpx:70},{wpx:240},{wpx:120},{wpx:70},{wpx:60},{wpx:70},{wpx:80}];
+    XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A2' });
     XLSX.utils.book_append_sheet(wb, ws, hoja.slice(0, 31));
     log(`  Hoja: ${hoja} (${items.length} líneas)`, 'ok');
   });
