@@ -441,6 +441,7 @@
   <div class="hdr-right">
     <div id="monthSelector" class="month-sel">
       <select id="selMes" onchange="onMonthChange()">
+        <option value="">— Todos los meses —</option>
         <option value="01 ENERO">Enero</option>
         <option value="02 FEBRERO">Febrero</option>
         <option value="03 MARZO">Marzo</option>
@@ -1409,7 +1410,7 @@ const GH_BRANCH = 'main';
 function ghFilePath() {
   const mes = document.getElementById('selMes').value;
   const anio = document.getElementById('selAnio').value;
-  const mesNombre = MESES_NOMBRE[mes] || mes;
+  const mesNombre = MESES_NOMBRE[mes] || 'TODOS';
   return `datos/${mesNombre}-${anio}.json`;
 }
 
@@ -1593,8 +1594,9 @@ const NE_TEMPLATE_MAP = {
 
 async function cargarPlan() {
   const mesVal  = document.getElementById('selMes').value;
-  const mesNom  = MESES_NOMBRE[mesVal];
+  const mesNom  = MESES_NOMBRE[mesVal] || '';   // '' = todos los meses
   const anio    = document.getElementById('selAnio').value;
+  const todosLosMeses = mesVal === '';
 
   document.getElementById('planContainer').innerHTML =
     '<p style="color:#999;font-size:13px">Cargando base de datos…</p>';
@@ -1627,9 +1629,11 @@ async function cargarPlan() {
     }
 
     // Build extintor map by local code
+    const normMes = s => String(s || '').trim().toUpperCase();
     const extMap = {};
     detalle.slice(1).forEach(r => {
-      if (!r[1] || r[2] !== mesNom) return;
+      if (!r[1]) return;
+      if (!todosLosMeses && normMes(r[2]) !== normMes(mesNom)) return;
       const m = String(r[1]).match(/^([A-Z]+\d+)/);
       if (!m) return;
       const cod = normCode(m[1]);
@@ -1638,7 +1642,7 @@ async function cargarPlan() {
     });
 
     planMes = resumen.slice(1)
-      .filter(r => r[0] && r[3] === mesNom)
+      .filter(r => r[0] && (todosLosMeses || normMes(r[3]) === normMes(mesNom)))
       .map(r => {
         const cod = normCode(String(r[0]));
         const anioRec = parseInt(r[9]) || 9999;
@@ -1674,7 +1678,8 @@ function renderPlan() {
   const total     = planMes.length;
   const visitados = planMes.filter(l => visitaStatus[l.codigo] === 'visitado').length;
   const pendientes = total - visitados;
-  const mesNom = MESES_NOMBRE[document.getElementById('selMes').value];
+  const mesVal = document.getElementById('selMes').value;
+  const mesNom = MESES_NOMBRE[mesVal] || (mesVal ? mesVal : 'TODOS LOS MESES');
   const isAdmin = currentProfile === 'admin';
 
   const statsEl = document.getElementById('planStats');
@@ -1733,6 +1738,7 @@ function renderPlan() {
             <strong style="white-space:nowrap">${local.codigo}</strong>
             <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${localLabel}</span>
             <span style="font-size:11px;color:#999;white-space:nowrap">${local.marca}</span>
+            ${mesVal === '' ? `<span style="font-size:11px;color:#8e44ad;font-weight:600;white-space:nowrap">${local.mes||''}</span>` : ''}
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
             <span class="badge-${status}">${isVisitado ? 'VISITADO' : 'PENDIENTE'}</span>
@@ -2000,7 +2006,7 @@ function generarTodo() {
 
 function getMesLabel() {
   const mes = document.getElementById('selMes').value;
-  return MESES_NOMBRE[mes] || mes;
+  return MESES_NOMBRE[mes] || (mes ? mes : 'TODOS');
 }
 
 function generarDetalle() {
