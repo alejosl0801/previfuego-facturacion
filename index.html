@@ -1090,10 +1090,10 @@ function normCategoria(v) {
 function eliminarCotizacion(idx) {
   cotizaciones.splice(idx, 1);
   if (!cotizaciones.length) {
-    document.getElementById('btn1').disabled = true;
-    document.getElementById('btn2').disabled = true;
-    document.getElementById('btn3').disabled = true;
-    document.getElementById('btnGenerarTodo').disabled = true;
+    ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
+    });
   }
   renderTabla();
   renderEmpresaFacturas();
