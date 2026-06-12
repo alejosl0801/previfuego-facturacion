@@ -1126,6 +1126,7 @@ function renderTabla() {
     <table>
       <thead>
         <tr>
+          <th></th>
           <th>#</th>
           <th>Archivo</th>
           <th>Cód. Local</th>
@@ -1138,7 +1139,6 @@ function renderTabla() {
           <th>Total</th>
           <th># N.E.</th>
           <th>Obs.</th>
-          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -1149,6 +1149,7 @@ function renderTabla() {
     const cls = c.category === 'MANGES' ? 'manges' : 'mant';
     html += `
       <tr class="${cls}">
+        <td><button onclick="eliminarCotizacion(${idx})" title="Eliminar" style="background:#e74c3c;color:white;border:none;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:13px;font-weight:700">✕</button></td>
         <td>${idx+1}</td>
         <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.filename)}">${c.filename.replace('.xlsx','')}</td>
         <td><strong>${c.localCode}</strong></td>
@@ -1172,7 +1173,6 @@ function renderTabla() {
         <td style="text-align:right;font-weight:700">$${c.total.toFixed(2)}</td>
         <td><input type="text" value="${esc(c.notaEntrega)}" placeholder="ej: 6494" style="width:80px" onchange="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
         <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim();autosave()">${esc(c.observacion)}</td>
-        <td><button onclick="eliminarCotizacion(${idx})" title="Eliminar" style="background:#e74c3c;color:white;border:none;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:13px;font-weight:700">✕</button></td>
       </tr>
     `;
   });
