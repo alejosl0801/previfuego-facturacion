@@ -1698,7 +1698,8 @@ async function cargarPlan() {
     renderBD();
   } catch(e) {
     console.error('cargarPlan:', e);
-    document.getElementById('planContainer').innerHTML =
+    const _pc = document.getElementById('planContainer');
+    if (_pc) _pc.innerHTML =
       `<p style="color:#c0392b;font-size:13px">Error cargando base de datos: ${e.message}</p>`;
   }
 }
@@ -1747,7 +1748,7 @@ function renderPlan() {
     const totalCobro = parseFloat((local.cobro + iva).toFixed(2));
     const localLabel = local.nombre.replace(local.codigo + ' - ', '');
     const extList    = local.extintores
-      .map(e => `<code style="font-size:11px;background:#f5f5f5;padding:1px 4px;border-radius:3px">${e.tipo} ${e.cap}</code>`)
+      .map(e => `<code style="font-size:11px;background:#f5f5f5;padding:1px 4px;border-radius:3px">${esc(e.tipo||'')} ${esc(e.cap||'')}</code>`)
       .join(' ');
     const tipoServ   = local.esRecarga
       ? `<span style="color:#8e44ad;font-weight:600">⟳ RECARGA ${local.anioRec}</span>`
@@ -1765,8 +1766,8 @@ function renderPlan() {
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
             <span class="badge-${status}">${isVisitado ? '✅' : '🔴'}</span>
             <strong style="white-space:nowrap">${local.codigo}</strong>
-            <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${localLabel}</span>
-            <span style="font-size:11px;color:#999;white-space:nowrap">${local.marca}</span>
+            <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(localLabel)}</span>
+            <span style="font-size:11px;color:#999;white-space:nowrap">${esc(local.marca||'')}</span>
             ${mesVal === '' ? `<span style="font-size:11px;color:#8e44ad;font-weight:600;white-space:nowrap">${local.mes||''}</span>` : ''}
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
@@ -1830,13 +1831,13 @@ function renderBD() {
     <th>Código</th><th>Local</th><th>Marca</th><th>Extintores</th>
     <th>Servicio</th><th>Cobro</th></tr></thead><tbody>`;
   html += planMes.map(l => {
-    const ext = l.extintores.map(e => `${e.tipo} ${e.cap}`).join(', ');
+    const ext = l.extintores.map(e => `${e.tipo||''} ${e.cap||''}`.trim()).join(', ');
     const serv = l.esRecarga ? `RECARGA ${l.anioRec}` : 'MANTENIMIENTO';
     return `<tr>
-      <td><strong>${l.codigo}</strong></td>
-      <td>${l.nombre.replace(l.codigo+' - ','')}</td>
-      <td>${l.marca}</td>
-      <td style="font-size:11px">${ext || '—'}</td>
+      <td><strong>${esc(l.codigo)}</strong></td>
+      <td>${esc(l.nombre.replace(l.codigo+' - ',''))}</td>
+      <td>${esc(l.marca||'')}</td>
+      <td style="font-size:11px">${esc(ext) || '—'}</td>
       <td>${serv}</td>
       <td style="text-align:right">$${l.cobro.toFixed(2)}</td>
     </tr>`;
