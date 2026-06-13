@@ -907,6 +907,7 @@ function getEmpresa(localCode) {
 // ─── PARSE COTIZACION EXCEL ───────────────────────────────────────────────────
 function parseCotizacion(arrayBuffer, filename) {
   const wb = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+  if (!wb.SheetNames.length) throw new Error('Archivo Excel sin hojas');
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
 
@@ -1079,7 +1080,9 @@ function applyPerfil() {
 
 // ─── CAMBIO DE MES ────────────────────────────────────────────────────────────
 async function onMonthChange() {
-  if (!cotizaciones.length) localRestore();
+  cotizaciones = [];
+  facturaMap = {};
+  localRestore();
   await cargarPlan();
   renderTabla();
   renderEmpresaFacturas();
@@ -1198,6 +1201,7 @@ function renderTabla() {
 // ─── RENDER FACTURAS POR EMPRESA ──────────────────────────────────────────────
 function renderEmpresaFacturas() {
   const container = document.getElementById('empresaFacturasContainer');
+  if (!container) return;
 
   // Group by hoja
   const byHoja = {};
@@ -1218,7 +1222,7 @@ function renderEmpresaFacturas() {
       <div class="empresa-section">
         <div class="empresa-header">
           <div>
-            <div class="empresa-nombre">${data.empresa?.empresa || hoja}</div>
+            <div class="empresa-nombre">${esc(data.empresa?.empresa || hoja)}</div>
             <div style="font-size:11px;color:#777">
               MANGES: ${data.manges.length} locales ($${subtManges.toFixed(2)}) &nbsp;|&nbsp;
               MANT: ${data.mant.length} locales ($${subtMant.toFixed(2)})
@@ -1228,13 +1232,13 @@ function renderEmpresaFacturas() {
             ${data.manges.length ? `
             <div class="fact-input-group">
               <label>Fact. MANGES:</label>
-              <input type="text" placeholder="ej: 3296 MANTGES" value="${facturaMap[hoja].factManges}"
+              <input type="text" placeholder="ej: 3296 MANTGES" value="${esc(facturaMap[hoja].factManges)}"
                 onchange="facturaMap['${hoja}'].factManges=this.value.trim();autosave()" />
             </div>` : ''}
             ${data.mant.length ? `
             <div class="fact-input-group">
               <label>Fact. MANT:</label>
-              <input type="text" placeholder="ej: 3299 MANTT" value="${facturaMap[hoja].factMant}"
+              <input type="text" placeholder="ej: 3299 MANTT" value="${esc(facturaMap[hoja].factMant)}"
                 onchange="facturaMap['${hoja}'].factMant=this.value.trim();autosave()" />
             </div>` : ''}
           </div>
