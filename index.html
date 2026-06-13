@@ -2,36 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<script>
-const _VER = '20260610011';
-// Mata SW viejo + limpia cachés + redirige con timestamp para romper CDN cache
-(function(){
-  // Timestamp por minuto → URL siempre nueva al primer acceso tras deploy
-  var _ts = Math.floor(Date.now() / 60000);
-  function _go() {
-    var v = (location.search.match(/[?&]v=([^&]*)/) || [])[1];
-    var t = (location.search.match(/[?&]t=([^&]*)/) || [])[1];
-    // Si la versión no coincide O el timestamp es viejo (>10 min), redirigir
-    if (v !== _VER || !t || (_ts - parseInt(t,10)) > 10) {
-      location.replace(location.pathname + '?v=' + _VER + '&t=' + _ts);
-    }
-  }
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function(regs){
-      if (regs.length) {
-        caches.keys().then(function(ks){ ks.forEach(function(k){ caches.delete(k); }); });
-        Promise.all(regs.map(function(r){ return r.unregister(); })).then(_go);
-      } else { _go(); }
-    }).catch(_go);
-  } else { _go(); }
-})();
-</script>
-<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Previfuego – Facturación KFC</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
@@ -407,30 +380,20 @@ const _VER = '20260610011';
   body.dark .acc-row.sel { background: #2d1f1e; }
   body.dark .acc-row-desc { color: #ccc; }
   body.dark .nov-btn { background: #1f2227; border-color: #3a3f47; color: #bbb; }
-
-  /* ── Responsive móvil ── */
-  @media (max-width: 600px) {
-    .container { padding: 0 8px; }
-    header { padding: 10px 14px; gap: 8px; }
-    .nav-tab { font-size: 11px; padding: 6px 10px; }
-    .local-card-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-    }
-    .local-card-header > div:last-child {
-      width: 100%;
-      flex-wrap: wrap;
-      justify-content: flex-start;
-    }
-    .local-card-header > div:first-child {
-      width: 100%;
-    }
-    .plan-stats { flex-direction: column; gap: 8px; }
-    .hdr-right { gap: 6px; }
-    .month-sel select { min-width: 70px; font-size: 12px; }
-    .cert-foto-btns { flex-direction: column; }
-  }
+  body.dark .output-card { background: #1f2227; border-color: #3a3f47; }
+  body.dark .output-card h3 { color: #e6e6e6; }
+  body.dark .output-card p { color: #888; }
+  body.dark .output-card.ready { background: #1a2e22; border-color: #27ae60; }
+  body.dark .empresa-section { background: #1f2227; border-color: #333; }
+  body.dark .empresa-header { background: #262a30; border-color: #333; }
+  body.dark .empresa-nombre { color: #e6e6e6; }
+  body.dark .fact-input-group label { color: #888; }
+  body.dark #certModal > div { background: #1f2227 !important; color: #e6e6e6; }
+  body.dark .status-ok { background: #1a2e22; color: #6bcb77; border-color: #27ae60; }
+  body.dark .status-error { background: #2e1a1a; color: #ff6b6b; border-color: #c0392b; }
+  body.dark .status-info { background: #1a2333; color: #85c1e9; border-color: #2980b9; }
+  body.dark .status-warn { background: #2a2210; color: #ffd93d; border-color: #f0b400; }
+  body.dark code { background: #2d323a !important; color: #d6d6d6; border-radius: 3px; padding: 1px 4px; }
 </style>
 </head>
 <body>
@@ -478,6 +441,7 @@ const _VER = '20260610011';
   <div class="hdr-right">
     <div id="monthSelector" class="month-sel">
       <select id="selMes" onchange="onMonthChange()">
+        <option value="">— Todos los meses —</option>
         <option value="01 ENERO">Enero</option>
         <option value="02 FEBRERO">Febrero</option>
         <option value="03 MARZO">Marzo</option>
@@ -492,9 +456,10 @@ const _VER = '20260610011';
         <option value="12 DICIEMBRE">Diciembre</option>
       </select>
       <select id="selAnio" onchange="onMonthChange()">
+        <option value="2027">2027</option>
         <option value="2026">2026</option>
         <option value="2025">2025</option>
-        <option value="2027">2027</option>
+        <option value="2024">2024</option>
       </select>
     </div>
     <div id="perfilIndicator" class="perfil-indicator" onclick="mostrarSelectorPerfil()" title="Cambiar perfil">
@@ -516,11 +481,7 @@ const _VER = '20260610011';
     <div class="plan-stats">
       <div class="admin-only">
         <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial NE</label>
-        <input type="number" id="neInicial" value="6700" min="1" style="width:90px;padding:5px" onchange="renderPlan();autosave()" />
-      </div>
-      <div class="admin-only">
-        <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial Cert.</label>
-        <input type="number" id="cotInicial" value="1500" min="1" style="width:90px;padding:5px" onchange="renderPlan();autosave()" />
+        <input type="number" id="neInicial" value="6700" min="1" style="width:90px;padding:5px" onchange="renderPlan()" />
       </div>
       <div id="planStats" style="font-size:13px;color:#555;font-weight:600"></div>
     </div>
@@ -553,7 +514,7 @@ const _VER = '20260610011';
         </p>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <input type="file" id="fotoNE" accept="image/*" multiple style="font-size:13px" />
-          <button class="btn btn-info" onclick="leerFotosNE()">🤖 Leer con IA</button>
+          <button class="btn btn-info" id="btnLeerIA" onclick="leerFotosNE()">🤖 Leer con IA</button>
           <span id="fotoStatus" style="font-size:13px;color:#666"></span>
         </div>
       </div>
@@ -646,34 +607,21 @@ const _VER = '20260610011';
   <!-- ════════════ SECCIÓN: BASE DE DATOS (admin) ════════════ -->
   <div class="app-section admin-only" id="sec-bd" style="display:none">
     <div class="section-title">🗄️ Base de Datos</div>
-    <div class="section-desc">Consulta y descarga las bases de datos consolidadas de extintores.</div>
+    <div class="section-desc">Consulta y descarga la base de datos consolidada de extintores del Grupo KFC.</div>
 
     <div class="card">
       <div class="card-body">
-        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:stretch">
-          <div style="background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px;padding:20px;flex:1;min-width:220px;text-align:center;">
-            <div style="font-size:32px;margin-bottom:8px;">📊</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+          <div style="background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px;padding:20px;flex:1;min-width:240px;text-align:center;">
+            <div style="font-size:36px;margin-bottom:8px;">📊</div>
             <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS KFC</div>
             <div style="font-size:12px;color:#666;margin-bottom:14px;">
-              197 locales · 906 extintores<br>
-              KFC · GUS · SHEMLON · TROPIBURGER<br>
-              JUAN VALDEZ · IVORY · SUSHICORP
+              210 locales · 968 extintores<br>
+              2 hojas: Detalle, Resumen Locales<br>
+              Precios MANTT y RECARGA por extintor
             </div>
             <a href="BASE_DATOS_KFC.xlsx" download="BASE_DATOS_KFC.xlsx"
                style="display:inline-block;background:#1F4E79;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
-              ⬇️ Descargar Excel
-            </a>
-          </div>
-          <div style="background:#f5f0ff;border:1px solid #c8a8f0;border-radius:8px;padding:20px;flex:1;min-width:220px;text-align:center;">
-            <div style="font-size:32px;margin-bottom:8px;">🍣</div>
-            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS SUSHICORP</div>
-            <div style="font-size:12px;color:#666;margin-bottom:14px;">
-              13 locales · 62 extintores<br>
-              KOBE · NOE (KN01–KN13)<br>
-              Misma estructura: RESUMEN + DETALLE
-            </div>
-            <a href="BASE_DATOS_SUSHICORP.xlsx" download="BASE_DATOS_SUSHICORP.xlsx"
-               style="display:inline-block;background:#6c3483;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
               ⬇️ Descargar Excel
             </a>
           </div>
@@ -706,9 +654,8 @@ const _VER = '20260610011';
       <div class="card-body">
         <div class="form-row">
           <div class="form-group" style="flex:2">
-            <label>🟠 API Key Groq — requerida para leer fotos con IA (<a href="https://console.groq.com/keys" target="_blank">console.groq.com</a> → API Keys → Create, gratis)</label>
-            <input type="password" id="groqKey" placeholder="gsk_..." autocomplete="off" oninput="saveConfig(); validarGroqKey(this)" />
-            <span id="groqKeyStatus" style="font-size:11px"></span>
+            <label>🟢 API Key Groq — requerida para leer fotos de notas de entrega</label>
+            <input type="text" id="groqKey" placeholder="gsk_..." autocomplete="off" oninput="saveConfig()" />
           </div>
           <div class="form-group" style="flex:2">
             <label>⚫ GitHub Token — respalda tus datos en la nube (opcional)</label>
@@ -736,39 +683,8 @@ const _VER = '20260610011';
 
 </div>
 
-<!-- EDIT EXTINTORES MODAL -->
-<div id="editExtModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;">
-  <div style="background:white;border-radius:12px;padding:22px;max-width:560px;width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <h3 style="color:#f39c12;font-size:14px;margin:0;font-weight:800">✏️ Editar extintores — <span id="editExtTitle"></span></h3>
-      <button onclick="cerrarEditExtModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;line-height:1;padding:0 4px">✕</button>
-    </div>
-    <div style="font-size:12px;color:#888;margin-bottom:12px">
-      Los cambios se guardan en este navegador y sobreescriben los datos de la base de datos para este local.
-      <button onclick="resetEditExt()" style="margin-left:8px;background:#e74c3c;color:white;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer">🗑️ Restaurar BD</button>
-    </div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px" id="editExtTable">
-      <thead>
-        <tr style="background:#f5f5f5;font-size:11px;text-transform:uppercase;color:#666">
-          <th style="padding:6px 8px;text-align:left;border:1px solid #ddd">Tipo</th>
-          <th style="padding:6px 8px;text-align:left;border:1px solid #ddd">Cap.</th>
-          <th style="padding:6px 8px;text-align:right;border:1px solid #ddd">$ Mantt</th>
-          <th style="padding:6px 8px;text-align:right;border:1px solid #ddd">$ Recarga</th>
-          <th style="padding:6px 8px;border:1px solid #ddd"></th>
-        </tr>
-      </thead>
-      <tbody id="editExtBody"></tbody>
-    </table>
-    <button onclick="editExtAgregarFila()" style="margin-top:10px;background:#27ae60;color:white;border:none;border-radius:5px;padding:6px 14px;font-size:12px;cursor:pointer">+ Agregar extintor</button>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-      <button onclick="cerrarEditExtModal()" style="background:#bbb;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer">Cancelar</button>
-      <button onclick="guardarEditExt()" style="background:#f39c12;color:white;border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer">💾 Guardar</button>
-    </div>
-  </div>
-</div>
-
 <!-- CERT MODAL (3 pasos) -->
-<div id="certModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;">
+<div id="certModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)cerrarCertModal()">
   <div style="background:white;border-radius:12px;padding:22px;max-width:480px;width:93%;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -872,48 +788,41 @@ const MESES_NOMBRE = {
   '10 OCTUBRE':'OCTUBRE','11 NOVIEMBRE':'NOVIEMBRE','12 DICIEMBRE':'DICIEMBRE'
 };
 
-// Mapa de prefijos de código local → empresa
-// Marcas del Grupo KFC sin razón social propia (Cinnabon, Baskin, Il Cappo,
-// El Español, Casa Res, Dolce Incontro, Cafa, Heladerías) facturan vía INT FOOD.
-// American Deli (A/B/F) factura vía DELI INTERNACIONAL.
-const EMPRESAS_MAP = {
-  'K':    { empresa:'INT FOOD SERVICES CORP SA',                    marca:'KFC',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'G':    { empresa:'INT FOOD SERVICES CORP SA',                    marca:'GUS',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'CN':   { empresa:'INT FOOD SERVICES CORP SA',                    marca:'CINNABON',           ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'BS':   { empresa:'INT FOOD SERVICES CORP SA',                    marca:'BASKIN ROBBINS',     ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'I':    { empresa:'INT FOOD SERVICES CORP SA',                    marca:'IL CAPPO',           ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'E':    { empresa:'INT FOOD SERVICES CORP SA',                    marca:'EL ESPAÑOL',         ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'R':    { empresa:'INT FOOD SERVICES CORP SA',                    marca:'CASA RES',           ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'DI':   { empresa:'INT FOOD SERVICES CORP SA',                    marca:'DOLCE INCONTRO',     ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'CA':   { empresa:'INT FOOD SERVICES CORP SA',                    marca:'CAFA',               ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'H':    { empresa:'INT FOOD SERVICES CORP SA',                    marca:'HELADERIAS',         ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'M':    { empresa:'SHEMLON SA',                                   marca:'MENESTRAS DEL NEGRO',ruc:'1792049504001', hoja:'SHEMLON' },
-  'J':    { empresa:'SHEMLON SA',                                   marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
-  'CJNC': { empresa:'SHEMLON SA',                                   marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
-  'T':    { empresa:'DELI INTERNACIONAL SA',                        marca:'TROPIBURGER',        ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
-  'A':    { empresa:'DELI INTERNACIONAL SA',                        marca:'AMERICAN DELI',      ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
-  'B':    { empresa:'DELI INTERNACIONAL SA',                        marca:'AMERICAN DELI',      ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
-  'F':    { empresa:'DELI INTERNACIONAL SA',                        marca:'AMERICAN DELI',      ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
-  'ILCI': { empresa:'PRODUCCIONES Y EVENTOS NOVOEVENTOS SA',        marca:'IVORY',              ruc:'1792025435001', hoja:'NOVOEVENTOS' },
-  'V':    { empresa:'PROMOTORA ECUATORIANA DE CAFE DE COLOMBIA SA', marca:'JUAN VALDEZ',        ruc:'1792141486001', hoja:'PROCAFECOL' },
-  'JV':   { empresa:'PROMOTORA ECUATORIANA DE CAFE DE COLOMBIA SA', marca:'JUAN VALDEZ',        ruc:'1792141486001', hoja:'PROCAFECOL' },
-  'IV':   { empresa:'PROMOTORA ECUATORIANA DE CAFE DE COLOMBIA SA', marca:'JUAN VALDEZ',        ruc:'1792141486001', hoja:'PROCAFECOL' },
-  'KN':   { empresa:'SUSHICORP SAS',                                marca:'KOBE / NOE',         ruc:'1792256267001', hoja:'SUSHICORP' },
-};
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
-// Opciones únicas para el dropdown (sin duplicados por empresa)
-const EMPRESAS_OPTS = (() => {
-  const seen = new Set();
-  return Object.entries(EMPRESAS_MAP)
-    .filter(([, v]) => { if (seen.has(v.empresa)) return false; seen.add(v.empresa); return true; })
-    .map(([k, v]) => ({ key: k, label: v.empresa }));
-})();
+// Mapa de prefijos de código local → empresa
+const EMPRESAS_MAP = {
+  'K':    { empresa:'INT FOOD SERVICES CORP SA',              marca:'KFC',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'G':    { empresa:'INT FOOD SERVICES CORP SA',              marca:'GUS',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
+  'M':    { empresa:'SHEMLON SA',                             marca:'MENESTRAS DEL NEGRO',ruc:'1792049504001', hoja:'SHEMLON' },
+  'J':    { empresa:'SHEMLON SA',                             marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
+  'CJNC': { empresa:'SHEMLON SA',                             marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
+  'CN':   { empresa:'CINNABON SA',                            marca:'CINNABON',           ruc:'',              hoja:'CINNABON' },
+  'BS':   { empresa:'BASKIN ROBBINS SA',                      marca:'BASKIN ROBBINS',     ruc:'',              hoja:'BASKIN ROBBINS' },
+  'T':    { empresa:'DELI-INTERNACIONAL SA',                  marca:'TROPIBURGER',        ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
+  'I':    { empresa:'IL CAPPO SA',                            marca:'IL CAPPO',           ruc:'',              hoja:'IL CAPPO' },
+  'ILCI': { empresa:'PRODUCCIONES Y EVENTOS NOVOEVENTOS SA',  marca:'IVORY',              ruc:'1792025435001', hoja:'NOVOEVENTOS' },
+  'V':    { empresa:'PROMOTORA ECUATORIANA DE CAFÉ DE COLOMBIA SA', marca:'JUAN VALDEZ',  ruc:'1792141486001', hoja:'PROCAFECOL' },
+  'JV':   { empresa:'PROMOTORA ECUATORIANA DE CAFÉ DE COLOMBIA SA', marca:'JUAN VALDEZ',  ruc:'1792141486001', hoja:'PROCAFECOL' },
+  'AMCA': { empresa:'AMCA SA',                                marca:'AMCA',               ruc:'',              hoja:'AMCA' },
+  'ESPE': { empresa:'ESPRESSO AMERICANO SA',                  marca:'ESPRESSO AMERICANO', ruc:'',              hoja:'ESPRESSO AMERICANO' },
+  'DI':   { empresa:'DOLCE INCONTRO SA',                      marca:'DOLCE INCONTRO',     ruc:'',              hoja:'DOLCE INCONTRO' },
+  'CA':   { empresa:'CAFA SA',                                marca:'CAFA',               ruc:'',              hoja:'CAFA' },
+  'A':    { empresa:'AMERICAN DELI SA',                       marca:'AMERICAN DELI',      ruc:'',              hoja:'AMERICAN DELI' },
+  'B':    { empresa:'AMERICAN DELI SA',                       marca:'AMERICAN DELI',      ruc:'',              hoja:'AMERICAN DELI' },
+  'F':    { empresa:'AMERICAN DELI SA',                       marca:'AMERICAN DELI',      ruc:'',              hoja:'AMERICAN DELI' },
+  'E':    { empresa:'ESPAÑOL SA',                             marca:'ESPAÑOL',            ruc:'',              hoja:'ESPAÑOL' },
+  'R':    { empresa:'CASA RES SA',                            marca:'CASA RES',           ruc:'',              hoja:'CASA RES' },
+  'H':    { empresa:'HELADERIAS SA',                          marca:'HELADERIAS',         ruc:'',              hoja:'HELADERIAS' },
+  'KN':   { empresa:'SUSHICORP SAS',                         marca:'KOBE / NOE',         ruc:'1792256267001', hoja:'SUSHICORP' },
+};
 
 let cotizaciones = []; // array of parsed cotizacion objects
 let facturaMap = {};   // { hojaKey: { factManges: 'XXXX', factMant: 'YYYY' } }
-
-// Overrides de extintores por local (persisten en localStorage)
-let extOverrides = (() => { try { return JSON.parse(localStorage.getItem('extOverrides') || '{}'); } catch(e) { return {}; } })();
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const GROQ_KEY_DEFAULT = ['gsk_v2dEa44p','FqiiNrh9Fa','HjWGdyb3FY','xmbuOBV47T','RRJACWXJJt','J400'].join('');
@@ -925,35 +834,21 @@ function getGroqKey() {
 }
 
 function loadConfig() {
-  const gkEl = document.getElementById('groqKey');
   const saved = localStorage.getItem('groqKey');
-  gkEl.value = saved || GROQ_KEY_DEFAULT;
+  document.getElementById('groqKey').value = saved || GROQ_KEY_DEFAULT;
   if (!saved) localStorage.setItem('groqKey', GROQ_KEY_DEFAULT);
   document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
-  validarGroqKey(gkEl);
 }
 
 function saveConfig() {
   const gk = document.getElementById('groqKey').value.trim();
   const gt = document.getElementById('ghToken').value.trim();
   localStorage.setItem('groqKey', gk || GROQ_KEY_DEFAULT);
-  if (gt) localStorage.setItem('ghToken', gt); else localStorage.removeItem('ghToken');
+  if (gt) localStorage.setItem('ghToken', gt);
   const el = document.getElementById('cfgStatus');
   el.textContent = '✅ Guardado permanentemente en este navegador';
   clearTimeout(saveConfig._t);
   saveConfig._t = setTimeout(() => el.textContent = '', 3000);
-}
-
-function validarGroqKey(input) {
-  const v = input.value.trim();
-  const el = document.getElementById('groqKeyStatus');
-  if (!el) return;
-  if (!v) { el.textContent = ''; return; }
-  if (v.startsWith('gsk_') && v.length > 20) {
-    el.textContent = '✅ Formato válido'; el.style.color = '#27ae60';
-  } else {
-    el.textContent = '⚠️ Debe empezar con gsk_'; el.style.color = '#e74c3c';
-  }
 }
 
 function getGhToken() {
@@ -982,15 +877,14 @@ function costCenter(localCode) {
   if (!m) return localCode + 'EC';
   const prefix = m[1];
   const num = m[2];
-  // Single-letter prefixes: pad to 3 digits
-  const padded = prefix.length === 1 ? num.padStart(3, '0') : num;
+  const padded = prefix.length <= 2 ? num.padStart(3, '0') : num;
   return prefix + padded + 'EC';
 }
 
 function getEmpresa(localCode) {
   const code = localCode.toUpperCase();
   // Try multi-char prefixes first (longest match)
-  const prefixes = ['CJNC','ILCI','JV','IV','KN','CN','BS','DI','CA','K','G','M','J','T','V','I','A','B','E','F','H','R'];
+  const prefixes = ['CJNC','GUSG','ILCI','AMCA','ESPE','JV','BS','DI','CA','KN','K','M','T','V','I','G','J','A','B','E','F','H','R','CN'];
   for (const p of prefixes) {
     if (code.startsWith(p)) return EMPRESAS_MAP[p] || null;
   }
@@ -1085,8 +979,8 @@ function parseCotizacion(arrayBuffer, filename) {
   }
 
   // Determine overall service category
-  const hasOnlyMaint = items.length > 0 && items.every(i => i.serviceType === 'MANTENIMIENTO');
-  const category = hasOnlyMaint ? 'MANGES' : 'MANT';
+  const hasOnlyBudgeted = items.length > 0 && items.every(i => i.serviceType === 'MANTENIMIENTO' || i.serviceType === 'RECARGA');
+  const category = hasOnlyBudgeted ? 'MANGES' : 'MANT';
 
   // Description for FORMATO_FACTURACIÓN
   let descripcionFact = 'EXTINTORES MANTENIMIENTO ANUAL';
@@ -1172,25 +1066,11 @@ function applyPerfil() {
 
 // ─── CAMBIO DE MES ────────────────────────────────────────────────────────────
 function onMonthChange() {
-  // Recalcular cotInicial por defecto según el nuevo mes (localRestore lo
-  // sobreescribe si el nuevo mes tiene sesión guardada)
-  const mesVal = document.getElementById('selMes').value;
-  const mesNum = parseInt(mesVal.substring(0, 2));
-  const cotInicialInp = document.getElementById('cotInicial');
-  if (cotInicialInp) cotInicialInp.value = 1200 + mesNum * 50;
-
-  // Vaciar el estado del mes anterior y cargar la sesión guardada del nuevo mes;
-  // sin esto los registros del mes viejo se quedaban en pantalla y el autosave
-  // los escribía bajo la clave del mes nuevo.
-  cotizaciones = [];
-  facturaMap = {};
-  visitaStatus = {};
-  localRestore();
+  if (!cotizaciones.length) localRestore();
   cargarPlan();
   renderTabla();
   renderEmpresaFacturas();
   renderBD();
-  ghCargar();   // intenta la versión de la nube (raw público); si falla, queda lo local
 }
 
 // ─── MODO OSCURO ──────────────────────────────────────────────────────────────
@@ -1207,6 +1087,19 @@ function normCategoria(v) {
 }
 
 // Cambia MANTGES/MANT de un registro desde la tabla y re-renderiza.
+function eliminarCotizacion(idx) {
+  cotizaciones.splice(idx, 1);
+  if (!cotizaciones.length) {
+    ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
+    });
+  }
+  renderTabla();
+  renderEmpresaFacturas();
+  autosave();
+}
+
 function setCategoria(idx, val) {
   if (cotizaciones[idx]) {
     cotizaciones[idx].category = normCategoria(val);
@@ -1227,12 +1120,13 @@ function renderTabla() {
     <div style="margin-bottom:8px;font-size:13px;color:#666">
       <span class="badge badge-manges">MANGES: ${manges.length}</span>&nbsp;
       <span class="badge badge-mant">MANT: ${mant.length}</span>&nbsp;
-      Total: ${cotizaciones.length} cotizaciones
+      Total: ${cotizaciones.length} notas de entrega
     </div>
     <div style="overflow-x:auto">
     <table>
       <thead>
         <tr>
+          <th></th>
           <th>#</th>
           <th>Archivo</th>
           <th>Cód. Local</th>
@@ -1255,18 +1149,15 @@ function renderTabla() {
     const cls = c.category === 'MANGES' ? 'manges' : 'mant';
     html += `
       <tr class="${cls}">
+        <td><button onclick="eliminarCotizacion(${idx})" title="Eliminar" style="background:#e74c3c;color:white;border:none;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:13px;font-weight:700">✕</button></td>
         <td>${idx+1}</td>
-        <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.filename}">${c.filename.replace('.xlsx','')}</td>
-        <td style="font-family:monospace;font-size:11px;font-weight:700;min-width:80px"
-            contenteditable="true"
-            onblur="(function(el,i){const v=normalizeLocalCode(el.textContent.trim().toUpperCase().replace(/\s+/g,''));if(!v)return;cotizaciones[i].localCode=v;cotizaciones[i].cc=costCenter(v);const emp=getEmpresa(v);if(emp)cotizaciones[i].empresa=emp;renderTabla();renderEmpresaFacturas();autosave();})(this,${idx})"
-            >${c.localCode}</td>
+        <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.filename)}">${c.filename.replace('.xlsx','')}</td>
+        <td><strong>${c.localCode}</strong></td>
         <td style="font-family:monospace;font-size:11px">${c.cc}</td>
         <td style="font-size:11px">
-          <select style="font-size:11px;padding:2px 4px;min-width:160px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderEmpresaFacturas();autosave()">
-            ${c.empresa ? '' : '<option value="" selected disabled>❓ Elegir empresa…</option>'}
-            ${EMPRESAS_OPTS.map(({ key, label }) =>
-              `<option value="${key}" ${c.empresa?.empresa===label?'selected':''}>${label}</option>`
+          <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderTabla();renderEmpresaFacturas();autosave()">
+            ${Object.entries(EMPRESAS_MAP).map(([k,v]) =>
+              `<option value="${k}" ${c.empresa===v?'selected':''}>${v.empresa}</option>`
             ).join('')}
           </select>
         </td>
@@ -1276,12 +1167,12 @@ function renderTabla() {
             <option value="MANT" ${c.category==='MANT'?'selected':''}>MANT (extra)</option>
           </select>
         </td>
-        <td style="font-size:11px;max-width:180px" contenteditable="true" onblur="cotizaciones[${idx}].descripcionFact=this.textContent.trim();autosave()">${c.descripcionFact}</td>
+        <td style="font-size:11px;max-width:180px" contenteditable="true" onblur="cotizaciones[${idx}].descripcionFact=this.textContent.trim();autosave()">${esc(c.descripcionFact)}</td>
         <td style="text-align:right">$${c.subtotal.toFixed(2)}</td>
         <td style="text-align:right">$${c.iva.toFixed(2)}</td>
         <td style="text-align:right;font-weight:700">$${c.total.toFixed(2)}</td>
-        <td><input type="text" value="${c.notaEntrega}" placeholder="ej: 6494" style="width:80px" onchange="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
-        <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim();autosave()">${c.observacion}</td>
+        <td><input type="text" value="${esc(c.notaEntrega)}" placeholder="ej: 6494" style="width:80px" onchange="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
+        <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim();autosave()">${esc(c.observacion)}</td>
       </tr>
     `;
   });
@@ -1341,236 +1232,187 @@ function renderEmpresaFacturas() {
 }
 
 // ─── LEER FOTOS NE ────────────────────────────────────────────────────────────
-let _leerFotosEnProgreso = false;
+const NE_PROMPT = `Eres un asistente experto en facturación de extintores de Previfuego (Ecuador).
+Analiza esta nota de entrega/servicio (puede ser escrita a mano o impresa) y extrae TODOS los datos visibles.
+
+CAMPOS A EXTRAER:
+1. notaEntrega: número de nota (4-5 dígitos; busca "N°", "No.", "NOTA DE ENTREGA", "NE")
+2. localCode: código del local KFC. Formato: letra(s) + número (ej: K02, K105, M35, T032, V091, BS04, KN01).
+   IMPORTANTE: ignora prefijos como "KFC" o "GUS" que aparecen antes; extrae solo el código real.
+3. empresa: nombre de la empresa cliente (ej: "INT FOOD SERVICES CORP SA", "SHEMLON SA")
+4. ciudad: ciudad del local (ej: "GUAYAQUIL", "QUITO", "CUENCA")
+5. localNombre: nombre o dirección del local (ej: "KFC POLICENTRO", "ALBAN BORJA")
+6. fecha: fecha del servicio en formato DD/MM/YYYY (busca en el documento)
+7. categoria: SOLO dos valores posibles:
+   - "MANTGES" = mantenimiento anual presupuestado de extintores
+   - "MANT" = accesorios, señaléticas, lámparas de emergencia, recargas extra, instalaciones, ventas
+8. descripcion: descripción del servicio (ej: "EXTINTORES MANTENIMIENTO ANUAL", "ACCESORIOS EXTINTORES Y SEÑALETICAS")
+9. extintores: array de extintores servidos [{tipo:"CO2"|"PQS"|"K", capacidad:"50LBS"|"10LBS"|"2.5 GLNS", cantidad:1, valorUnit:25.00}]
+10. subtotal: valor ANTES del IVA (número decimal)
+11. iva: valor del IVA (número decimal)
+12. total: valor TOTAL con IVA (número decimal)
+13. observacion: observación o nota especial (ej: "ACCESORIOS DAÑADOS", "SOLICITADO POR EL LOCAL", "")
+
+REGLAS:
+- Si un valor no es legible o no existe, usa "" para texto o 0 para números.
+- NO inventes valores. Solo extrae lo que está escrito.
+- Para categoria: si ves "mantenimiento anual" o referencias a PRESUPUESTO → "MANTGES". Si ves accesorios, señales, lámparas, recarga extra → "MANT".
+- Responde ÚNICAMENTE con el objeto JSON, sin texto adicional.
+
+JSON de respuesta:
+{
+  "notaEntrega": "", "localCode": "", "empresa": "", "ciudad": "",
+  "localNombre": "", "fecha": "", "categoria": "MANTGES",
+  "descripcion": "EXTINTORES MANTENIMIENTO ANUAL",
+  "extintores": [],
+  "subtotal": 0, "iva": 0, "total": 0,
+  "observacion": ""
+}`;
+
 async function leerFotosNE() {
-  if (_leerFotosEnProgreso) return;   // evita doble clic / race condition
   const groqKey = getGroqKey();
-  if (!groqKey) {
-    document.getElementById('fotoStatus').textContent = '⚠️ Necesitas API Key de Groq en Configuración (console.groq.com)';
-    return;
-  }
+  const btnIA = document.getElementById('btnLeerIA');
+  const statusEl = document.getElementById('fotoStatus');
 
   const files = document.getElementById('fotoNE').files;
   if (!files.length) {
-    document.getElementById('fotoStatus').textContent = '⚠️ Selecciona al menos una foto';
+    statusEl.textContent = '⚠️ Selecciona al menos una foto';
     return;
   }
 
-  _leerFotosEnProgreso = true;
-  document.getElementById('fotoStatus').textContent = `🤖 Procesando ${files.length} foto${files.length>1?'s':''} con Groq IA...`;
+  btnIA.disabled = true;
+  statusEl.textContent = `🤖 Procesando ${files.length} foto(s) con Groq...`;
   let procesadas = 0, errores = 0;
+  const errLog = [];
 
-  try {
   for (const file of files) {
+    statusEl.textContent = `🤖 [${procesadas + errores + 1}/${files.length}] Leyendo ${file.name}…`;
+    const base64 = await fileToBase64(file);
     try {
-      const mimeType = file.type || 'image/jpeg';
-      const base64 = await fileToBase64(file);
-      if (!base64) { errores++; continue; }
-      const statusEl = document.getElementById('fotoStatus');
-      const result = await callGroq(groqKey, base64, mimeType,
-        `Eres un asistente de facturación de extintores de Previfuego (Ecuador).
-Analiza TODA la imagen de esta nota de entrega/servicio y extrae TODOS los datos visibles.
-
-CAMPOS OBLIGATORIOS:
-1. notaEntrega: número de nota (4-5 dígitos). Busca "N°", "No.", "NOTA DE ENTREGA", "NE".
-2. localCode: código del local. Ejemplos reales: KFCK76, KFCK161, GUSG45, K02, K105, M35, T032, BS04, KN01, ILCI12, GUS G45 (sin espacio → GUSG45).
-   Devuelve SIN espacios, mayúsculas.
-3. empresa: razón social completa del cliente (ej: "INT FOOD SERVICES CORP", "OPERADORA GUAYAQUIL S.A.", "ILCI S.A.").
-4. ruc: RUC o cédula del cliente si aparece.
-5. ciudad: ciudad del local (ej: "GUAYAQUIL", "QUITO", "CUENCA").
-6. localNombre: nombre o dirección exacta del local (ej: "KFC CARAPUNGO", "LOCAL 42 CC VENTURA").
-7. fecha: fecha del servicio en formato DD/MM/YYYY si aparece.
-8. categoria: "MANTGES" si es mantenimiento/recarga anual; "MANT" si es accesorio/señalética/lámpara/instalación extra.
-9. descripcion: descripción completa del servicio (ej: "EXTINTORES MANTENIMIENTO ANUAL", "ACCESORIOS EXTINTORES Y SEÑALETICAS", "LAMPARA DE EMERGENCIA").
-10. extintores: TODOS los extintores/ítems del detalle:
-    [{tipo:"CO2", capacidad:"50LBS", cantidad:1, valorUnit:45.00, valorTotal:45.00, serie:"12345"}]
-    tipo: CO2 / PQS / K / AGUA / HALON / ESPUMA / LAMPARA / SEÑALETICA / ACCESORIO / etc.
-    IMPORTANTE: Para extintores de cocina tipo K (acetato de potasio), usa exactamente "K" — NO "ESPUMA".
-    capacidad: exactamente como aparece (ej: "50LBS", "10LBS", "6KG", "25LBS").
-    serie: número de serie si aparece en la nota.
-11. subtotal: monto sin IVA exacto (número decimal).
-12. iva: monto IVA exacto (número decimal).
-13. total: monto total con IVA exacto (número decimal).
-14. formaPago: forma de pago si aparece (ej: "CREDITO", "CONTADO", "TRANSFERENCIA").
-15. observacion: cualquier observación, nota o comentario adicional visible en el documento.
-16. tecnico: nombre del técnico que realizó el servicio si aparece.
-17. firmaCliente: nombre de quien recibió/firmó si aparece.
-
-Responde ÚNICAMENTE con JSON válido sin texto extra ni markdown:
-{"notaEntrega":"","localCode":"","empresa":"","ruc":"","ciudad":"","localNombre":"","fecha":"","categoria":"MANTGES","descripcion":"EXTINTORES MANTENIMIENTO ANUAL","extintores":[],"subtotal":0,"iva":0,"total":0,"formaPago":"","observacion":"","tecnico":"","firmaCliente":""}
-Si no encuentras un campo, deja "" o 0.`,
-        msg => { if (statusEl) statusEl.textContent = msg; }
-      );
+      const result = await callGroq(groqKey, base64, file.type, NE_PROMPT);
 
       let json;
       try {
         json = JSON.parse(result.replace(/```json|```/g, '').trim());
       } catch(pe) {
         const m = result.match(/\{[\s\S]*\}/);
-        if (m) { try { json = JSON.parse(m[0]); } catch(e2) { throw pe; } }
-        else throw pe;
+        if (m) json = JSON.parse(m[0]);
+        else throw new Error('Respuesta no es JSON válido');
       }
 
-      if (json.localCode || json.notaEntrega) {
-        const rawCode = normalizeLocalCode((json.localCode || '').toUpperCase().trim().replace(/\s+/g, ''));
-        // Match by full normalised code (spaces removed, uppercase). Fallback: last digits only if unique.
-        let cot = rawCode ? cotizaciones.find(c =>
-          c.localCode.toUpperCase().replace(/\s+/g,'') === rawCode
-        ) : null;
-        if (!cot && rawCode) {
-          const rawNum = rawCode.replace(/\D/g, '');
-          const matches = rawNum ? cotizaciones.filter(c => c.localCode.replace(/\D/g,'') === rawNum) : [];
-          if (matches.length === 1) cot = matches[0]; // solo si es inequívoco
-        }
+      // Normalize the local code from AI (handles "KFCK02" → "K02")
+      const localCodeNorm = normalizeLocalCode((json.localCode || '').toUpperCase().trim());
 
-        if (cot) {
-          if (json.notaEntrega) cot.notaEntrega = String(json.notaEntrega);
-          if (json.categoria) cot.category = normCategoria(json.categoria);
-          if (json.descripcion) cot.descripcionFact = json.descripcion;
-          if (json.observacion) cot.observacion = json.observacion;
-          if (json.ciudad) cot.ciudad = json.ciudad;
-          if (json.ruc) cot.ruc = json.ruc;
-          if (json.fecha) cot.fecha = json.fecha;
-          if (json.tecnico) cot.tecnico = json.tecnico;
-          if (json.firmaCliente) cot.firmaCliente = json.firmaCliente;
-          if (json.formaPago) cot.formaPago = json.formaPago;
-          if (json.subtotal && !cot.subtotal) cot.subtotal = parseFloat(json.subtotal) || 0;
-          if (json.iva && !cot.iva) cot.iva = parseFloat(json.iva) || 0;
-          if (json.total && !cot.total) cot.total = parseFloat(json.total) || 0;
-          if (json.extintores?.length && (!cot.items || !cot.items.length)) {
-            cot.items = json.extintores.map(e => ({
-              qty: e.cantidad || 1, desc: `${e.tipo||''} ${e.capacidad||''}`.trim(),
-              tipo: e.tipo, capacidad: e.capacidad, serie: e.serie || '',
-              unitPrice: parseFloat(e.valorUnit) || 0,
-              total: parseFloat(e.valorTotal) || (e.cantidad||1) * (parseFloat(e.valorUnit)||0),
-              serviceType: 'MANTENIMIENTO', isExtintor: true
-            }));
-          }
-          procesadas++;
-          document.getElementById('fotoStatus').textContent =
-            `🤖 [${procesadas}/${files.length}] ✅ ${json.localCode||'?'} NE:${json.notaEntrega||'?'} $${json.total||0}`;
-        } else if (json.subtotal > 0 || json.total > 0) {
-          const localCodeClean = normalizeLocalCode((json.localCode || '').toUpperCase().trim().replace(/\s+/g,''));
-          const emp = getEmpresa(localCodeClean);
-          cotizaciones.push({
-            filename: `foto-${file.name}`,
-            proformaNum: '',
-            rawLocalCode: localCodeClean,
-            localCode: localCodeClean,
-            cc: costCenter(localCodeClean),
-            empresa: emp,
-            localName: json.localNombre || localCodeClean,
-            ciudad: json.ciudad || '',
-            ruc: json.ruc || '',
-            fecha: json.fecha || '',
-            tecnico: json.tecnico || '',
-            firmaCliente: json.firmaCliente || '',
-            formaPago: json.formaPago || '',
-            items: (json.extintores || []).map(e => ({
-              qty: e.cantidad || 1, desc: `${e.tipo||''} ${e.capacidad||''}`.trim(),
-              tipo: e.tipo, capacidad: e.capacidad, serie: e.serie || '',
-              unitPrice: parseFloat(e.valorUnit) || 0,
-              total: parseFloat(e.valorTotal) || (e.cantidad||1) * (parseFloat(e.valorUnit)||0),
-              serviceType: 'MANTENIMIENTO', isExtintor: true
-            })),
-            subtotal: parseFloat(json.subtotal) || 0,
-            iva: parseFloat(json.iva) || 0,
-            total: parseFloat(json.total) || 0,
-            category: normCategoria(json.categoria),
-            descripcionFact: json.descripcion || 'EXTINTORES MANTENIMIENTO ANUAL',
-            observacion: json.observacion || '',
-            notaEntrega: String(json.notaEntrega || '')
-          });
-          procesadas++;
-          document.getElementById('fotoStatus').textContent =
-            `🤖 [${procesadas}/${files.length}] ➕ ${localCodeClean} NE:${json.notaEntrega||'?'} $${json.total||0} (nuevo)`;
-        } else {
-          errores++;
-        }
-        renderTabla();
-        renderEmpresaFacturas();
+      // Match against existing cotizacion using FULL normalized code (not just digits)
+      const cot = localCodeNorm
+        ? cotizaciones.find(c => normalizeLocalCode(c.localCode) === localCodeNorm)
+        : null;
+
+      if (cot) {
+        if (json.notaEntrega) cot.notaEntrega = String(json.notaEntrega);
+        if (json.categoria)   cot.category = normCategoria(json.categoria);
+        if (json.descripcion) cot.descripcionFact = json.descripcion;
+        if (json.observacion) cot.observacion = json.observacion;
+        if (json.ciudad)      cot.ciudad = json.ciudad;
+        if (json.fecha)       cot.fecha = json.fecha;
+        if (json.subtotal > 0 && !cot.subtotal) cot.subtotal = parseFloat(json.subtotal) || 0;
+        if (json.iva > 0 && !cot.iva)           cot.iva = parseFloat(json.iva) || 0;
+        if (json.total > 0 && !cot.total)       cot.total = parseFloat(json.total) || 0;
+        procesadas++;
+        statusEl.textContent = `🤖 [${procesadas}/${files.length}] ✅ ${localCodeNorm} NE:${json.notaEntrega || '?'}`;
+      } else if (json.subtotal > 0 || json.total > 0) {
+        const emp = getEmpresa(localCodeNorm);
+        cotizaciones.push({
+          filename: `foto-${file.name}`,
+          proformaNum: '',
+          rawLocalCode: localCodeNorm,
+          localCode: localCodeNorm,
+          cc: costCenter(localCodeNorm),
+          empresa: emp,
+          localName: json.localNombre || localCodeNorm,
+          ciudad: json.ciudad || '',
+          fecha: json.fecha || '',
+          items: (json.extintores || []).map(e => ({
+            qty: e.cantidad || 1, desc: `${e.tipo} ${e.capacidad}`,
+            tipo: e.tipo, capacidad: e.capacidad,
+            unitPrice: e.valorUnit || 0, total: (e.cantidad || 1) * (e.valorUnit || 0),
+            serviceType: 'MANTENIMIENTO', isExtintor: true
+          })),
+          subtotal: parseFloat(json.subtotal) || 0,
+          iva: parseFloat(json.iva) || 0,
+          total: parseFloat(json.total) || 0,
+          category: normCategoria(json.categoria),
+          descripcionFact: json.descripcion || 'EXTINTORES MANTENIMIENTO ANUAL',
+          observacion: json.observacion || '',
+          notaEntrega: String(json.notaEntrega || '')
+        });
+        procesadas++;
+        statusEl.textContent = `🤖 [${procesadas}/${files.length}] ➕ ${localCodeNorm || '?'} NE:${json.notaEntrega || '?'} (nuevo)`;
+      } else {
+        errores++;
+        errLog.push(`${file.name}: datos insuficientes (código=${localCodeNorm || '?'}, total=${json.total})`);
+        console.warn('Groq: datos insuficientes', file.name, json);
       }
+      renderTabla();
+      renderEmpresaFacturas();
     } catch(e) {
-      console.warn('Groq error:', file.name, e);
       errores++;
-      document.getElementById('fotoStatus').textContent =
-        `⚠️ Error en ${file.name}: ${e.message}`;
+      errLog.push(`${file.name}: ${e.message}`);
+      console.warn('Groq error:', file.name, e);
     }
-    // Pequeña pausa entre fotos
-    if (files.length > 1) await new Promise(res => setTimeout(res, 500));
-  }
-  } finally {
-    _leerFotosEnProgreso = false;
   }
 
-  document.getElementById('fotoStatus').textContent =
-    `✅ Listo: ${procesadas} notas procesadas${errores ? `, ${errores} errores` : ''}`;
+  btnIA.disabled = false;
+  if (errores > 0) {
+    statusEl.innerHTML = `✅ ${procesadas} procesadas, <span style="color:#c0392b;font-weight:700">${errores} con error</span> — ver consola`;
+    console.warn('Errores Groq NE:', errLog);
+  } else {
+    statusEl.textContent = `✅ Listo: ${procesadas} notas procesadas correctamente`;
+  }
 
   if (cotizaciones.length) enableGenerarBtns();
-  autosave();   // guarda las notas recién registradas
+  autosave();
 }
 
-// onStatus: callback(msg) para reportar progreso al caller (evita acoplamiento al DOM)
-async function callGroq(apiKey, base64, mimeType, prompt, onStatus) {
-  const MAX_ATTEMPTS = 4;
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    let r;
-    try {
-      r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-          temperature: 0.1,
-          max_tokens: 2000,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'text', text: prompt },
-              { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } }
-            ]
-          }]
-        })
-      });
-    } catch(netErr) {
-      throw new Error('Error de red al contactar Groq: ' + netErr.message);
-    }
+async function callGroq(apiKey, base64, mimeType, prompt) {
+  const reqBody = JSON.stringify({
+    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'text', text: prompt },
+        { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } }
+      ]
+    }],
+    max_tokens: 2048,
+    temperature: 0,
+    response_format: { type: 'json_object' }
+  });
 
-    if (r.status === 429) {
-      if (attempt < MAX_ATTEMPTS) {
-        const wait = 3000 * Math.pow(2, attempt - 1); // 3s, 6s, 12s
-        if (onStatus) onStatus(`⏳ Groq límite — reintentando en ${wait/1000}s (${attempt}/${MAX_ATTEMPTS})…`);
-        await new Promise(res => setTimeout(res, wait));
-        continue;
-      }
-      throw new Error('Groq: límite de tasa excedido, espera unos segundos y vuelve a intentar');
+  const delays = [0, 3000, 8000];
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    if (delays[attempt] > 0) {
+      document.getElementById('fotoStatus').textContent =
+        `⏳ Rate limit — reintentando en ${delays[attempt]/1000}s… (intento ${attempt+1}/3)`;
+      await new Promise(r => setTimeout(r, delays[attempt]));
     }
-
-    if (r.status === 401) throw new Error('Groq: API Key inválida — verifica que empiece con gsk_');
-    if (r.status === 400) {
-      let data2; try { data2 = await r.json(); } catch(e) { throw new Error('Groq: request inválido (400)'); }
-      throw new Error(`Groq: ${data2?.error?.message || 'request inválido (400)'}`);
-    }
-
-    let data;
-    try { data = await r.json(); } catch(e) { throw new Error(`Groq: respuesta no-JSON (HTTP ${r.status})`); }
-
-    if (!r.ok || !data.choices?.[0]?.message?.content) {
-      const msg = data?.error?.message || `HTTP ${r.status}`;
-      throw new Error(`Groq: ${msg}`);
-    }
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: reqBody
+    });
+    const data = await r.json();
+    if (r.status === 429 && attempt < delays.length - 1) continue;
+    if (!r.ok) throw new Error(data?.error?.message || `HTTP ${r.status}`);
     return data.choices[0].message.content;
   }
-  throw new Error('Groq: sin respuesta después de todos los reintentos');
+  throw new Error('Groq: límite de solicitudes superado, intenta en unos segundos');
 }
 
 function fileToBase64(file) {
   return new Promise((res, rej) => {
     const reader = new FileReader();
-    reader.onload = e => res((e.target?.result || '').split(',')[1] || '');
+    reader.onload = e => res(e.target.result.split(',')[1]);
     reader.onerror = rej;
     reader.readAsDataURL(file);
   });
@@ -1583,7 +1425,7 @@ const GH_BRANCH = 'main';
 function ghFilePath() {
   const mes = document.getElementById('selMes').value;
   const anio = document.getElementById('selAnio').value;
-  const mesNombre = MESES_NOMBRE[mes] || mes;
+  const mesNombre = MESES_NOMBRE[mes] || 'TODOS';
   return `datos/${mesNombre}-${anio}.json`;
 }
 
@@ -1597,18 +1439,14 @@ function buildPayload() {
       filename: c.filename, proformaNum: c.proformaNum, localCode: c.localCode,
       cc: c.cc, localName: c.localName, ciudad: c.ciudad,
       empresaHoja: c.empresa?.hoja || '',
+      empresaKey: (() => { const e = Object.entries(EMPRESAS_MAP).find(([,v]) => v === c.empresa); return e ? e[0] : ''; })(),
       items: c.items, subtotal: c.subtotal, iva: c.iva, total: c.total,
       category: c.category, descripcionFact: c.descripcionFact,
-      observacion: c.observacion, notaEntrega: c.notaEntrega,
-      ruc: c.ruc || '', fecha: c.fecha || '',
-      tecnico: c.tecnico || '', firmaCliente: c.firmaCliente || '',
-      formaPago: c.formaPago || ''
+      observacion: c.observacion, notaEntrega: c.notaEntrega
     })),
     facturaMap,
     visitaStatus,
-    extOverrides,
-    neInicial:  parseInt(document.getElementById('neInicial')?.value)  || 6700,
-    cotInicial: parseInt(document.getElementById('cotInicial')?.value) || 1500
+    neInicial: parseInt(document.getElementById('neInicial')?.value) || 6700
   };
 }
 
@@ -1626,27 +1464,16 @@ function localRestore() {
     const raw = localStorage.getItem(lsKey());
     if (!raw) return false;
     const json = JSON.parse(raw);
-    facturaMap   = json.facturaMap   || {};
+    facturaMap = json.facturaMap || {};
     visitaStatus = json.visitaStatus || {};
-    if (json.extOverrides) {
-      extOverrides = json.extOverrides;
-      localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
-    }
     if (json.neInicial) {
       const inp = document.getElementById('neInicial');
       if (inp) inp.value = json.neInicial;
     }
-    if (json.cotInicial) {
-      const inp = document.getElementById('cotInicial');
-      if (inp) inp.value = json.cotInicial;
-    }
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
-      empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
-      notaEntrega: c.notaEntrega || '',
-      ruc: c.ruc || '', fecha: c.fecha || '',
-      tecnico: c.tecnico || '', firmaCliente: c.firmaCliente || '',
-      formaPago: c.formaPago || ''
+      empresa: (c.empresaKey ? EMPRESAS_MAP[c.empresaKey] : null) || Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
+      notaEntrega: c.notaEntrega || ''
     }));
     return true;
   } catch(e) { return false; }
@@ -1665,44 +1492,47 @@ async function ghGuardar(silent = false) {
   const token = getGhToken();
   const st = document.getElementById('ghStatus');
   if (!token) return;
+  if (!cotizaciones.length) return;
 
   const path = ghFilePath();
   const payload = buildPayload();
+
   if (!silent && st) st.textContent = '⏳ Guardando...';
-
   try {
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
-    const notasTxt = cotizaciones.length ? ` · ${cotizaciones.length} notas` : '';
-    const ghHeaders = {
-      Authorization: `token ${token}`,
-      Accept: 'application/vnd.github+json',
-      'Content-Type': 'application/json'
-    };
-
-    // Intento 1: PUT sin SHA (funciona si el archivo no existe → 201)
-    let body = { message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio}${notasTxt}`, content, branch: GH_BRANCH };
-    let r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
-      method: 'PUT', headers: ghHeaders, body: JSON.stringify(body)
+    // Check if file exists (need SHA to update)
+    let sha = null;
+    const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
     });
-
-    // 409 = archivo existe, necesita SHA → buscarlo y reintentar
-    if (r.status === 409 || r.status === 422) {
-      const meta = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
-        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
-      });
-      if (meta.ok) {
-        body.sha = (await meta.json()).sha;
-        r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
-          method: 'PUT', headers: ghHeaders, body: JSON.stringify(body)
-        });
-      }
+    if (check.ok) {
+      const existing = await check.json();
+      sha = existing.sha;
     }
 
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+    const body = {
+      message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio} (${cotizaciones.length} notas)`,
+      content,
+      branch: GH_BRANCH
+    };
+    if (sha) body.sha = sha;
+
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
     if (r.ok) {
-      if (st) st.innerHTML = `<span style="color:green">✅ Guardado en la nube${notasTxt} · ${new Date().toLocaleTimeString()}</span>`;
+      if (st) st.innerHTML =
+        `<span style="color:green">✅ Guardado en la nube (${cotizaciones.length} notas) · ${new Date().toLocaleTimeString()}</span>`;
     } else {
-      const err = await r.json().catch(() => ({}));
-      throw new Error(err.message || `HTTP ${r.status}`);
+      const err = await r.json();
+      throw new Error(err.message || r.status);
     }
   } catch (e) {
     if (st) st.innerHTML = `<span style="color:red">❌ ${e.message}</span>`;
@@ -1710,38 +1540,38 @@ async function ghGuardar(silent = false) {
 }
 
 async function ghCargar() {
+  const token = getGhToken();
+
+  // No token → try localStorage
+  if (!token) {
+    const ok = localRestore();
+    if (ok) {
+      renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan();
+    }
+    return;
+  }
+
   const path = ghFilePath();
   try {
-    // Raw URL pública — no requiere token (repositorio público)
-    const rawUrl = `https://raw.githubusercontent.com/${GH_REPO}/${GH_BRANCH}/${path}?t=${Date.now()}`;
-    const r = await fetch(rawUrl);
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    });
     if (!r.ok) {
+      // Fallback to localStorage
       const ok = localRestore();
       if (ok) { renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan(); }
       return;
     }
-    const json = await r.json();
+    const data = await r.json();
+    const json = JSON.parse(decodeURIComponent(escape(atob(data.content))));
 
-    facturaMap    = json.facturaMap    || {};
-    visitaStatus  = json.visitaStatus  || {};
-    extOverrides  = json.extOverrides  || {};
-    localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
+    facturaMap = json.facturaMap || {};
+    visitaStatus = json.visitaStatus || {};
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
-      empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
-      notaEntrega: c.notaEntrega || '',
-      ruc: c.ruc || '', fecha: c.fecha || '',
-      tecnico: c.tecnico || '', firmaCliente: c.firmaCliente || '',
-      formaPago: c.formaPago || ''
+      empresa: (c.empresaKey ? EMPRESAS_MAP[c.empresaKey] : null) || Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
+      notaEntrega: c.notaEntrega || ''
     }));
-    if (json.neInicial) {
-      const inp = document.getElementById('neInicial');
-      if (inp) inp.value = json.neInicial;
-    }
-    if (json.cotInicial) {
-      const inp = document.getElementById('cotInicial');
-      if (inp) inp.value = json.cotInicial;
-    }
 
     renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan();
     const gs = document.getElementById('ghStatus');
@@ -1766,7 +1596,6 @@ function log(msg, type='') {
 // ─── PLAN DEL MES & NOTAS DE ENTREGA ─────────────────────────────────────────
 let planMes = [];
 let visitaStatus = {};
-let extMapBD = {}; // copia del extMap del Excel, para poder restaurar overrides
 const RAW_BASE = '';
 
 const NE_TEMPLATE_MAP = {
@@ -1780,85 +1609,79 @@ const NE_TEMPLATE_MAP = {
 
 async function cargarPlan() {
   const mesVal  = document.getElementById('selMes').value;
-  const mesNom  = MESES_NOMBRE[mesVal];
+  const mesNom  = MESES_NOMBRE[mesVal] || '';   // '' = todos los meses
   const anio    = document.getElementById('selAnio').value;
+  const todosLosMeses = mesVal === '';
 
   document.getElementById('planContainer').innerHTML =
-    '<p style="color:#999;font-size:13px">Cargando bases de datos…</p>';
-
-  // Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
-  const CN_TO_BS_MAP = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
-  function normCode(raw) {
-    const m = String(raw).match(/^([A-Z]+)(\d+)/);
-    if (!m) return raw;
-    const n = m[1] + String(parseInt(m[2])).padStart(3, '0');
-    return CN_TO_BS_MAP[n] || n;
-  }
-
-  // Extrae resumen + detalle de un workbook y los acumula en los arrays dados
-  function parseWB(wb, resumenArr, extMap) {
-    const wsRes = wb.Sheets['RESUMEN_LOCALES'];
-    const wsDet = wb.Sheets['DETALLE'];
-    if (wsRes) {
-      const rows = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
-      rows.slice(1).forEach(r => {
-        if (r[0] && !String(r[0]).toUpperCase().startsWith('GRAN')) resumenArr.push(r);
-      });
-    }
-    if (wsDet) {
-      const rows = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
-      rows.slice(1).forEach(r => {
-        if (!r[1] || String(r[2] || '').trim() !== mesNom) return;
-        const mx = String(r[1]).match(/^([A-Z]+\d+)/);
-        if (!mx) return;
-        const cod = normCode(mx[1]);
-        if (!extMap[cod]) extMap[cod] = [];
-        extMap[cod].push({ tipo: r[4], cap: r[5], costoMantt: r[6], precioRec: r[7], anioRec: r[9] });
-      });
-    }
-  }
+    '<p style="color:#999;font-size:13px">Cargando base de datos…</p>';
+  const _ls = document.getElementById('loadStatus');
+  if (_ls) _ls.innerHTML = '<div class="status-bar status-info">⏳ Cargando base de datos de extintores…</div>';
 
   try {
-    const t = Date.now();
-    // Cargar ambos Excel en paralelo; SUSHICORP puede no existir → se ignora el error
-    const [bufKFC, bufSUS] = await Promise.all([
-      fetch(`BASE_DATOS_KFC.xlsx?t=${t}`).then(r => { if (!r.ok) throw new Error(`BD KFC: HTTP ${r.status}`); return r.arrayBuffer(); }),
-      fetch(`BASE_DATOS_SUSHICORP.xlsx?t=${t}`).then(r => r.arrayBuffer()).catch(() => null),
-    ]);
+    const resp = await fetch(`BASE_DATOS_KFC.xlsx?t=${Date.now()}`);
+    const buf  = await resp.arrayBuffer();
+    const wb   = XLSX.read(buf, { type: 'array' });
 
-    const resumenAll = [];
-    const extMap     = {};
+    // RESUMEN: CÓDIGO, MARCA, NOMBRE_LOCAL, MES_SERVICIO, N_EXTINTORES,
+    //          TOTAL_MANTT, TOTAL_RECARGA, COBRO_ANUAL, AÑO_ULT_RECARGA, AÑO_RECARGA
+    const wsRes = wb.Sheets['RESUMEN_LOCALES'];
+    const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
 
-    parseWB(XLSX.read(bufKFC, { type: 'array' }), resumenAll, extMap);
-    if (bufSUS) parseWB(XLSX.read(bufSUS, { type: 'array' }), resumenAll, extMap);
+    // DETALLE: MARCA, NOMBRE_LOCAL, MES_SERVICIO, UBICACIÓN, TIPO, CAPACIDAD,
+    //          COSTO_MANTT, PRECIO_RECARGA, AÑO_ULT_RECARGA, AÑO_RECARGA
+    const wsDet  = wb.Sheets['DETALLE'];
+    const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
 
-    extMapBD = extMap;
+    // Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
+    // Ej: "BS04"→"BS004", "CN31"→"BS031"
+    const CN_TO_BS_MAP = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
+    function normCode(raw) {
+      const m = String(raw).match(/^([A-Z]+)(\d+)/);
+      if (!m) return raw;
+      const n = m[1] + String(parseInt(m[2])).padStart(3, '0');
+      return CN_TO_BS_MAP[n] || n;
+    }
 
-    planMes = resumenAll
-      .filter(r => r[3] === mesNom)
+    // Build extintor map by local code
+    const normMes = s => String(s || '').trim().toUpperCase();
+    const extMap = {};
+    detalle.slice(1).forEach(r => {
+      if (!r[1]) return;
+      if (!todosLosMeses && normMes(r[2]) !== normMes(mesNom)) return;
+      const m = String(r[1]).match(/^([A-Z]+\d+)/);
+      if (!m) return;
+      const cod = normCode(m[1]);
+      if (!extMap[cod]) extMap[cod] = [];
+      extMap[cod].push({ tipo: r[4], cap: r[5], costoMantt: r[6], precioRec: r[7], anioRec: r[9] });
+    });
+
+    planMes = resumen.slice(1)
+      .filter(r => r[0] && (todosLosMeses || normMes(r[3]) === normMes(mesNom)))
       .map(r => {
         const cod = normCode(String(r[0]));
         const anioRec = parseInt(r[9]) || 9999;
         const esRecarga = parseInt(anio) === anioRec;
-        const totalMantt   = parseFloat(r[5]) || 0;
-        const totalRecarga = parseFloat(r[6]) || 0;
         return {
           codigo: cod,
           marca: r[1],
           nombre: String(r[2] || cod),
           mes: r[3],
           nExt: r[4] || 0,
-          totalMantt,
-          totalRecarga,
-          cobro: esRecarga ? totalRecarga : totalMantt,
+          totalMantt: parseFloat(r[5]) || 0,
+          totalRecarga: parseFloat(r[6]) || 0,
+          cobro: parseFloat(r[7]) || 0,
           anioRec,
           esRecarga,
           empresa: getEmpresa(cod),
-          extintores: extOverrides[cod] || extMap[cod] || [],
+          extintores: extMap[cod] || [],
         };
       });
 
+    const _ls2 = document.getElementById('loadStatus');
+    if (_ls2) _ls2.innerHTML = '';
     renderPlan();
+    renderBD();
   } catch(e) {
     console.error('cargarPlan:', e);
     document.getElementById('planContainer').innerHTML =
@@ -1870,7 +1693,8 @@ function renderPlan() {
   const total     = planMes.length;
   const visitados = planMes.filter(l => visitaStatus[l.codigo] === 'visitado').length;
   const pendientes = total - visitados;
-  const mesNom = MESES_NOMBRE[document.getElementById('selMes').value];
+  const mesVal = document.getElementById('selMes').value;
+  const mesNom = MESES_NOMBRE[mesVal] || (mesVal ? mesVal : 'TODOS LOS MESES');
   const isAdmin = currentProfile === 'admin';
 
   const statsEl = document.getElementById('planStats');
@@ -1888,11 +1712,10 @@ function renderPlan() {
 
   // Filtro de búsqueda
   const q = (document.getElementById('planSearch')?.value || '').toUpperCase().trim();
-  const neBase  = parseInt(document.getElementById('neInicial')?.value)  || 6700;
-  const cotBase = parseInt(document.getElementById('cotInicial')?.value) || 1500;
+  const neBase = parseInt(document.getElementById('neInicial')?.value) || 6700;
 
   const visibles = planMes
-    .map((local, idx) => ({ local, neNum: neBase + idx, cotNum: cotBase + idx }))
+    .map((local, idx) => ({ local, neNum: neBase + idx }))
     .filter(({ local }) => !q ||
       local.codigo.toUpperCase().includes(q) ||
       String(local.nombre).toUpperCase().includes(q) ||
@@ -1903,7 +1726,7 @@ function renderPlan() {
     return;
   }
 
-  function buildCard({ local, neNum, cotNum }) {
+  function buildCard({ local, neNum }) {
     const status     = visitaStatus[local.codigo] || 'pendiente';
     const isVisitado = status === 'visitado';
     const iva        = parseFloat((local.cobro * 0.15).toFixed(2));
@@ -1930,6 +1753,7 @@ function renderPlan() {
             <strong style="white-space:nowrap">${local.codigo}</strong>
             <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${localLabel}</span>
             <span style="font-size:11px;color:#999;white-space:nowrap">${local.marca}</span>
+            ${mesVal === '' ? `<span style="font-size:11px;color:#8e44ad;font-weight:600;white-space:nowrap">${local.mes||''}</span>` : ''}
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
             <span class="badge-${status}">${isVisitado ? 'VISITADO' : 'PENDIENTE'}</span>
@@ -1939,17 +1763,13 @@ function renderPlan() {
               ${isVisitado ? '↩ Pendiente' : '✅ Visitado'}
             </button>${btnNE}
             <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
-              onclick="event.stopPropagation();abrirCertModal('${local.codigo}',${cotNum})">
-              📜 Certificado #${cotNum}
+              onclick="event.stopPropagation();abrirCertModal('${local.codigo}')">
+              📜 Generar Certificado
             </button>
           </div>
         </div>
         <div class="local-card-body" id="lbody-${local.codigo}">
-          <div style="margin-bottom:6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
-            <div style="flex:1;min-width:0">${extList || '<em style="color:#e74c3c">⚠️ Sin extintores en la base de datos</em>'}</div>
-            ${isAdmin ? `<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#f39c12;color:white;flex-shrink:0"
-              onclick="abrirEditExtModal('${local.codigo}')">✏️ Editar exts</button>` : ''}
-          </div>
+          <div style="margin-bottom:6px">${extList || '<em style="color:#e74c3c">⚠️ Sin extintores en la base de datos</em>'}</div>
           <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;align-items:center">
             ${tipoServ}
             <span>Subtotal: <strong>$${local.cobro.toFixed(2)}</strong></span>
@@ -1992,22 +1812,14 @@ function renderBD() {
     cont.innerHTML = '<p style="color:#999;font-size:13px">Sin locales para este mes.</p>';
     return;
   }
-  const totalExt = planMes.reduce((s, l) => s + (l.nExt || 0), 0);
-  const totalCobro = planMes.reduce((s, l) => s + l.cobro, 0);
-  let html = `<div style="font-size:12px;color:#555;margin-bottom:8px">
-    <strong>${planMes.length}</strong> locales · <strong>${totalExt}</strong> extintores ·
-    Total cobro: <strong>$${totalCobro.toFixed(2)}</strong>
-  </div>`;
-  html += `<table><thead><tr>
+  let html = `<table><thead><tr>
     <th>Código</th><th>Local</th><th>Marca</th><th>Extintores</th>
     <th>Servicio</th><th>Cobro</th></tr></thead><tbody>`;
   html += planMes.map(l => {
     const ext = l.extintores.map(e => `${e.tipo} ${e.cap}`).join(', ');
     const serv = l.esRecarga ? `RECARGA ${l.anioRec}` : 'MANTENIMIENTO';
-    const isSushi = l.codigo.startsWith('KN');
-    const rowBg = isSushi ? 'background:#fdf5ff' : '';
-    return `<tr style="${rowBg}">
-      <td><strong>${l.codigo}</strong>${isSushi ? ' <span style="font-size:9px;background:#6c3483;color:white;border-radius:3px;padding:1px 4px">SUSHI</span>' : ''}</td>
+    return `<tr>
+      <td><strong>${l.codigo}</strong></td>
       <td>${l.nombre.replace(l.codigo+' - ','')}</td>
       <td>${l.marca}</td>
       <td style="font-size:11px">${ext || '—'}</td>
@@ -2074,107 +1886,6 @@ function toggleLocalCard(codigo) {
   if (card) card.classList.toggle('open');
 }
 
-// ─── EDIT EXTINTORES MODAL ─────────────────────────────────────────────────────
-let _editExtCodigo = null;
-let _editExtOriginal = []; // copia de extMap para poder restaurar
-
-function abrirEditExtModal(codigo) {
-  _editExtCodigo = codigo;
-  const local = planMes.find(l => l.codigo === codigo);
-  if (!local) return;
-  document.getElementById('editExtTitle').textContent = `${codigo} — ${local.nombre}`;
-  _editExtOriginal = (extMapBD[codigo] || []).slice(); // datos originales del Excel
-  _renderEditExtRows(extOverrides[codigo] || extMapBD[codigo] || local.extintores);
-  const modal = document.getElementById('editExtModal');
-  modal.style.display = 'flex';
-}
-
-function cerrarEditExtModal() {
-  document.getElementById('editExtModal').style.display = 'none';
-  _editExtCodigo = null;
-}
-
-function _renderEditExtRows(rows) {
-  const tbody = document.getElementById('editExtBody');
-  tbody.innerHTML = rows.map((e, i) => `
-    <tr id="editExtRow-${i}">
-      <td style="padding:4px 6px;border:1px solid #ddd">
-        <select style="width:100%;font-size:12px;padding:2px">
-          ${(() => {
-            const TIPOS = ['PQS','CO2','AGUA','HCFC','K'];
-            const cur = (e.tipo||'').toUpperCase();
-            const opts = TIPOS.map(t => `<option value="${t}" ${cur===t?'selected':''}>${t}</option>`);
-            if (cur && !TIPOS.includes(cur)) opts.push(`<option value="${cur}" selected>${cur}</option>`);
-            return opts.join('');
-          })()}
-        </select>
-      </td>
-      <td style="padding:4px 6px;border:1px solid #ddd">
-        <input type="text" value="${e.cap||''}" style="width:80px;font-size:12px;padding:2px" />
-      </td>
-      <td style="padding:4px 6px;border:1px solid #ddd;text-align:right">
-        <input type="number" value="${e.costoMantt||0}" step="0.01" style="width:70px;font-size:12px;padding:2px;text-align:right" />
-      </td>
-      <td style="padding:4px 6px;border:1px solid #ddd;text-align:right">
-        <input type="number" value="${e.precioRec||0}" step="0.01" style="width:70px;font-size:12px;padding:2px;text-align:right" />
-      </td>
-      <td style="padding:4px 6px;border:1px solid #ddd;text-align:center">
-        <button onclick="editExtEliminarFila(${i})" style="background:#e74c3c;color:white;border:none;border-radius:3px;padding:2px 6px;font-size:11px;cursor:pointer">✕</button>
-      </td>
-    </tr>`).join('');
-}
-
-function _leerFilasEditExt() {
-  const rows = document.querySelectorAll('#editExtBody tr');
-  return Array.from(rows).map(tr => {
-    const cells = tr.querySelectorAll('td');
-    return {
-      tipo:      cells[0].querySelector('select').value.trim().toUpperCase(),
-      cap:       cells[1].querySelector('input').value.trim().toUpperCase(),
-      costoMantt: parseFloat(cells[2].querySelector('input').value) || 0,
-      precioRec:  parseFloat(cells[3].querySelector('input').value) || 0,
-    };
-  }).filter(e => e.tipo);
-}
-
-function editExtAgregarFila() {
-  const current = _leerFilasEditExt();
-  current.push({ tipo: 'PQS', cap: '10LBS', costoMantt: 0, precioRec: 0 });
-  _renderEditExtRows(current);
-}
-
-function editExtEliminarFila(idx) {
-  const current = _leerFilasEditExt();
-  current.splice(idx, 1);
-  _renderEditExtRows(current);
-}
-
-function guardarEditExt() {
-  if (!_editExtCodigo) return;
-  const rows = _leerFilasEditExt();
-  extOverrides[_editExtCodigo] = rows;
-  localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
-  const local = planMes.find(l => l.codigo === _editExtCodigo);
-  if (local) local.extintores = rows;
-  cerrarEditExtModal();
-  renderPlan();
-  autosave();
-  log(`✅ Extintores de ${_editExtCodigo} actualizados (${rows.length} exts)`, 'ok');
-}
-
-function resetEditExt() {
-  if (!_editExtCodigo) return;
-  if (!confirm(`¿Restaurar extintores de ${_editExtCodigo} desde la base de datos?`)) return;
-  delete extOverrides[_editExtCodigo];
-  localStorage.setItem('extOverrides', JSON.stringify(extOverrides));
-  const local = planMes.find(l => l.codigo === _editExtCodigo);
-  if (local) local.extintores = _editExtOriginal.slice();
-  cerrarEditExtModal();
-  renderPlan();
-  autosave();
-  log(`🔄 Extintores de ${_editExtCodigo} restaurados desde la BD`, 'ok');
-}
-
 function toggleVisita(codigo) {
   const cur = visitaStatus[codigo] || 'pendiente';
   visitaStatus[codigo] = cur === 'visitado' ? 'pendiente' : 'visitado';
@@ -2197,38 +1908,28 @@ async function generarNELocal(codigo, neNum) {
     const wb   = XLSX.read(buf, { type: 'array', cellStyles: true });
     const ws   = wb.Sheets[wb.SheetNames[0]];
 
-    // Escribe valor conservando el estilo de la celda de la plantilla
-    // (reemplazar la celda completa borraba bordes, colores y formato).
-    function setCell(ref, t, v, f) {
-      const prev = ws[ref] || {};
-      const cell = { t, v };
-      if (f) cell.f = f;
-      if (prev.s !== undefined) cell.s = prev.s;
-      ws[ref] = cell;
-    }
-
     // ── Date ────────────────────────────────────────────────────────────────
     const today = new Date();
     const MNAMES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
                     'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
     const fechaStr = `${today.getDate()} DE ${MNAMES[today.getMonth()]} DEL ${today.getFullYear()}`;
-    setCell('I10', 's', fechaStr);
+    ws['I10'] = { t:'s', v: fechaStr };
 
     // ── Company name & RUC: only override when using a dedicated template ──
     // INT fallback keeps "INT FOOD SERVICES" since KFC/GUS/CN/BS/I all bill via INT
     const emp = local.empresa || {};
     const hasOwnTemplate = emp.hoja && NE_TEMPLATE_MAP[emp.hoja] && NE_TEMPLATE_MAP[emp.hoja] !== 'INT';
     if (hasOwnTemplate) {
-      if (emp.empresa) setCell('B10', 's', emp.empresa);
-      if (emp.ruc)     setCell('L11', 's', emp.ruc);
+      if (emp.empresa) ws['B10'] = { t:'s', v: emp.empresa };
+      if (emp.ruc)     ws['L11'] = { t:'s', v: emp.ruc };
     }
 
     // ── Service type ─────────────────────────────────────────────────────────
-    setCell('C13', 's', local.esRecarga ? 'RECARGA' : 'MANTENIMIENTO');
+    ws['C13'] = { t:'s', v: local.esRecarga ? 'RECARGA' : 'MANTENIMIENTO' };
 
-    // ── Vaciar filas de ejemplo 14-24 conservando su formato ─────────────────
+    // ── Clear old sample rows 14-24 ──────────────────────────────────────────
     for (let r = 14; r <= 24; r++) {
-      ['A','B','C','L','M','N'].forEach(col => { setCell(col + r, 's', ''); });
+      ['A','B','C','L','M','N'].forEach(col => { delete ws[col + r]; });
     }
 
     // ── Build grouped items ──────────────────────────────────────────────────
@@ -2245,34 +1946,34 @@ async function generarNELocal(codigo, neNum) {
 
     let subtotalCalc = 0;
     items.forEach((item, i) => {
-      if (i >= 11) return; // max 11 item rows (14-24)
+      if (i >= 11) { if (i === 11) log(`⚠️ NE ${codigo}: ${items.length - 11} tipos de extintor omitidos (máx 11 filas)`, 'warn'); return; }
       const r = 14 + i;
       const desc  = tipoExtDescripcion(item.tipo, item.cap);
-      const lineT = parseFloat((item.qty * item.price).toFixed(2));
+      const lineT = item.qty * item.price;
       subtotalCalc += lineT;
-      setCell(`A${r}`, 'n', item.qty);
-      setCell(`B${r}`, 'n', item.qty);
-      setCell(`C${r}`, 's', desc);
-      setCell(`L${r}`, 's', '$');
-      setCell(`M${r}`, 'n', item.price);
-      setCell(`N${r}`, 'n', lineT, `M${r}*A${r}`);
+      ws[`A${r}`] = { t:'n', v: item.qty };
+      ws[`B${r}`] = { t:'n', v: item.qty };
+      ws[`C${r}`] = { t:'s', v: desc };
+      ws[`L${r}`] = { t:'s', v: '$' };
+      ws[`M${r}`] = { t:'n', v: item.price };
+      ws[`N${r}`] = { t:'n', v: lineT, f: `M${r}*A${r}` };
     });
 
     // ── Local info (row 25) ──────────────────────────────────────────────────
     const localLabel = local.nombre.replace(local.codigo + ' - ', '');
-    setCell('C25', 's', `LOCAL: ${local.codigo} - ${localLabel}`);
+    ws['C25'] = { t:'s', v: `LOCAL: ${local.codigo} - ${localLabel}` };
 
     // ── Totals ───────────────────────────────────────────────────────────────
     const sub = parseFloat(subtotalCalc.toFixed(2));
     const iva = parseFloat((sub * 0.15).toFixed(2));
     const tot = parseFloat((sub + iva).toFixed(2));
-    setCell('N27', 'n', sub, 'SUM(N14:N25)');
-    setCell('N29', 'n', iva, 'N27*0.15');
-    setCell('N31', 'n', tot, 'N27+N29');
-    setCell('N32', 'n', tot);
+    ws['N27'] = { t:'n', v: sub, f:'SUM(N14:N25)' };
+    ws['N29'] = { t:'n', v: iva, f:'N27*0.15' };
+    ws['N31'] = { t:'n', v: tot, f:'N27+N29' };
+    ws['N32'] = { t:'n', v: tot, f:'SUM(N31)' };
 
     // ── Amount in words ──────────────────────────────────────────────────────
-    setCell('B29', 's', numeroEnLetras(sub));
+    ws['B29'] = { t:'s', v: numeroEnLetras(tot) };
 
     XLSX.writeFile(wb, `NE-${neNum}-${local.codigo}.xlsx`);
     log(`✅ NE #${neNum} — ${local.codigo} descargada`, 'ok');
@@ -2284,7 +1985,8 @@ async function generarNELocal(codigo, neNum) {
 
 function tipoExtDescripcion(tipo, cap) {
   const tm = { CO2:'GAS CARBONICO', PQS:'POLVO QUIMICO SECO',
-                K:'TIPO K (ACETATO DE POTASIO)', FOAM:'ESPUMA (AGUA QUIMICA)' };
+                K:'TIPO K (ACETATO DE POTASIO)', FOAM:'ESPUMA (AGUA QUIMICA)',
+                AGUA:'AGUA QUIMICA', HCFC:'HCFC-123 (HALOTRON)' };
   const td = tm[(tipo || '').toUpperCase()] || tipo;
   const cd = (cap || '').replace(/\bLBS\b/gi,'LIBRAS').replace(/\b(?:GLNS|GLS|GL)\b/gi,'GALONES');
   return `EXTINTOR ${cd} - ${td}`;
@@ -2311,307 +2013,274 @@ function numeroEnLetras(num) {
   return `                ${txt} CON ${String(dec).padStart(2,'0')}/100 USD`;
 }
 
-function generarTodo() {
-  generarDetalle();
-  generarDistribucion();
-  generarFormatoFact();
-}
-
-// ─── EXCEL HELPERS ────────────────────────────────────────────────────────────
-function normTipo(tipo) {
-  const t = (tipo || '').toUpperCase().trim();
-  if (t === 'K' || t.includes('TIPO K') || t.includes('ACETATO')) return 'K';
-  if (t === 'CO2' || t.includes('CARBONICO')) return 'CO2';
-  if (t === 'PQS' || t.includes('POLVO')) return 'PQS';
-  if (t.includes('CO2')) return 'CO2';
-  return t || '-';
-}
-
-const _XB  = { style: 'thin',   color: { rgb: 'BDBDBD' } };
-const _XBM = { style: 'medium', color: { rgb: '888888' } };
-const _BG  = { indexed: 64 }; // required by xlsx-js-style for solid fills
-
-const XSTYLE = {
-  TITLE: {
-    font:      { bold: true, color: { rgb: 'FFFFFF' }, sz: 12, name: 'Calibri' },
-    fill:      { patternType: 'solid', fgColor: { rgb: '1F4E79' }, bgColor: _BG },
-    alignment: { horizontal: 'center', vertical: 'center' },
-    border:    { top: _XBM, bottom: _XBM, left: _XBM, right: _XBM }
-  },
-  SEC: {
-    font:      { bold: true, color: { rgb: 'FFFFFF' }, sz: 9, name: 'Calibri' },
-    fill:      { patternType: 'solid', fgColor: { rgb: '2E75B6' }, bgColor: _BG },
-    alignment: { horizontal: 'center', vertical: 'center' },
-    border:    { top: _XB, bottom: _XB, left: _XB, right: _XB }
-  },
-  HDR: {
-    font:      { bold: true, color: { rgb: 'FFFFFF' }, sz: 9, name: 'Calibri' },
-    fill:      { patternType: 'solid', fgColor: { rgb: 'C0392B' }, bgColor: _BG },
-    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-    border:    { top: _XB, bottom: { style: 'medium', color: { rgb: '922B21' } }, left: _XB, right: _XB }
-  },
-  DATA: {
-    font:      { sz: 9, name: 'Calibri' },
-    fill:      { patternType: 'solid', fgColor: { rgb: 'FFFFFF' }, bgColor: _BG },
-    alignment: { vertical: 'center' },
-    border:    { top: _XB, bottom: _XB, left: _XB, right: _XB }
-  },
-  ALT: {
-    font:      { sz: 9, name: 'Calibri' },
-    fill:      { patternType: 'solid', fgColor: { rgb: 'EBF5FB' }, bgColor: _BG },
-    alignment: { vertical: 'center' },
-    border:    { top: _XB, bottom: _XB, left: _XB, right: _XB }
-  },
-  TOT: {
-    font:      { bold: true, sz: 9, name: 'Calibri' },
-    fill:      { patternType: 'solid', fgColor: { rgb: 'FEF9E7' }, bgColor: _BG },
-    alignment: { vertical: 'center' },
-    border:    { top: { style: 'medium', color: { rgb: 'F0B400' } }, bottom: { style: 'medium', color: { rgb: 'F0B400' } }, left: _XB, right: _XB }
-  },
-  MONEY: '"$"#,##0.00',
-};
-
-function xsApply(ws, rows, opts = {}) {
-  const nr = rows.length;
-  const nc = Math.max(...rows.map(r => r.length));
-  let dataIdx = 0;
-  for (let ri = 0; ri < nr; ri++) {
-    for (let ci = 0; ci < nc; ci++) {
-      const ref = XLSX.utils.encode_cell({ r: ri, c: ci });
-      if (!ws[ref]) ws[ref] = { t: 's', v: '' };
-      let s;
-      if      (ri === opts.titleRow)             s = XSTYLE.TITLE;
-      else if (ri === opts.secRow)               s = XSTYLE.SEC;
-      else if (ri === opts.hdrRow)               s = XSTYLE.HDR;
-      else if (opts.totalRows?.includes(ri))     s = XSTYLE.TOT;
-      else    s = dataIdx % 2 === 0 ? XSTYLE.DATA : XSTYLE.ALT;
-      ws[ref].s = JSON.parse(JSON.stringify(s));
-      if (opts.moneyCols?.includes(ci) && (ws[ref].t === 'n' || ws[ref].f)) {
-        ws[ref].s.numFmt = XSTYLE.MONEY;
-      }
-    }
-    const notHdr = ri !== opts.titleRow && ri !== opts.secRow && ri !== opts.hdrRow && !opts.totalRows?.includes(ri);
-    if (notHdr) dataIdx++;
-  }
-  ws['!rows'] = rows.map((_, ri) => ({
-    hpt: ri === opts.titleRow ? 22 : ri === opts.secRow ? 18 : ri === opts.hdrRow ? 34 : opts.totalRows?.includes(ri) ? 18 : 15
-  }));
-  if (opts.merges) ws['!merges'] = opts.merges;
-  if (opts.freezeRows) ws['!freeze'] = { xSplit: 0, ySplit: opts.freezeRows };
+async function generarTodo() {
+  await generarDetalle();
+  await generarDistribucion();
+  await generarFormatoFact();
 }
 
 function getMesLabel() {
   const mes = document.getElementById('selMes').value;
-  return MESES_NOMBRE[mes] || mes;
+  return MESES_NOMBRE[mes] || (mes ? mes : 'TODOS');
 }
 
-function generarDetalle() {
-  log('Generando DETALLE FACT MENSUAL...');
-  const periodo = `${getMesLabel()} ${document.getElementById('selAnio').value}`;
-
-  const porEmpresa = {};
-  cotizaciones.forEach(c => {
-    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-    if (!porEmpresa[hoja]) porEmpresa[hoja] = [];
-    porEmpresa[hoja].push(c);
-  });
-
-  for (const [hoja, cots] of Object.entries(porEmpresa)) {
-    const wb = XLSX.utils.book_new();
-    const empNombre = cots[0]?.empresa?.empresa || hoja;
-    const mangesCots = cots.filter(c => c.category === 'MANGES');
-    const mantCots   = cots.filter(c => c.category === 'MANT');
-
-    // ── MANGES sheet ──────────────────────────────────────────────────────
-    if (mangesCots.length > 0) {
-      const NC = 16;
-      const titleRow = [`DETALLE FACTURACIÓN MANTGES — ${empNombre} — ${periodo}`, ...Array(NC-1).fill(null)];
-      const secRow   = ['DATOS DE LA EMPRESA',null,null,null,null, 'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null,null, 'DETALLE DE COSTOS',null,null,null,null];
-      const hdrRow   = ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO', 'EQUIPO/SERVICIO ENTREGADO','No. EXT','TIPO','CAPACIDAD','M/R', 'JEFE DE OPERACIONES', 'VALOR UNIT.','SUBTOTAL','IVA 15%','TOTAL','# N.E.'];
-      const dataRows = [];
-      mangesCots.forEach(c => {
-        const emp = c.empresa || {};
-        const extItems = c.items.filter(i => i.isExtintor);
-        const first = extItems[0];
-        dataRows.push([emp.empresa||'', emp.marca||'', c.localName||'', c.ciudad||'', c.localCode||'', null,
-          first?first.qty:1, first?normTipo(first.tipo):'-', first?first.capacidad:'-', 'M', null,
-          first?first.unitPrice:0, c.subtotal, c.iva, c.total, c.notaEntrega||'']);
-        for (let i = 1; i < extItems.length; i++) {
-          const it = extItems[i];
-          dataRows.push([null,null,null,null,null,null, it.qty,normTipo(it.tipo),it.capacidad,'M',null, it.unitPrice,null,null,null,null]);
-        }
-      });
-      const totSub = parseFloat(mangesCots.reduce((s,c)=>s+c.subtotal,0).toFixed(2));
-      const totIva = parseFloat(mangesCots.reduce((s,c)=>s+c.iva,0).toFixed(2));
-      const totTot = parseFloat(mangesCots.reduce((s,c)=>s+c.total,0).toFixed(2));
-      const totRow = [null,null,null,null,null,null,null,null,null,null,null, 'TOTALES', totSub, totIva, totTot, null];
-      const allRows = [titleRow, secRow, hdrRow, ...dataRows, totRow];
-      const tr = allRows.length - 1;
-      const ws = XLSX.utils.aoa_to_sheet(allRows);
-      // Formulas in total row (Excel 1-indexed: data starts at row 4)
-      ws[`M${tr+1}`] = { t:'n', v:totSub, f:`SUM(M4:M${tr})` };
-      ws[`N${tr+1}`] = { t:'n', v:totIva, f:`SUM(N4:N${tr})` };
-      ws[`O${tr+1}`] = { t:'n', v:totTot, f:`SUM(O4:O${tr})` };
-      ws['!cols'] = [22,14,22,10,12,26,7,7,9,4,18,10,10,9,10,9].map(w=>({wch:w}));
-      xsApply(ws, allRows, {
-        titleRow:0, secRow:1, hdrRow:2, totalRows:[tr],
-        moneyCols:[11,12,13,14],
-        merges:[
-          {s:{r:0,c:0},e:{r:0,c:NC-1}},
-          {s:{r:1,c:0},e:{r:1,c:4}}, {s:{r:1,c:5},e:{r:1,c:10}}, {s:{r:1,c:11},e:{r:1,c:15}}
-        ],
-        freezeRows:3
-      });
-      XLSX.utils.book_append_sheet(wb, ws, 'MANGES');
-    }
-
-    // ── MANT sheet ────────────────────────────────────────────────────────
-    if (mantCots.length > 0) {
-      const NC = 16;
-      const titleRow = [`DETALLE FACTURACIÓN MANT — ${empNombre} — ${periodo}`, ...Array(NC-1).fill(null)];
-      const secRow   = ['DATOS DE LA EMPRESA',null,null,null,null, 'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null, 'DETALLE DE COSTOS',null,null,null, 'DATOS ENTREGA',null];
-      const hdrRow   = ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. COSTO', 'EQUIPO/SERVICIO','# EXT','TIPO','CAPACIDAD','JEFE DE OPERACIONES', 'VALOR UNIT.','SUBTOTAL','IVA 15%','TOTAL','# N.E.','OBSERVACIÓN'];
-      const dataRows = mantCots.map(c => {
-        const emp = c.empresa || {};
-        return [emp.empresa||'', emp.marca||'', c.localName||'', c.ciudad||'', c.localCode||'',
-          c.descripcionFact||'', '-','-','-', null,
-          c.subtotal, c.subtotal, c.iva, c.total, c.notaEntrega||'', c.observacion||'SOLICITADO POR EL LOCAL'];
-      });
-      const totSub = parseFloat(mantCots.reduce((s,c)=>s+c.subtotal,0).toFixed(2));
-      const totIva = parseFloat(mantCots.reduce((s,c)=>s+c.iva,0).toFixed(2));
-      const totTot = parseFloat(mantCots.reduce((s,c)=>s+c.total,0).toFixed(2));
-      const totRow = [null,null,null,null,null,null,null,null,null,null, 'TOTALES', totSub, totIva, totTot, null, null];
-      const allRows = [titleRow, secRow, hdrRow, ...dataRows, totRow];
-      const tr = allRows.length - 1;
-      const ws = XLSX.utils.aoa_to_sheet(allRows);
-      ws[`L${tr+1}`] = { t:'n', v:totSub, f:`SUM(L4:L${tr})` };
-      ws[`M${tr+1}`] = { t:'n', v:totIva, f:`SUM(M4:M${tr})` };
-      ws[`N${tr+1}`] = { t:'n', v:totTot, f:`SUM(N4:N${tr})` };
-      ws['!cols'] = [22,14,22,10,12,26,7,7,9,18,10,10,9,10,9,22].map(w=>({wch:w}));
-      xsApply(ws, allRows, {
-        titleRow:0, secRow:1, hdrRow:2, totalRows:[tr],
-        moneyCols:[10,11,12,13],
-        merges:[
-          {s:{r:0,c:0},e:{r:0,c:NC-1}},
-          {s:{r:1,c:0},e:{r:1,c:4}}, {s:{r:1,c:5},e:{r:1,c:9}}, {s:{r:1,c:10},e:{r:1,c:13}}, {s:{r:1,c:14},e:{r:1,c:15}}
-        ],
-        freezeRows:3
-      });
-      XLSX.utils.book_append_sheet(wb, ws, 'MANT');
-    }
-
-    if (!wb.SheetNames.length) continue;
-    const nombreArchivo = sanitizeFileName(`DETALLE FACT MENSUAL ${getMesLabel()} - ${hoja}.xlsx`);
-    XLSX.writeFile(wb, nombreArchivo);
-    log(`  ✅ ${nombreArchivo} (MANGES: ${mangesCots.length}, MANT: ${mantCots.length})`, 'ok');
+function _cloneSheet(ws) {
+  const out = {};
+  for (const k of Object.keys(ws)) {
+    out[k] = k.startsWith('!') ? JSON.parse(JSON.stringify(ws[k])) : Object.assign({}, ws[k]);
   }
+  return out;
+}
+
+function _clearSheetRows(ws, fromRow) {
+  if (!ws['!ref']) return;
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let r = fromRow - 1; r <= range.e.r; r++) {
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      delete ws[XLSX.utils.encode_cell({ r, c })];
+    }
+  }
+  range.e.r = Math.max(range.s.r, fromRow - 2);
+  ws['!ref'] = XLSX.utils.encode_range(range);
+}
+
+async function _fetchTemplate(path) {
+  const resp = await fetch(path);
+  if (!resp.ok) throw new Error(resp.status);
+  return XLSX.read(new Uint8Array(await resp.arrayBuffer()), { type: 'array' });
+}
+
+async function generarDetalle() {
+  if (!cotizaciones.length) { log('⚠️ No hay datos para generar DETALLE', 'warn'); return; }
+  log('Generando DETALLE FACT MENSUAL...');
+  const dateStr = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+  let wb;
+  try {
+    wb = await _fetchTemplate('templates/DETALLE_FACT_MENSUAL.xlsx');
+    log('  Plantilla cargada', 'ok');
+  } catch(e) {
+    log('⚠️ No se pudo cargar plantilla: ' + e.message, 'warn');
+    wb = XLSX.utils.book_new();
+  }
+
+  // ── MANGES ──────────────────────────────────────────────────────────────────
+  {
+    // data[] rows go into Excel starting at row 3 (rows 1-2 are headers in template)
+    // Excel row of data[i] = i + 3
+    const data = [];
+    const byHoja = {}; const hojaOrder = [];
+    cotizaciones.filter(c => c.category === 'MANGES').forEach(c => {
+      const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+      if (!byHoja[hoja]) { byHoja[hoja] = []; hojaOrder.push(hoja); }
+      byHoja[hoja].push(c);
+    });
+    hojaOrder.forEach(hoja => {
+      const group = byHoja[hoja];
+      const gs = data.length + 3; // Excel row of group start
+      group.forEach(c => {
+        const emp = c.empresa || {};
+        const extItems = (c.items || []).filter(i => i.isExtintor);
+        if (!extItems.length) {
+          const r = data.length + 3;
+          data.push([emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
+            c.localCode, null, 0, '-', '-', 'M', null, 0,
+            {f:`SUM(L${r}:L${r})`}, {f:`M${r}*0.15`}, {f:`N${r}+M${r}`}, c.notaEntrega||'']);
+          return;
+        }
+        const cotFirst = data.length; // index into data[] of this cotización's first row
+        extItems.forEach((item, i) => {
+          data.push(i === 0
+            ? [emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
+               c.localCode, null,
+               item.qty, item.tipo, item.capacidad,
+               item.serviceType === 'RECARGA' ? 'R' : 'M', null, item.unitPrice,
+               null, null, null, c.notaEntrega||'']
+            : [null,null,null,null,null,null,
+               item.qty, item.tipo, item.capacidad,
+               item.serviceType === 'RECARGA' ? 'R' : 'M', null, item.unitPrice,
+               null,null,null,null]);
+        });
+        // fr/lr: Excel rows spanning this cotización's items
+        const fr = cotFirst + 3, lr = data.length + 2;
+        data[cotFirst][12] = {f:`SUM(L${fr}:L${lr})`};
+        data[cotFirst][13] = {f:`M${fr}*0.15`};
+        data[cotFirst][14] = {f:`N${fr}+M${fr}`};
+      });
+      const ge = data.length + 2; // Excel row of last data row before totals
+      const factNum = (facturaMap[hoja]?.factManges || '').trim().split(' ')[0];
+      data.push([null,null,null,null,null,null,
+        dateStr, null, `FACT 001-002-${factNum}`, null, null, 'TOTAL:',
+        {f:`SUM(M${gs}:M${ge})`}, {f:`SUM(N${gs}:N${ge})`}, {f:`SUM(O${gs}:O${ge})`}, null]);
+    });
+    let ws = wb.Sheets['MANGES'];
+    if (!ws) {
+      ws = XLSX.utils.aoa_to_sheet([
+        ['DATOS DE LA EMPRESA',null,null,null,null,'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null,null,'DETALLE DE COSTOS',null,null,null,null],
+        ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO','EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R','JEFE DE OPERACIONES QUE AUTORIZA','VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
+      ]);
+      XLSX.utils.book_append_sheet(wb, ws, 'MANGES');
+    } else {
+      _clearSheetRows(ws, 3);
+    }
+    if (data.length) XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A3' });
+    log(`  MANGES: ${hojaOrder.length} empresas`, 'ok');
+  }
+
+  // ── MANT ────────────────────────────────────────────────────────────────────
+  {
+    const data = [];
+    const byHoja = {}; const hojaOrder = [];
+    cotizaciones.filter(c => c.category === 'MANT').forEach(c => {
+      const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+      if (!byHoja[hoja]) { byHoja[hoja] = []; hojaOrder.push(hoja); }
+      byHoja[hoja].push(c);
+    });
+    hojaOrder.forEach(hoja => {
+      const group = byHoja[hoja];
+      const gs = data.length + 3;
+      group.forEach(c => {
+        const emp = c.empresa || {};
+        const r = data.length + 3;
+        data.push([emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
+          c.localCode, c.descripcionFact, '-', '-', '-', null,
+          c.subtotal, {f:`SUM(K${r})`}, {f:`L${r}*0.15`}, {f:`M${r}+L${r}`},
+          c.notaEntrega||'', c.observacion||'', null]);
+      });
+      const ge = data.length + 2;
+      const factNum = (facturaMap[hoja]?.factMant || '').trim().split(' ')[0];
+      data.push([null,null,null,null,null,null,
+        dateStr, null, `FACT 001-002-${factNum}`, null, 'TOTAL:',
+        {f:`SUM(L${gs}:L${ge})`}, {f:`SUM(M${gs}:M${ge})`}, {f:`SUM(N${gs}:N${ge})`},
+        null,null,null]);
+    });
+    let ws = wb.Sheets['MANT'];
+    if (!ws) {
+      ws = XLSX.utils.aoa_to_sheet([
+        ['DATOS DE LA EMPRESA',null,null,null,null,'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null,'DETALLE DE COSTOS',null,null,null,null,'OBSERVACION',null],
+        ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO','EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD','JEFE DE OPERACIONES QUE AUTORIZA','VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA',null,null]
+      ]);
+      XLSX.utils.book_append_sheet(wb, ws, 'MANT');
+    } else {
+      _clearSheetRows(ws, 3);
+    }
+    if (data.length) XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A3' });
+    log(`  MANT: ${hojaOrder.length} empresas`, 'ok');
+  }
+
+  XLSX.writeFile(wb, `DETALLE FACT MENSUAL ${getMesLabel()}.xlsx`);
+  log('✅ DETALLE FACT MENSUAL descargado', 'ok');
   markOutput('out1');
 }
 
-function generarDistribucion() {
+async function generarDistribucion() {
+  if (!cotizaciones.length) { log('⚠️ No hay datos para generar DISTRIBUCIÓN', 'warn'); return; }
   log('Generando DISTRIBUCIÓN...');
-  const periodo = `${getMesLabel()} ${document.getElementById('selAnio').value}`;
-  const wb = XLSX.utils.book_new();
 
-  const byHoja = {};
-  cotizaciones.forEach(c => {
-    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-    const key  = hoja + '|' + c.category;
-    if (!byHoja[key]) byHoja[key] = { hoja, category: c.category, empresa: c.empresa, items: [] };
-    byHoja[key].items.push(c);
-  });
-
-  let sheetCount = 0;
-  for (const [, data] of Object.entries(byHoja)) {
-    const tipo      = data.category === 'MANGES' ? 'MANTGES' : 'MANT';
-    const factNum  = data.category === 'MANGES'
-      ? (facturaMap[data.hoja]?.factManges || `XXXX ${tipo}`)
-      : (facturaMap[data.hoja]?.factMant   || `XXXX ${tipo}`);
-    const empNombre = data.empresa?.empresa || data.hoja;
-
-    const NC = 5;
-    const titleRow = [`DISTRIBUCIÓN ${tipo} — ${empNombre} — FACT. ${factNum} — ${periodo}`, null, null, null, null];
-    const hdrRow   = ['C.C.', 'DESCRIPCIÓN DEL SERVICIO', 'SUBTOTAL', 'IVA 15%', 'TOTAL'];
-    const dataRows = data.items.map(c => [c.cc, c.descripcionFact, c.subtotal, c.iva, c.total]);
-
-    const totSub = parseFloat(data.items.reduce((s,c)=>s+c.subtotal,0).toFixed(2));
-    const totIva = parseFloat(data.items.reduce((s,c)=>s+c.iva,0).toFixed(2));
-    const totTot = parseFloat(data.items.reduce((s,c)=>s+c.total,0).toFixed(2));
-    const totRow = [null, 'TOTAL FACTURA', totSub, totIva, totTot];
-
-    const allRows = [titleRow, hdrRow, ...dataRows, totRow];
-    const tr = allRows.length - 1;
-    const ws = XLSX.utils.aoa_to_sheet(allRows);
-    ws[`C${tr+1}`] = { t:'n', v:totSub, f:`SUM(C3:C${tr})` };
-    ws[`D${tr+1}`] = { t:'n', v:totIva, f:`SUM(D3:D${tr})` };
-    ws[`E${tr+1}`] = { t:'n', v:totTot, f:`SUM(E3:E${tr})` };
-    ws['!cols'] = [{ wch:12 }, { wch:40 }, { wch:12 }, { wch:11 }, { wch:12 }];
-    xsApply(ws, allRows, {
-      titleRow:0, hdrRow:1, totalRows:[tr],
-      moneyCols:[2,3,4],
-      merges:[{ s:{r:0,c:0}, e:{r:0,c:NC-1} }]
-    });
-
-    let sheetName = (`FACT ${factNum}`).slice(0, 31);
-    let suffix = 2;
-    while (wb.SheetNames.includes(sheetName)) {
-      sheetName = (`FACT ${factNum} (${suffix++})`).slice(0, 31);
-    }
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    sheetCount++;
-    log(`  Hoja: ${sheetName} (${data.items.length} líneas)`, 'ok');
+  let templateSheet = null;
+  try {
+    const tWb = await _fetchTemplate('templates/DISTRIBUCION.xlsx');
+    templateSheet = tWb.Sheets[tWb.SheetNames[0]];
+    log('  Plantilla cargada', 'ok');
+  } catch(e) {
+    log('⚠️ No se pudo cargar plantilla: ' + e.message, 'warn');
   }
 
+  const wb = XLSX.utils.book_new();
+  const byKey = {}; const keyOrder = [];
+  cotizaciones.forEach(c => {
+    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+    const factFull = c.category === 'MANGES'
+      ? (facturaMap[hoja]?.factManges || '')
+      : (facturaMap[hoja]?.factMant || '');
+    const num = factFull.trim().split(' ')[0];
+    const key = hoja + '|' + c.category;
+    if (!byKey[key]) { byKey[key] = { num, items: [] }; keyOrder.push(key); }
+    byKey[key].items.push(c);
+  });
+
+  keyOrder.forEach(key => {
+    const { num, items } = byKey[key];
+    // data[] rows go into Excel starting at row 2 (row 1 is header)
+    // Excel row of data[i] = i + 2
+    let ws;
+    if (templateSheet) {
+      ws = _cloneSheet(templateSheet);
+      _clearSheetRows(ws, 2);
+    } else {
+      ws = XLSX.utils.aoa_to_sheet([['C.C.', 'DESCRIPCION', 'SUBTOTAL', 'IVA', 'TOTAL']]);
+    }
+    const data = [];
+    items.forEach(c => {
+      const r = data.length + 2;
+      data.push([c.cc, c.descripcionFact, c.subtotal, {f:`C${r}*0.15`}, {f:`SUM(D${r},C${r})`}]);
+    });
+    const last = data.length + 1; // Excel row of last data row
+    data.push([null, 'TOTAL:',
+      {f:`SUM(C2:C${last})`}, {f:`SUM(D2:D${last})`}, {f:`SUM(E2:E${last})`}]);
+    XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A2' });
+    const sheetName = `FACT ${num}`.slice(0, 31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    log(`  Hoja: ${sheetName} (${items.length} líneas)`, 'ok');
+  });
+
+  if (!wb.SheetNames.length) { log('⚠️ No hay datos para generar DISTRIBUCIÓN', 'warn'); return; }
   XLSX.writeFile(wb, `DISTRIBUCION ${getMesLabel()}.xlsx`);
-  log(`✅ DISTRIBUCIÓN descargado (${sheetCount} hojas)`, 'ok');
+  log(`✅ DISTRIBUCIÓN descargado (${keyOrder.length} hojas)`, 'ok');
   markOutput('out2');
 }
 
-function generarFormatoFact() {
+async function generarFormatoFact() {
   log('Generando FORMATO_FACTURACIÓN...');
-  const periodo = `${getMesLabel()} ${document.getElementById('selAnio').value}`;
-  const wb = XLSX.utils.book_new();
 
-  const byHoja = {};
-  cotizaciones.forEach(c => {
-    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-    if (!byHoja[hoja]) byHoja[hoja] = { empresa: c.empresa, items: [] };
-    byHoja[hoja].items.push(c);
-  });
-
-  for (const [hoja, data] of Object.entries(byHoja)) {
-    const empNombre = data.empresa?.empresa || hoja;
-    const NC = 7;
-    const titleRow = [`FORMATO FACTURACIÓN — ${empNombre} — ${periodo}`, null, null, null, null, null, null];
-    const hdrRow   = ['C. COSTO', 'DESCRIPCIÓN FACTURA / # ACTA U ORDEN DE TRABAJO', 'N° FACTURA', 'SUBTOTAL', 'IVA 15%', 'TOTAL', '# N.E.'];
-    const dataRows = data.items.map(c => {
-      const factNum = c.category === 'MANGES'
-        ? (facturaMap[hoja]?.factManges || '')
-        : (facturaMap[hoja]?.factMant   || '');
-      return [c.cc, c.descripcionFact, factNum, c.subtotal, c.iva, c.total, c.notaEntrega||''];
-    });
-
-    const totSub = parseFloat(data.items.reduce((s,c)=>s+c.subtotal,0).toFixed(2));
-    const totIva = parseFloat(data.items.reduce((s,c)=>s+c.iva,0).toFixed(2));
-    const totTot = parseFloat(data.items.reduce((s,c)=>s+c.total,0).toFixed(2));
-    const totRow = [null, 'TOTALES', null, totSub, totIva, totTot, null];
-
-    const allRows = [titleRow, hdrRow, ...dataRows, totRow];
-    const tr = allRows.length - 1;
-    const ws = XLSX.utils.aoa_to_sheet(allRows);
-    ws[`D${tr+1}`] = { t:'n', v:totSub, f:`SUM(D3:D${tr})` };
-    ws[`E${tr+1}`] = { t:'n', v:totIva, f:`SUM(E3:E${tr})` };
-    ws[`F${tr+1}`] = { t:'n', v:totTot, f:`SUM(F3:F${tr})` };
-    ws['!cols'] = [{ wch:12 }, { wch:45 }, { wch:14 }, { wch:11 }, { wch:10 }, { wch:11 }, { wch:10 }];
-    xsApply(ws, allRows, {
-      titleRow:0, hdrRow:1, totalRows:[tr],
-      moneyCols:[3,4,5],
-      merges:[{ s:{r:0,c:0}, e:{r:0,c:NC-1} }]
-    });
-    XLSX.utils.book_append_sheet(wb, ws, hoja.slice(0, 31));
-    log(`  Hoja: ${hoja} (${data.items.length} líneas)`, 'ok');
+  let templateSheet = null;
+  try {
+    const tWb = await _fetchTemplate('templates/FORMATO_FACTURACION.xlsx');
+    templateSheet = tWb.Sheets[tWb.SheetNames[0]];
+    log('  Plantilla cargada', 'ok');
+  } catch(e) {
+    log('⚠️ No se pudo cargar plantilla: ' + e.message, 'warn');
   }
 
+  const wb = XLSX.utils.book_new();
+  const byHoja = {}; const hojaOrder = [];
+  cotizaciones.forEach(c => {
+    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
+    if (!byHoja[hoja]) { byHoja[hoja] = []; hojaOrder.push(hoja); }
+    byHoja[hoja].push(c);
+  });
+
+  hojaOrder.forEach(hoja => {
+    const items = byHoja[hoja];
+    // data[] rows go into Excel starting at row 2 (row 1 is header)
+    // Excel row of data[i] = i + 2
+    let ws;
+    if (templateSheet) {
+      ws = _cloneSheet(templateSheet);
+      _clearSheetRows(ws, 2);
+    } else {
+      ws = XLSX.utils.aoa_to_sheet([
+        ['C.COSTO','DESCRIPCION FACTURA + # ACTA/ORDEN DE TRABAJO','N° FACTURA','SUBTOTAL','IVA','TOTAL','ACTA']
+      ]);
+    }
+    const data = [];
+    items.forEach(c => {
+      const factNum = c.category === 'MANGES'
+        ? (facturaMap[hoja]?.factManges || '')
+        : (facturaMap[hoja]?.factMant || '');
+      const r = data.length + 2;
+      data.push([c.cc, c.descripcionFact, factNum, c.subtotal,
+        {f:`D${r}*0.15`}, {f:`SUM(E${r},D${r})`}, null]);
+    });
+    const last = data.length + 1;
+    data.push([null, 'TOTALES', null,
+      {f:`SUM(D2:D${last})`}, {f:`SUM(E2:E${last})`}, {f:`SUM(F2:F${last})`}, null]);
+    XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A2' });
+    XLSX.utils.book_append_sheet(wb, ws, hoja.slice(0, 31));
+    log(`  Hoja: ${hoja} (${items.length} líneas)`, 'ok');
+  });
+
+  if (!wb.SheetNames.length) { log('⚠️ No hay datos para generar FORMATO_FACTURACIÓN', 'warn'); return; }
   XLSX.writeFile(wb, `FORMATO_FACTURACIÓN ${getMesLabel()}.xlsx`);
   log('✅ FORMATO_FACTURACIÓN descargado', 'ok');
   markOutput('out3');
@@ -2619,21 +2288,10 @@ function generarFormatoFact() {
 
 // ─── CERTIFICADOS PDF ─────────────────────────────────────────────────────────
 let certModalCodigo = null;
-let certModalCotNum = 0;   // número de cotización para el cert activo
 let certFotos = {};       // { antes: File, despues: File, cilindro: File }
 let certHayNovedades = false;
 let certAccsSelected = new Set();  // indices into ACCESSORIES
 let sigCtx = null, sigDrawing = false;
-
-// Reconstruye el código de display: K76→KFCK76, G49→GUSG49, resto igual
-function certDisplayCode(cod) {
-  if (/^K\d/.test(cod)) return 'KFCK' + cod.slice(1);
-  if (/^G\d/.test(cod)) return 'GUSG' + cod.slice(1);
-  return cod;
-}
-function sanitizeFileName(s) {
-  return String(s || '').replace(/[/\\:*?"<>|]/g, '_').trim();
-}
 
 const ACCESSORIES = [
   { desc: 'Abrazadera plástica',   precio: 1.50 },
@@ -2667,8 +2325,8 @@ async function fetchLogo() {
 }
 
 async function hacerPDF(opts) {
-  const { localNom, puntNom, localCode, exts, FB64, ACCS, certNum, MA, MAS, anio, fileName } = opts;
-  if (!window.jspdf || !window.jspdf.jsPDF) { alert('Error: librería PDF no cargada. Recarga la página.'); return; }
+  const { localNom, puntNom, localCode, exts, FB64, ACCS, certNum, MA, MAS, anio } = opts;
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('jsPDF no cargado'); return; }
   const { jsPDF } = window.jspdf;
   const LOGO_B64 = await fetchLogo();
 
@@ -2800,7 +2458,7 @@ async function hacerPDF(opts) {
 
   const gmap = {};
   (exts||[]).forEach(e => {
-    const cap=(e.cap||e.capacidad||'').toUpperCase(), tip=normTipo(e.tipo);
+    const cap=(e.cap||e.capacidad||'').toUpperCase(), tip=(e.tipo||'').toUpperCase();
     const k=cap+'|'+tip;
     if (!gmap[k]) gmap[k]={cnt:0,cap,tip};
     gmap[k].cnt++;
@@ -2922,7 +2580,7 @@ async function hacerPDF(opts) {
     bloqueAutorizacion(y2);
   }
 
-  doc.save(fileName || ('CERT-'+localCode+'-'+anio+'.pdf'));
+  doc.save('CERT-'+localCode+'-'+anio+'.pdf');
   return doc;
 }
 
@@ -2935,46 +2593,34 @@ async function generarCertificados() {
   const anio   = document.getElementById('selAnio').value;
   const mesNum = mesVal.substring(0,2);
 
-  const cotBase = parseInt(document.getElementById('cotInicial')?.value) || 1500;
   let count = 0;
-  for (const [i, cot] of mangesCots.entries()) {
+  for (const cot of mangesCots) {
     const exts = [];
-    (cot.items||[]).filter(it=>it.isExtintor).forEach(it => {
-      for (let q=0;q<(it.qty||1);q++) exts.push({tipo:it.tipo, cap:it.capacidad||it.cap||'—'});
+    (cot.items||[]).filter(i=>i.isExtintor).forEach(i => {
+      for (let q=0;q<(i.qty||1);q++) exts.push({tipo:i.tipo, cap:i.capacidad||i.cap||'—'});
     });
-    const dispCode = certDisplayCode(cot.localCode);
-    const cotNum   = cotBase + i;
-    const certNum  = `CERT. N° ${cotNum}`;
-    try {
-    const fileName = sanitizeFileName(`COTIZACION${cotNum} ${dispCode} ${cot.localName||cot.localCode}.pdf`);
     await hacerPDF({
       localNom:  cot.localName||cot.localCode,
       puntNom:   cot.ciudad||cot.localName||'',
       localCode: cot.localCode,
       exts, FB64:{}, ACCS:[],
-      certNum,
-      fileName,
+      certNum:   cot.localCode+'-MANT EXTINTORES-'+anio,
       MA:  mesNum+'/'+anio,
       MAS: mesNum+'/'+(parseInt(anio)+1),
       anio,
     });
-      count++;
-      log('  📜 '+cot.localCode+' — '+(cot.localName||cot.localCode),'ok');
-    } catch(e) {
-      console.warn('Cert error:', cot.localCode, e);
-      log('  ❌ Error en '+cot.localCode+': '+e.message,'error');
-    }
+    count++;
+    log('  📜 '+cot.localCode+' — '+(cot.localName||cot.localCode),'ok');
     await new Promise(r=>setTimeout(r,300));
   }
   log('✅ '+count+' certificado(s) generado(s)','ok');
   markOutput('out4');
 }
 
-function abrirCertModal(codigo, cotNum) {
+function abrirCertModal(codigo) {
   const local = planMes.find(l=>l.codigo===codigo);
   if (!local) return;
   certModalCodigo = codigo;
-  certModalCotNum = cotNum || (parseInt(document.getElementById('cotInicial')?.value) || 1500);
   certFotos = {}; certHayNovedades = false; certAccsSelected = new Set();
   document.getElementById('certModalTitle').textContent =
     codigo+' — '+local.nombre.replace(codigo+' - ','');
@@ -3088,14 +2734,19 @@ function clearSignature() {
   if (!sigCtx) return;
   const c = document.getElementById('sigCanvas');
   if (!c) return;
-  sigCtx.fillStyle = '#fff'; sigCtx.fillRect(0, 0, c.width, c.height);
+  const W = c.offsetWidth || parseInt(c.style.width) || 436;
+  const H = c.offsetHeight || parseInt(c.style.height) || 140;
+  sigCtx.fillStyle = '#fff'; sigCtx.fillRect(0, 0, W, H);
 }
 
 function getSignatureB64() {
   const c = document.getElementById('sigCanvas');
   if (!c || !sigCtx) return null;
   const data = sigCtx.getImageData(0, 0, c.width, c.height).data;
-  const hasInk = Array.from(data).some((v,i) => (i%4 !== 3) && v < 200);
+  let hasInk = false;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] < 200 || data[i+1] < 200 || data[i+2] < 200) { hasInk = true; break; }
+  }
   if (!hasInk) return null;
   return c.toDataURL('image/png').split(',')[1];
 }
@@ -3113,10 +2764,10 @@ function renderAccCatalog() {
 
   // Determinar tipos de extintores que tiene el local actual
   const local = planMes.find(l => l.codigo === certModalCodigo);
-  const tipos = new Set((local?.extintores || []).map(e => normTipo(e.tipo)));
+  const tipos = new Set((local?.extintores || []).map(e => (e.tipo||'').toUpperCase()));
   const tienePQS   = tipos.has('PQS') || tipos.size === 0;   // si no hay datos, mostrar todo
   const tieneCO2   = tipos.has('CO2') || tipos.size === 0;
-  const tieneTIPOK = tipos.has('K') || tipos.size === 0;
+  const tieneTIPOK = tipos.has('TIPO K') || tipos.size === 0;
 
   // Filtrar accesorios relevantes al tipo de extintor
   const relevant = ACCESSORIES.map((a, i) => ({ ...a, i })).filter(a => {
@@ -3141,7 +2792,7 @@ function certToggleAcc(i) {
 }
 
 function updateAccTotal() {
-  const total = parseFloat([...certAccsSelected].reduce((s,i) => s + ACCESSORIES[i].precio, 0).toFixed(2));
+  const total = [...certAccsSelected].reduce((s,i) => s + ACCESSORIES[i].precio, 0);
   const el = document.getElementById('accTotal');
   if (el) el.textContent = `Total accesorios: $${total.toFixed(2)}`;
 }
@@ -3172,54 +2823,49 @@ async function generarCertLocal() {
     ? [...certAccsSelected].map(i => ({ desc: ACCESSORIES[i].desc }))
     : [];
 
-  const localLabel = local.nombre.replace(local.codigo + ' - ', '');
-  const dispCode   = certDisplayCode(local.codigo);
-  const cotNum     = certModalCotNum;
-  const certNum    = `CERT. N° ${cotNum}`;
-  const fileName   = sanitizeFileName(`COTIZACION${cotNum} ${dispCode} ${localLabel}.pdf`);
-
   const doc = await hacerPDF({
-    localNom:  localLabel,
+    localNom:  local.nombre.replace(local.codigo+' - ',''),
     puntNom:   local.nombre,
     localCode: local.codigo,
     exts: local.extintores.map(e=>({tipo:e.tipo,cap:e.cap})),
     FB64,
     ACCS: ACCS_SEL,
-    certNum,
-    fileName,
+    certNum: local.codigo+'-'+tipoLabel+' EXTINTORES-'+anio,
     MA:  mesNum+'/'+anio,
     MAS: mesNum+'/'+(parseInt(anio)+1),
     anio,
     tipoServ: tipoServSel,
   });
 
-  try { if (doc) await subirCertGitHub(local.codigo, anio, mesVal, doc, fileName); } catch(e) { console.warn('subirCert:', e); }
+  try { if (doc) await subirCertGitHub(local.codigo, anio, mesVal, doc); } catch(e) { console.warn('subirCert:', e); }
 
+  if (certModalCodigo && visitaStatus[certModalCodigo] !== 'visitado') {
+    visitaStatus[certModalCodigo] = 'visitado';
+    renderPlan();
+  }
   cerrarCertModal();
 }
 
-// Sube el PDF del certificado a GitHub: certificados/[MES]-[ANIO]/COTIZACION{num} {CODE} {LOCAL}.pdf
-async function subirCertGitHub(localCode, anio, mesVal, doc, fileName) {
+// Sube el PDF del certificado a GitHub: certificados/[MES]-[ANIO]/CERT-[CODIGO]-[ANIO].pdf
+async function subirCertGitHub(localCode, anio, mesVal, doc) {
   const token = getGhToken();
   if (!token) return;
   const mes = MESES_NOMBRE[mesVal];
-  const name = fileName || `CERT-${localCode}-${anio}.pdf`;
-  const path = `certificados/${mes}-${anio}/${name}`;
+  const path = `certificados/${mes}-${anio}/CERT-${localCode}-${anio}.pdf`;
   // jsPDF → base64 (sin el prefijo data:)
   const content = doc.output('datauristring').split(',')[1];
-  const hdrs = { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' };
-  const url  = `https://api.github.com/repos/${GH_REPO}/contents/${path}`;
-  // PUT directo (201 si es nuevo); si ya existe (409/422) → buscar SHA y reintentar.
-  // Evita el GET previo que llenaba la consola de 404.
-  const body = { message: `cert: ${fileName}`, content, branch: GH_BRANCH };
-  let r = await fetch(url, { method: 'PUT', headers: hdrs, body: JSON.stringify(body) });
-  if (r.status === 409 || r.status === 422) {
-    const meta = await fetch(`${url}?ref=${GH_BRANCH}`, { headers: hdrs });
-    if (meta.ok) {
-      body.sha = (await meta.json()).sha;
-      await fetch(url, { method: 'PUT', headers: hdrs, body: JSON.stringify(body) });
-    }
-  }
+  let sha = null;
+  const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+  });
+  if (check.ok) { const d = await check.json(); sha = d.sha; }
+  const body = { message: `cert: ${localCode} ${mes}-${anio}`, content, branch: GH_BRANCH };
+  if (sha) body.sha = sha;
+  await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
 }
 
 // ─── UI HELPERS ───────────────────────────────────────────────────────────────
@@ -3230,7 +2876,6 @@ function showStatus(elId, type, msg) {
   el.style.display = 'flex';
 }
 
-function setStep(n) { /* obsoleto: la app ya no usa pasos lineales */ }
 
 function enableGenerarBtns() {
   ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => {
@@ -3268,15 +2913,9 @@ function init() {
 
   const hoy = new Date();
   const mesActual = String(hoy.getMonth() + 1).padStart(2, '0');
-  const mesNum    = parseInt(mesActual);
   const selMes = document.getElementById('selMes');
   const opt = Array.from(selMes.options).find(o => o.value.startsWith(mesActual));
   if (opt) selMes.value = opt.value;
-
-  // Auto-calcular número inicial de cotización: base 1200 + mes*50 (sólo si no hay valor guardado)
-  const cotInicialAuto = 1200 + mesNum * 50;
-  const cotInicialInp  = document.getElementById('cotInicial');
-  if (cotInicialInp) cotInicialInp.value = cotInicialAuto; // se sobreescribe si hay sesión guardada
   const anioActual = String(hoy.getFullYear());
   const selAnio = document.getElementById('selAnio');
   if (Array.from(selAnio.options).some(o => o.value === anioActual)) selAnio.value = anioActual;
@@ -3285,8 +2924,8 @@ function init() {
   cargarPlan();
   renderTabla();
   renderEmpresaFacturas();
-  enableGenerarBtns();
-  ghCargar();   // raw público — funciona con o sin token
+  if (cotizaciones.length) enableGenerarBtns();
+  if (getGhToken()) ghCargar();
 
   // Preparar vista interna con el perfil guardado sin mostrar aún
   const isAdmin = currentProfile === 'admin';
@@ -3309,6 +2948,10 @@ function init() {
   mostrarSelectorPerfil();
 }
 
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('certModal').style.display !== 'none') cerrarCertModal();
+});
 init();
 </script>
 </body>
