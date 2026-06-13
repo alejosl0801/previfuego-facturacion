@@ -607,7 +607,7 @@
   <!-- ════════════ SECCIÓN: BASE DE DATOS (admin) ════════════ -->
   <div class="app-section admin-only" id="sec-bd" style="display:none">
     <div class="section-title">🗄️ Base de Datos</div>
-    <div class="section-desc">Consulta y descarga la base de datos consolidada de extintores del Grupo KFC.</div>
+    <div class="section-desc">Consulta y descarga las bases de datos de extintores.</div>
 
     <div class="card">
       <div class="card-body">
@@ -622,6 +622,19 @@
             </div>
             <a href="BASE_DATOS_KFC.xlsx" download="BASE_DATOS_KFC.xlsx"
                style="display:inline-block;background:#1F4E79;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
+              ⬇️ Descargar Excel
+            </a>
+          </div>
+          <div style="background:#f0fff4;border:1px solid #a8e6c0;border-radius:8px;padding:20px;flex:1;min-width:240px;text-align:center;">
+            <div style="font-size:36px;margin-bottom:8px;">🍣</div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS SUSHICORP</div>
+            <div style="font-size:12px;color:#666;margin-bottom:14px;">
+              15 locales · 64 extintores<br>
+              NOE · KOBE<br>
+              Matriz de servicios y costos
+            </div>
+            <a href="BASE_DATOS_SUSHICORP.xlsx" download="BASE_DATOS_SUSHICORP.xlsx"
+               style="display:inline-block;background:#1a7a3c;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
               ⬇️ Descargar Excel
             </a>
           </div>
@@ -1065,9 +1078,9 @@ function applyPerfil() {
 }
 
 // ─── CAMBIO DE MES ────────────────────────────────────────────────────────────
-function onMonthChange() {
+async function onMonthChange() {
   if (!cotizaciones.length) localRestore();
-  cargarPlan();
+  await cargarPlan();
   renderTabla();
   renderEmpresaFacturas();
   renderBD();
@@ -1156,6 +1169,7 @@ function renderTabla() {
         <td style="font-family:monospace;font-size:11px">${c.cc}</td>
         <td style="font-size:11px">
           <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderTabla();renderEmpresaFacturas();autosave()">
+            ${!c.empresa ? '<option value="" disabled selected>— Seleccionar —</option>' : ''}
             ${Object.entries(EMPRESAS_MAP).map(([k,v]) =>
               `<option value="${k}" ${c.empresa===v?'selected':''}>${v.empresa}</option>`
             ).join('')}
@@ -1853,8 +1867,13 @@ async function renderCertsList() {
     cont.innerHTML = '<p style="color:#999;font-size:13px">Configura un GitHub Token para ver los certificados guardados en la nube.</p>';
     return;
   }
-  const mes = MESES_NOMBRE[document.getElementById('selMes').value];
+  const mesVal2 = document.getElementById('selMes').value;
+  const mes = MESES_NOMBRE[mesVal2];
   const anio = document.getElementById('selAnio').value;
+  if (!mes) {
+    cont.innerHTML = '<p style="color:#e67e22;font-size:13px">⚠️ Selecciona un mes específico para ver los certificados.</p>';
+    return;
+  }
   const dir = `certificados/${mes}-${anio}`;
   cont.innerHTML = '<p style="color:#999;font-size:13px">⏳ Cargando certificados…</p>';
   try {
@@ -1873,8 +1892,8 @@ async function renderCertsList() {
     }
     cont.innerHTML = pdfs.map(f => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid #eee;border-radius:6px;margin-bottom:6px">
-        <span style="font-size:13px">📜 ${f.name}</span>
-        <a href="${f.download_url}" download="${f.name}" class="btn btn-sm btn-info" style="font-size:12px">⬇️ Descargar</a>
+        <span style="font-size:13px">📜 ${esc(f.name)}</span>
+        <a href="${esc(f.download_url)}" download="${esc(f.name)}" class="btn btn-sm btn-info" style="font-size:12px">⬇️ Descargar</a>
       </div>`).join('');
   } catch (e) {
     cont.innerHTML = `<p style="color:#c0392b;font-size:13px">Error cargando certificados: ${e.message}</p>`;
@@ -2591,7 +2610,7 @@ async function generarCertificados() {
 
   const mesVal = document.getElementById('selMes').value;
   const anio   = document.getElementById('selAnio').value;
-  const mesNum = mesVal.substring(0,2);
+  const mesNum = mesVal ? mesVal.substring(0,2) : (new Date().getMonth()+1).toString().padStart(2,'0');
 
   let count = 0;
   for (const cot of mangesCots) {
@@ -2813,7 +2832,7 @@ async function generarCertLocal() {
 
   const mesVal = document.getElementById('selMes').value;
   const anio   = document.getElementById('selAnio').value;
-  const mesNum = mesVal.substring(0,2);
+  const mesNum = mesVal ? mesVal.substring(0,2) : (new Date().getMonth()+1).toString().padStart(2,'0');
 
   const tipoServSel = document.querySelector('input[name="certTipoServ"]:checked')?.value || 'mantenimiento';
   const tipoLabel   = tipoServSel === 'recarga' ? 'RECARGA' : 'MANT';
@@ -2850,7 +2869,7 @@ async function generarCertLocal() {
 async function subirCertGitHub(localCode, anio, mesVal, doc) {
   const token = getGhToken();
   if (!token) return;
-  const mes = MESES_NOMBRE[mesVal];
+  const mes = MESES_NOMBRE[mesVal] || new Date().toLocaleString('es-ES', {month:'long'}).toUpperCase();
   const path = `certificados/${mes}-${anio}/CERT-${localCode}-${anio}.pdf`;
   // jsPDF → base64 (sin el prefijo data:)
   const content = doc.output('datauristring').split(',')[1];
