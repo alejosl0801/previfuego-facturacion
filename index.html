@@ -1128,6 +1128,7 @@ function setCategoria(idx, val) {
 // ─── RENDER TABLA ─────────────────────────────────────────────────────────────
 function renderTabla() {
   const container = document.getElementById('tablaContainer');
+  if (!container) return;
 
   const manges = cotizaciones.filter(c => c.category === 'MANGES');
   const mant = cotizaciones.filter(c => c.category === 'MANT');
@@ -1185,9 +1186,9 @@ function renderTabla() {
           </select>
         </td>
         <td style="font-size:11px;max-width:180px" contenteditable="true" onblur="cotizaciones[${idx}].descripcionFact=this.textContent.trim();autosave()">${esc(c.descripcionFact)}</td>
-        <td style="text-align:right">$${c.subtotal.toFixed(2)}</td>
-        <td style="text-align:right">$${c.iva.toFixed(2)}</td>
-        <td style="text-align:right;font-weight:700">$${c.total.toFixed(2)}</td>
+        <td style="text-align:right">$${(c.subtotal||0).toFixed(2)}</td>
+        <td style="text-align:right">$${(c.iva||0).toFixed(2)}</td>
+        <td style="text-align:right;font-weight:700">$${(c.total||0).toFixed(2)}</td>
         <td><input type="text" value="${esc(c.notaEntrega)}" placeholder="ej: 6494" style="width:80px" onchange="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
         <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim();autosave()">${esc(c.observacion)}</td>
       </tr>
@@ -1593,7 +1594,7 @@ async function ghCargar() {
 
     renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan();
     const gs = document.getElementById('ghStatus');
-    if (gs) gs.textContent = `☁️ Sincronizado (${new Date(json.savedAt).toLocaleString()})`;
+    if (gs) gs.textContent = `☁️ Sincronizado (${json.savedAt ? new Date(json.savedAt).toLocaleString() : 'fecha desconocida'})`;
   } catch (e) {
     const ok = localRestore();
     if (ok) { renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan(); }
@@ -1631,8 +1632,8 @@ async function cargarPlan() {
   const anio    = document.getElementById('selAnio').value;
   const todosLosMeses = mesVal === '';
 
-  document.getElementById('planContainer').innerHTML =
-    '<p style="color:#999;font-size:13px">Cargando base de datos…</p>';
+  const _pc = document.getElementById('planContainer');
+  if (_pc) _pc.innerHTML = '<p style="color:#999;font-size:13px">Cargando base de datos…</p>';
   const _ls = document.getElementById('loadStatus');
   if (_ls) _ls.innerHTML = '<div class="status-bar status-info">⏳ Cargando base de datos de extintores…</div>';
 
@@ -1644,11 +1645,13 @@ async function cargarPlan() {
     // RESUMEN: CÓDIGO, MARCA, NOMBRE_LOCAL, MES_SERVICIO, N_EXTINTORES,
     //          TOTAL_MANTT, TOTAL_RECARGA, COBRO_ANUAL, AÑO_ULT_RECARGA, AÑO_RECARGA
     const wsRes = wb.Sheets['RESUMEN_LOCALES'];
+    if (!wsRes) throw new Error('Hoja RESUMEN_LOCALES no encontrada en BASE_DATOS_KFC.xlsx');
     const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
 
     // DETALLE: MARCA, NOMBRE_LOCAL, MES_SERVICIO, UBICACIÓN, TIPO, CAPACIDAD,
     //          COSTO_MANTT, PRECIO_RECARGA, AÑO_ULT_RECARGA, AÑO_RECARGA
     const wsDet  = wb.Sheets['DETALLE'];
+    if (!wsDet) throw new Error('Hoja DETALLE no encontrada en BASE_DATOS_KFC.xlsx');
     const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
 
     // Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
