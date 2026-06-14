@@ -2874,6 +2874,7 @@ async function generarCertLocal() {
   if (certModalCodigo && visitaStatus[certModalCodigo] !== 'visitado') {
     visitaStatus[certModalCodigo] = 'visitado';
     renderPlan();
+    autosave();
   }
   cerrarCertModal();
 }
