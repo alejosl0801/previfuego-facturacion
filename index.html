@@ -1642,6 +1642,7 @@ async function cargarPlan() {
 
   try {
     const resp = await fetch(`BASE_DATOS_KFC.xlsx?t=${Date.now()}`);
+    if (!resp.ok) throw new Error(`No se pudo cargar BASE_DATOS_KFC.xlsx (HTTP ${resp.status})`);
     const buf  = await resp.arrayBuffer();
     const wb   = XLSX.read(buf, { type: 'array' });
 
