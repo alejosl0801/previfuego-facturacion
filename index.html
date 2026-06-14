@@ -825,25 +825,23 @@ let cotizaciones = []; // array of parsed cotizacion objects
 let facturaMap = {};   // { hojaKey: { factManges: 'XXXX', factMant: 'YYYY' } }
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const GROQ_KEY_DEFAULT = ['gsk_v2dEa44p','FqiiNrh9Fa','HjWGdyb3FY','xmbuOBV47T','RRJACWXJJt','J400'].join('');
 
 function getGroqKey() {
   return localStorage.getItem('groqKey') ||
          document.getElementById('groqKey')?.value?.trim() ||
-         GROQ_KEY_DEFAULT;
+         '';
 }
 
 function loadConfig() {
   const saved = localStorage.getItem('groqKey');
-  document.getElementById('groqKey').value = saved || GROQ_KEY_DEFAULT;
-  if (!saved) localStorage.setItem('groqKey', GROQ_KEY_DEFAULT);
+  document.getElementById('groqKey').value = saved || '';
   document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
 }
 
 function saveConfig() {
   const gk = document.getElementById('groqKey').value.trim();
   const gt = document.getElementById('ghToken').value.trim();
-  localStorage.setItem('groqKey', gk || GROQ_KEY_DEFAULT);
+  if (gk) localStorage.setItem('groqKey', gk); else localStorage.removeItem('groqKey');
   if (gt) localStorage.setItem('ghToken', gt); else localStorage.removeItem('ghToken');
   const el = document.getElementById('cfgStatus');
   el.textContent = '✅ Guardado permanentemente en este navegador';
@@ -1066,6 +1064,7 @@ function applyPerfil() {
 
 // ─── CAMBIO DE MES ────────────────────────────────────────────────────────────
 function onMonthChange() {
+  ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
   if (!cotizaciones.length) localRestore();
   cargarPlan();
   renderTabla();
@@ -1274,6 +1273,11 @@ async function leerFotosNE() {
   const groqKey = getGroqKey();
   const btnIA = document.getElementById('btnLeerIA');
   const statusEl = document.getElementById('fotoStatus');
+
+  if (!groqKey) {
+    statusEl.textContent = '⚠️ Configura tu API Key de Groq en Configuración antes de usar esta función';
+    return;
+  }
 
   const files = document.getElementById('fotoNE').files;
   if (!files.length) {
@@ -1622,6 +1626,7 @@ async function cargarPlan() {
 
   try {
     const resp = await fetch(`BASE_DATOS_KFC.xlsx?t=${Date.now()}`);
+    if (!resp.ok) throw new Error(`No se pudo cargar BASE_DATOS_KFC.xlsx (HTTP ${resp.status})`);
     const buf  = await resp.arrayBuffer();
     const wb   = XLSX.read(buf, { type: 'array' });
 
@@ -2845,6 +2850,7 @@ async function generarCertLocal() {
   if (certModalCodigo && visitaStatus[certModalCodigo] !== 'visitado') {
     visitaStatus[certModalCodigo] = 'visitado';
     renderPlan();
+    autosave();
   }
   cerrarCertModal();
 }
