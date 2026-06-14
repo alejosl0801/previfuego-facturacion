@@ -668,7 +668,7 @@
         <div class="form-row">
           <div class="form-group" style="flex:2">
             <label>🟢 API Key Groq — requerida para leer fotos de notas de entrega</label>
-            <input type="text" id="groqKey" placeholder="gsk_..." autocomplete="off" oninput="saveConfig()" />
+            <input type="password" id="groqKey" placeholder="gsk_..." autocomplete="off" oninput="saveConfig()" />
           </div>
           <div class="form-group" style="flex:2">
             <label>⚫ GitHub Token — respalda tus datos en la nube (opcional)</label>
@@ -804,7 +804,7 @@ const MESES_NOMBRE = {
 function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 // Mapa de prefijos de código local → empresa
@@ -876,7 +876,7 @@ function toggleCard(id) {
 // ─── LOCAL CODE NORMALIZATION ─────────────────────────────────────────────────
 function normalizeLocalCode(rawCode) {
   // KFCK02 → K02, GUSG49 → G49, M58 → M58, T032 → T032
-  let code = rawCode.toUpperCase().trim();
+  let code = String(rawCode ?? '').toUpperCase().trim();
   if (code.startsWith('KFCK')) code = 'K' + code.slice(4);
   else if (code.startsWith('GUSG')) code = 'G' + code.slice(4);
   return code;
@@ -1395,6 +1395,7 @@ async function leerFotosNE() {
   }
 
   if (cotizaciones.length) enableGenerarBtns();
+  document.getElementById('fotoNE').value = '';
   autosave();
 }
 
@@ -1409,8 +1410,7 @@ async function callGroq(apiKey, base64, mimeType, prompt) {
       ]
     }],
     max_tokens: 2048,
-    temperature: 0,
-    response_format: { type: 'json_object' }
+    temperature: 0
   });
 
   const delays = [0, 3000, 8000];
@@ -1425,8 +1425,8 @@ async function callGroq(apiKey, base64, mimeType, prompt) {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
       body: reqBody
     });
-    const data = await r.json();
     if (r.status === 429 && attempt < delays.length - 1) continue;
+    const data = await r.json();
     if (!r.ok) throw new Error(data?.error?.message || `HTTP ${r.status}`);
     return data.choices[0].message.content;
   }
@@ -1516,7 +1516,7 @@ async function ghGuardar(silent = false) {
   const token = getGhToken();
   const st = document.getElementById('ghStatus');
   if (!token) return;
-  if (!cotizaciones.length) return;
+  if (!cotizaciones.length && !Object.keys(visitaStatus).length) return;
 
   const path = ghFilePath();
   const payload = buildPayload();
@@ -1587,7 +1587,7 @@ async function ghCargar() {
       return;
     }
     const data = await r.json();
-    const json = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+    const json = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))));
 
     facturaMap = json.facturaMap || {};
     visitaStatus = json.visitaStatus || {};
@@ -1751,7 +1751,7 @@ function renderPlan() {
       String(local.marca).toUpperCase().includes(q));
 
   if (!visibles.length) {
-    cont.innerHTML = `<p style="color:#999;font-size:13px">Ningún local coincide con "${q}".</p>`;
+    cont.innerHTML = `<p style="color:#999;font-size:13px">Ningún local coincide con "${esc(q)}".</p>`;
     return;
   }
 
@@ -2001,10 +2001,10 @@ async function generarNELocal(codigo, neNum) {
     const sub = parseFloat(subtotalCalc.toFixed(2));
     const iva = parseFloat((sub * 0.15).toFixed(2));
     const tot = parseFloat((sub + iva).toFixed(2));
-    ws['N27'] = { t:'n', v: sub, f:'SUM(N14:N25)' };
+    ws['N27'] = { t:'n', v: sub, f:'SUM(N14:N24)' };
     ws['N29'] = { t:'n', v: iva, f:'N27*0.15' };
     ws['N31'] = { t:'n', v: tot, f:'N27+N29' };
-    ws['N32'] = { t:'n', v: tot, f:'SUM(N31)' };
+    ws['N32'] = { t:'n', v: tot, f:'N31' };
 
     // ── Amount in words ──────────────────────────────────────────────────────
     ws['B29'] = { t:'s', v: numeroEnLetras(tot) };
@@ -2041,7 +2041,8 @@ function numeroEnLetras(num) {
     return de[~~(n/10)]+' Y '+un[n%10];
   };
   const b1000 = n => n===100 ? 'CIEN' : n<100 ? b100(n) : (n%100===0 ? ce[~~(n/100)] : ce[~~(n/100)]+' '+b100(n%100));
-  const int = Math.floor(num), dec = Math.round((num - int) * 100);
+  const safe = (isFinite(num) && num >= 0) ? num : 0;
+  const int = Math.floor(safe), dec = Math.round(Math.round(safe * 100) % 100);
   let txt = int===0 ? 'CERO' : int<1000 ? b1000(int)
     : (int<1000000 ? (~~(int/1000)===1?'MIL':b1000(~~(int/1000))+' MIL')+(int%1000===0?'':' '+b1000(int%1000)) : 'MONTO');
   return `                ${txt} CON ${String(dec).padStart(2,'0')}/100 USD`;
@@ -2118,7 +2119,7 @@ async function generarDetalle() {
         if (!extItems.length) {
           const r = data.length + 3;
           data.push([emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
-            c.localCode, null, 0, '-', '-', 'M', null, 0,
+            c.localCode, null, 0, '-', '-', 'M', null, c.subtotal,
             {f:`SUM(L${r}:L${r})`}, {f:`M${r}*0.15`}, {f:`N${r}+M${r}`}, c.notaEntrega||'']);
           return;
         }
@@ -2643,7 +2644,7 @@ async function generarCertificados() {
       MA:  mesNum+'/'+anio,
       MAS: mesNum+'/'+(parseInt(anio)+1),
       anio,
-    });
+    }); // Note: generarCertificados only runs for MANGES (maintenance), so +1 year is correct here
     count++;
     log('  📜 '+cot.localCode+' — '+(cot.localName||cot.localCode),'ok');
     await new Promise(r=>setTimeout(r,300));
@@ -2678,17 +2679,25 @@ function abrirCertModal(codigo) {
   document.getElementById('novBtnBad').className = 'nov-btn';
   document.getElementById('novBtnOk').className  = 'nov-btn active-ok';
   document.getElementById('accCatalogWrap').style.display = 'none';
-  // Reset signature canvas
-  const c = document.getElementById('sigCanvas');
-  if (c) { c._initialized = false; sigCtx = null; }
+  // Reset signature canvas — reuse listeners if already initialized
+  sigDrawing = false;
+  if (sigCtx) {
+    clearSignature();
+  } else {
+    const c = document.getElementById('sigCanvas');
+    if (c) c._initialized = false;
+  }
   // Go to step 1
   certPaso(1);
+  document.body.style.overflow = 'hidden';
   document.getElementById('certModal').style.display = 'flex';
 }
 
 function cerrarCertModal() {
   document.getElementById('certModal').style.display = 'none';
+  document.body.style.overflow = '';
   certModalCodigo = null; certFotos = {}; certAccsSelected = new Set();
+  certHayNovedades = false; sigDrawing = false;
 }
 
 function certPaso(n) {
@@ -2867,7 +2876,7 @@ async function generarCertLocal() {
     ACCS: ACCS_SEL,
     certNum: local.codigo+'-'+tipoLabel+' EXTINTORES-'+anio,
     MA:  mesNum+'/'+anio,
-    MAS: mesNum+'/'+(parseInt(anio)+1),
+    MAS: mesNum+'/'+(parseInt(anio) + (tipoServSel === 'recarga' ? 3 : 1)),
     anio,
     tipoServ: tipoServSel,
   });
@@ -2897,11 +2906,15 @@ async function subirCertGitHub(localCode, anio, mesVal, doc) {
   if (check.ok) { const d = await check.json(); sha = d.sha; }
   const body = { message: `cert: ${localCode} ${mes}-${anio}`, content, branch: GH_BRANCH };
   if (sha) body.sha = sha;
-  await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+  const putResp = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
     method: 'PUT',
     headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
+  if (!putResp.ok) {
+    const err = await putResp.json().catch(() => ({}));
+    throw new Error(err.message || `HTTP ${putResp.status}`);
+  }
 }
 
 // ─── UI HELPERS ───────────────────────────────────────────────────────────────
