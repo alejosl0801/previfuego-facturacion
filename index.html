@@ -844,7 +844,7 @@ function saveConfig() {
   const gk = document.getElementById('groqKey').value.trim();
   const gt = document.getElementById('ghToken').value.trim();
   localStorage.setItem('groqKey', gk || GROQ_KEY_DEFAULT);
-  if (gt) localStorage.setItem('ghToken', gt);
+  if (gt) localStorage.setItem('ghToken', gt); else localStorage.removeItem('ghToken');
   const el = document.getElementById('cfgStatus');
   el.textContent = '✅ Guardado permanentemente en este navegador';
   clearTimeout(saveConfig._t);
@@ -1070,6 +1070,7 @@ function onMonthChange() {
   cargarPlan();
   renderTabla();
   renderEmpresaFacturas();
+  if (cotizaciones.length) enableGenerarBtns();
   renderBD();
 }
 
@@ -1151,7 +1152,7 @@ function renderTabla() {
       <tr class="${cls}">
         <td><button onclick="eliminarCotizacion(${idx})" title="Eliminar" style="background:#e74c3c;color:white;border:none;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:13px;font-weight:700">✕</button></td>
         <td>${idx+1}</td>
-        <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.filename)}">${c.filename.replace('.xlsx','')}</td>
+        <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.filename)}">${esc(c.filename.replace('.xlsx',''))}</td>
         <td><strong>${c.localCode}</strong></td>
         <td style="font-family:monospace;font-size:11px">${c.cc}</td>
         <td style="font-size:11px">
@@ -1289,7 +1290,7 @@ async function leerFotosNE() {
     statusEl.textContent = `🤖 [${procesadas + errores + 1}/${files.length}] Leyendo ${file.name}…`;
     const base64 = await fileToBase64(file);
     try {
-      const result = await callGroq(groqKey, base64, file.type, NE_PROMPT);
+      const result = await callGroq(groqKey, base64, file.type || 'image/jpeg', NE_PROMPT);
 
       let json;
       try {
@@ -1546,7 +1547,7 @@ async function ghCargar() {
   if (!token) {
     const ok = localRestore();
     if (ok) {
-      renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan();
+      renderTabla(); renderEmpresaFacturas(); if (cotizaciones.length) enableGenerarBtns(); renderPlan();
     }
     return;
   }
@@ -1559,7 +1560,7 @@ async function ghCargar() {
     if (!r.ok) {
       // Fallback to localStorage
       const ok = localRestore();
-      if (ok) { renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan(); }
+      if (ok) { renderTabla(); renderEmpresaFacturas(); if (cotizaciones.length) enableGenerarBtns(); renderPlan(); }
       return;
     }
     const data = await r.json();
@@ -1572,13 +1573,14 @@ async function ghCargar() {
       empresa: (c.empresaKey ? EMPRESAS_MAP[c.empresaKey] : null) || Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
       notaEntrega: c.notaEntrega || ''
     }));
+    if (json.neInicial) { const _ne = document.getElementById('neInicial'); if (_ne) _ne.value = json.neInicial; }
 
-    renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan();
+    renderTabla(); renderEmpresaFacturas(); if (cotizaciones.length) enableGenerarBtns(); renderPlan();
     const gs = document.getElementById('ghStatus');
     if (gs) gs.textContent = `☁️ Sincronizado (${new Date(json.savedAt).toLocaleString()})`;
   } catch (e) {
     const ok = localRestore();
-    if (ok) { renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan(); }
+    if (ok) { renderTabla(); renderEmpresaFacturas(); if (cotizaciones.length) enableGenerarBtns(); renderPlan(); }
   }
 }
 
@@ -2231,6 +2233,7 @@ async function generarDistribucion() {
 }
 
 async function generarFormatoFact() {
+  if (!cotizaciones.length) { log('⚠️ No hay datos para generar FORMATO_FACTURACIÓN', 'warn'); return; }
   log('Generando FORMATO_FACTURACIÓN...');
 
   let templateSheet = null;
