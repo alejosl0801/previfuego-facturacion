@@ -1175,7 +1175,7 @@ function renderTabla() {
           <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderTabla();renderEmpresaFacturas();autosave()">
             ${!c.empresa ? '<option value="" disabled selected>— Seleccionar —</option>' : ''}
             ${Object.entries(EMPRESAS_MAP).map(([k,v]) =>
-              `<option value="${k}" ${c.empresa===v?'selected':''}>${v.empresa}</option>`
+              `<option value="${k}" ${c.empresa?.hoja===v.hoja?'selected':''}>${v.empresa}</option>`
             ).join('')}
           </select>
         </td>
@@ -2049,9 +2049,9 @@ function numeroEnLetras(num) {
 }
 
 async function generarTodo() {
-  await generarDetalle();
-  await generarDistribucion();
-  await generarFormatoFact();
+  try { await generarDetalle(); } catch(e) { log('❌ Error Detalle: ' + e.message, 'error'); }
+  try { await generarDistribucion(); } catch(e) { log('❌ Error Distribución: ' + e.message, 'error'); }
+  try { await generarFormatoFact(); } catch(e) { log('❌ Error Formato Fact: ' + e.message, 'error'); }
 }
 
 function getMesLabel() {
@@ -2511,8 +2511,10 @@ async function hacerPDF(opts) {
   for (let i=1;i<cxs.length;i++) doc.line(cxs[i],y,cxs[i],y+rH);
   y += rH;
 
+  const tableTop = y - rH;
   grps.forEach((g,r) => {
-    const ry=y+r*rH;
+    if (y + rH > PH - 15) { doc.addPage(); fondoBase(); piePagina(); y = 25; }
+    const ry = y;
     if (r%2===0) doc.setFillColor(255,255,255); else fBG();
     doc.rect(ML,ry,CW,rH,'F');
     dG(); doc.setLineWidth(0.2); doc.line(ML,ry+rH,ML+CW,ry+rH);
@@ -2526,9 +2528,10 @@ async function hacerPDF(opts) {
     tN(); doc.setFont('helvetica','normal');
     doc.text(MA,  cxs[3]+cws[3]/2, ry+rH-2.8, {align:'center'});
     doc.text(MAS, cxs[4]+cws[4]/2, ry+rH-2.8, {align:'center'});
+    y += rH;
   });
-  dR(); doc.setLineWidth(0.6); doc.rect(ML, y-rH, CW, rH+grps.length*rH, 'S');
-  y += grps.length*rH+5;
+  dR(); doc.setLineWidth(0.6); doc.rect(ML, tableTop, CW, y - tableTop, 'S');
+  y += 5;
 
   const gar = 'Los extintores detallados se encuentran operativos de acuerdo con la norma NFPA10 y normativa ecuatoriana vigente. Cada extintor cuenta con sus respectivos precintos y seguros metálicos, etiqueta de control de carga, accesorios en buen estado y agente extintor en óptimas condiciones, garantizando su funcionamiento con vigencia de un (1) año a partir de su último mantenimiento.';
   doc.setFont('helvetica','italic'); doc.setFontSize(8); tG();
@@ -2540,7 +2543,7 @@ async function hacerPDF(opts) {
 
   // ── Page 2: Evidence photos + signature + accessories ───────────────────────
   const fotoKeys = ['antes','despues','cilindro'].filter(k => FB64&&FB64[k]);
-  if (fotoKeys.length>0 || FB64.firma || (ACCS&&ACCS.length>0)) {
+  if (fotoKeys.length>0 || (FB64&&FB64.firma) || (ACCS&&ACCS.length>0)) {
     doc.addPage(); fondoBase(); piePagina();
     let y2 = 18;
 
@@ -2605,10 +2608,11 @@ async function hacerPDF(opts) {
       doc.text('DESCRIPCIÓN DEL ACCESORIO', ML+4, y2+0.8);
       y2 += 8;
       ACCS.forEach((acc,i) => {
+        if (y2 + 7 > PH - 15) { doc.addPage(); fondoBase(); piePagina(); y2 = 18; }
         if (i%2===0) doc.setFillColor(255,255,255); else fBG();
         doc.rect(ML,y2-3.5,CW,7,'F');
         doc.setFont('helvetica','normal'); doc.setFontSize(9); tN();
-        doc.text('• '+(acc.desc||acc), ML+4, y2+0.5);
+        doc.text('• '+(acc.desc||acc.nombre||String(acc)), ML+4, y2+0.5);
         y2 += 7;
       });
       y2 += 4;
@@ -2633,7 +2637,7 @@ async function generarCertificados() {
   for (const cot of mangesCots) {
     const exts = [];
     (cot.items||[]).filter(i=>i.isExtintor).forEach(i => {
-      for (let q=0;q<(i.qty||1);q++) exts.push({tipo:i.tipo, cap:i.capacidad||i.cap||'—'});
+      for (let q=0;q<(i.qty??1);q++) exts.push({tipo:i.tipo, cap:i.capacidad||i.cap||'—'});
     });
     await hacerPDF({
       localNom:  cot.localName||cot.localCode,
@@ -2920,6 +2924,7 @@ async function subirCertGitHub(localCode, anio, mesVal, doc) {
 // ─── UI HELPERS ───────────────────────────────────────────────────────────────
 function showStatus(elId, type, msg) {
   const el = document.getElementById(elId);
+  if (!el) return;
   el.className = 'status-bar status-' + type;
   el.innerHTML = msg;
   el.style.display = 'flex';
@@ -2934,7 +2939,8 @@ function enableGenerarBtns() {
 }
 
 function markOutput(id) {
-  document.getElementById(id).classList.add('ready');
+  const el = document.getElementById(id);
+  if (el) el.classList.add('ready');
 }
 
 // ─── SELECTOR DE PERFIL ───────────────────────────────────────────────────────
@@ -2970,10 +2976,10 @@ function init() {
   if (Array.from(selAnio.options).some(o => o.value === anioActual)) selAnio.value = anioActual;
 
   localRestore();
-  cargarPlan();
   renderTabla();
   renderEmpresaFacturas();
   if (cotizaciones.length) enableGenerarBtns();
+  cargarPlan();
   if (getGhToken()) ghCargar();
 
   // Preparar vista interna con el perfil guardado sin mostrar aún
