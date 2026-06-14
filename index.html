@@ -1082,6 +1082,7 @@ function applyPerfil() {
 async function onMonthChange() {
   cotizaciones = [];
   facturaMap = {};
+  ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
   localRestore();
   await cargarPlan();
   renderTabla();
