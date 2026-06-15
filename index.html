@@ -1831,8 +1831,8 @@ function renderPlan() {
             </button>` : '';
 
     return `
-      <div class="local-card ${status}" id="lcard-${esc(local.codigo)}">
-        <div class="local-card-header" onclick="toggleLocalCard('${esc(local.codigo)}')">
+      <div class="local-card ${status}" id="lcard-${neNum}">
+        <div class="local-card-header" onclick="toggleLocalCard(${neNum})">
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
             <span class="badge-${status}">${isVisitado ? '✅' : '🔴'}</span>
             <strong style="white-space:nowrap">${esc(local.codigo)}</strong>
@@ -1853,7 +1853,7 @@ function renderPlan() {
             </button>
           </div>
         </div>
-        <div class="local-card-body" id="lbody-${esc(local.codigo)}">
+        <div class="local-card-body" id="lbody-${neNum}">
           <div style="margin-bottom:6px">${extList || '<em style="color:#e74c3c">⚠️ Sin extintores en la base de datos</em>'}</div>
           <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;align-items:center">
             ${tipoServ}
