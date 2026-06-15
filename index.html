@@ -874,11 +874,15 @@ function toggleCard(id) {
 }
 
 // ─── LOCAL CODE NORMALIZATION ─────────────────────────────────────────────────
+const _CN_BS = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
 function normalizeLocalCode(rawCode) {
-  // KFCK02 → K02, GUSG49 → G49, M58 → M58, T032 → T032
+  // KFCK02 → K02, GUSG49 → G49, CN031 → BS031 (shared Cinnabon/Baskin Robbins locals)
   let code = String(rawCode ?? '').toUpperCase().trim();
   if (code.startsWith('KFCK')) code = 'K' + code.slice(4);
   else if (code.startsWith('GUSG')) code = 'G' + code.slice(4);
+  // Apply CN→BS remapping (same normCode logic as cargarPlan)
+  const mc = code.match(/^([A-Z]+)(\d+)$/);
+  if (mc) { const n = mc[1] + String(parseInt(mc[2])).padStart(3,'0'); code = _CN_BS[n] || code; }
   return code;
 }
 
@@ -1330,9 +1334,10 @@ async function leerFotosNE() {
       // Normalize the local code from AI (handles "KFCK02" → "K02")
       const localCodeNorm = normalizeLocalCode((json.localCode || '').toUpperCase().trim());
 
-      // Match against existing cotizacion using FULL normalized code (not just digits)
+      // Match by normalized code AND category so MANGES/MANT records don't cross-update
+      const aiCat = normCategoria(json.categoria);
       const cot = localCodeNorm
-        ? cotizaciones.find(c => normalizeLocalCode(c.localCode) === localCodeNorm)
+        ? cotizaciones.find(c => normalizeLocalCode(c.localCode) === localCodeNorm && c.category === aiCat)
         : null;
 
       if (cot) {
