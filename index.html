@@ -2390,7 +2390,7 @@ async function generarFormatoFact() {
     XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A2' });
     let _sn = hoja.slice(0, 31);
     let _snI = 1;
-    while (wb.SheetNames.includes(_sn)) _sn = hoja.slice(0, 28) + ` (${++_snI})`;
+    while (wb.SheetNames.includes(_sn)) _sn = (hoja.slice(0, 28) + ` (${++_snI})`).slice(0, 31);
     XLSX.utils.book_append_sheet(wb, ws, _sn);
     log(`  Hoja: ${hoja} (${items.length} líneas)`, 'ok');
   });
@@ -2437,7 +2437,7 @@ async function fetchLogo() {
     const m = t.match(/var LOGO_B64\s*=\s*"([^"]+)"/);
     if (m) { _LOGO_CACHE = m[1]; return m[1]; }
   } catch(e) { console.warn('Logo no disponible:', e); }
-  _LOGO_CACHE = null; // cache negative result to avoid repeated fetches
+  if (_LOGO_CACHE === undefined) _LOGO_CACHE = null; // only cache failure if no concurrent fetch succeeded
   return null;
 }
 
