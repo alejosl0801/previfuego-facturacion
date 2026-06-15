@@ -1176,8 +1176,8 @@ function renderTabla() {
         <td><button onclick="eliminarCotizacion(${idx})" title="Eliminar" style="background:#e74c3c;color:white;border:none;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:13px;font-weight:700">✕</button></td>
         <td>${idx+1}</td>
         <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.filename)}">${esc(c.filename.replace('.xlsx',''))}</td>
-        <td><strong>${c.localCode}</strong></td>
-        <td style="font-family:monospace;font-size:11px">${c.cc}</td>
+        <td><strong>${esc(c.localCode)}</strong></td>
+        <td style="font-family:monospace;font-size:11px">${esc(c.cc)}</td>
         <td style="font-size:11px">
           <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderTabla();renderEmpresaFacturas();autosave()">
             ${!c.empresa ? '<option value="" disabled selected>— Seleccionar —</option>' : ''}
@@ -1196,7 +1196,7 @@ function renderTabla() {
         <td style="text-align:right">$${(c.subtotal||0).toFixed(2)}</td>
         <td style="text-align:right">$${(c.iva||0).toFixed(2)}</td>
         <td style="text-align:right;font-weight:700">$${(c.total||0).toFixed(2)}</td>
-        <td><input type="text" value="${esc(c.notaEntrega)}" placeholder="ej: 6494" style="width:80px" onchange="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
+        <td><input type="text" value="${esc(c.notaEntrega)}" placeholder="ej: 6494" style="width:80px" oninput="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
         <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim();autosave()">${esc(c.observacion)}</td>
       </tr>
     `;
@@ -1223,8 +1223,8 @@ function renderEmpresaFacturas() {
   let html = '';
   for (const [hoja, data] of Object.entries(byHoja)) {
     if (!facturaMap[hoja]) facturaMap[hoja] = { factManges: '', factMant: '' };
-    const subtManges = data.manges.reduce((s,c) => s + c.subtotal, 0);
-    const subtMant = data.mant.reduce((s,c) => s + c.subtotal, 0);
+    const subtManges = data.manges.reduce((s,c) => s + (c.subtotal || 0), 0);
+    const subtMant = data.mant.reduce((s,c) => s + (c.subtotal || 0), 0);
 
     html += `
       <div class="empresa-section">
@@ -1241,13 +1241,13 @@ function renderEmpresaFacturas() {
             <div class="fact-input-group">
               <label>Fact. MANGES:</label>
               <input type="text" placeholder="ej: 3296 MANTGES" value="${esc(facturaMap[hoja].factManges)}"
-                onchange="facturaMap['${hoja}'].factManges=this.value.trim();autosave()" />
+                data-hoja="${esc(hoja)}" onchange="const _k=this.dataset.hoja;if(!facturaMap[_k])facturaMap[_k]={factManges:'',factMant:''};facturaMap[_k].factManges=this.value.trim();autosave()" />
             </div>` : ''}
             ${data.mant.length ? `
             <div class="fact-input-group">
               <label>Fact. MANT:</label>
               <input type="text" placeholder="ej: 3299 MANTT" value="${esc(facturaMap[hoja].factMant)}"
-                onchange="facturaMap['${hoja}'].factMant=this.value.trim();autosave()" />
+                data-hoja="${esc(hoja)}" onchange="const _k=this.dataset.hoja;if(!facturaMap[_k])facturaMap[_k]={factManges:'',factMant:''};facturaMap[_k].factMant=this.value.trim();autosave()" />
             </div>` : ''}
           </div>
         </div>
@@ -2015,7 +2015,7 @@ async function generarNELocal(codigo, neNum) {
     });
 
     // ── Local info (row 25) ──────────────────────────────────────────────────
-    const localLabel = local.nombre.replace(local.codigo + ' - ', '');
+    const localLabel = (local.nombre || '').replace(local.codigo + ' - ', '');
     ws['C25'] = { t:'s', v: `LOCAL: ${local.codigo} - ${localLabel}` };
 
     // ── Totals ───────────────────────────────────────────────────────────────
@@ -2523,18 +2523,28 @@ async function hacerPDF(opts) {
   const grps = Object.values(gmap);
   if (!grps.length) grps.push({cnt:1,cap:'—',tip:'PQS'});
 
-  fN(); doc.rect(ML,y,CW,rH,'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(8); tW();
-  ['CANT.','CAPACIDAD','TIPO','ÚLTIMO MANT.','PRÓXIMO MANT.'].forEach((h,i) => {
-    doc.text(h, cxs[i]+cws[i]/2, y+rH-2.8, {align:'center',maxWidth:cws[i]-2});
-  });
-  dR(); doc.setLineWidth(0.3);
-  for (let i=1;i<cxs.length;i++) doc.line(cxs[i],y,cxs[i],y+rH);
-  y += rH;
+  const _drawTableHeader = () => {
+    fN(); doc.rect(ML,y,CW,rH,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); tW();
+    ['CANT.','CAPACIDAD','TIPO','ÚLTIMO MANT.','PRÓXIMO MANT.'].forEach((h,i) => {
+      doc.text(h, cxs[i]+cws[i]/2, y+rH-2.8, {align:'center',maxWidth:cws[i]-2});
+    });
+    dR(); doc.setLineWidth(0.3);
+    for (let i=1;i<cxs.length;i++) doc.line(cxs[i],y,cxs[i],y+rH);
+    y += rH;
+  };
 
-  const tableTop = y - rH;
+  if (y + rH * 2 > PH - 15) { doc.addPage(); fondoBase(); piePagina(); y = 25; }
+  _drawTableHeader();
+
+  let tableTop = y - rH;
   grps.forEach((g,r) => {
-    if (y + rH > PH - 15) { doc.addPage(); fondoBase(); piePagina(); y = 25; }
+    if (y + rH > PH - 15) {
+      dR(); doc.setLineWidth(0.6); doc.rect(ML, tableTop, CW, y - tableTop, 'S');
+      doc.addPage(); fondoBase(); piePagina(); y = 25;
+      _drawTableHeader();
+      tableTop = y - rH;
+    }
     const ry = y;
     if (r%2===0) doc.setFillColor(255,255,255); else fBG();
     doc.rect(ML,ry,CW,rH,'F');
@@ -2901,8 +2911,8 @@ async function generarCertLocal() {
     : [];
 
   const doc = await hacerPDF({
-    localNom:  local.nombre.replace(local.codigo+' - ',''),
-    puntNom:   local.nombre,
+    localNom:  (local.nombre||'').replace(local.codigo+' - ',''),
+    puntNom:   local.nombre || local.codigo,
     localCode: local.codigo,
     exts: local.extintores.map(e=>({tipo:e.tipo,cap:e.cap})),
     FB64,
@@ -2914,7 +2924,7 @@ async function generarCertLocal() {
     tipoServ: tipoServSel,
   });
 
-  try { if (doc) await subirCertGitHub(local.codigo, anio, mesVal, doc); } catch(e) { console.warn('subirCert:', e); }
+  try { if (doc) await subirCertGitHub(local.codigo, anio, mesVal, doc, tipoLabel); } catch(e) { console.warn('subirCert:', e); }
 
   if (certModalCodigo && visitaStatus[certModalCodigo] !== 'visitado') {
     visitaStatus[certModalCodigo] = 'visitado';
@@ -2925,11 +2935,11 @@ async function generarCertLocal() {
 }
 
 // Sube el PDF del certificado a GitHub: certificados/[MES]-[ANIO]/CERT-[CODIGO]-[ANIO].pdf
-async function subirCertGitHub(localCode, anio, mesVal, doc) {
+async function subirCertGitHub(localCode, anio, mesVal, doc, tipoLabel='MANT') {
   const token = getGhToken();
   if (!token) return;
   const mes = MESES_NOMBRE[mesVal] || new Date().toLocaleString('es-ES', {month:'long'}).toUpperCase();
-  const path = `certificados/${mes}-${anio}/CERT-${localCode}-${anio}.pdf`;
+  const path = `certificados/${mes}-${anio}/CERT-${localCode}-${tipoLabel}-${anio}.pdf`;
   // jsPDF → base64 (sin el prefijo data:)
   const content = doc.output('datauristring').split(',')[1];
   let sha = null;
