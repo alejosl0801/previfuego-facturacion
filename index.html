@@ -1085,6 +1085,7 @@ async function onMonthChange() {
   ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
   localRestore();
   await cargarPlan();
+  if (getGhToken()) await ghCargar();
   renderTabla();
   renderEmpresaFacturas();
   if (cotizaciones.length) enableGenerarBtns();
@@ -1354,7 +1355,6 @@ async function leerFotosNE() {
           rawLocalCode: localCodeNorm,
           localCode: localCodeNorm,
           cc: costCenter(localCodeNorm),
-          empresa: emp,
           localName: json.localNombre || localCodeNorm,
           ciudad: json.ciudad || '',
           fecha: json.fecha || '',
@@ -1371,7 +1371,8 @@ async function leerFotosNE() {
           category: normCategoria(json.categoria),
           descripcionFact: json.descripcion || 'EXTINTORES MANTENIMIENTO ANUAL',
           observacion: json.observacion || '',
-          notaEntrega: String(json.notaEntrega || '')
+          notaEntrega: String(json.notaEntrega || ''),
+          empresa: emp
         });
         procesadas++;
         statusEl.textContent = `🤖 [${procesadas}/${files.length}] ➕ ${localCodeNorm || '?'} NE:${json.notaEntrega || '?'} (nuevo)`;
@@ -1520,6 +1521,7 @@ async function ghGuardar(silent = false) {
   const st = document.getElementById('ghStatus');
   if (!token) return;
   if (!cotizaciones.length && !Object.keys(visitaStatus).length) return;
+  if (!document.getElementById('selMes').value) return; // Don't save when "all months" is selected
 
   const path = ghFilePath();
   const payload = buildPayload();
@@ -1562,7 +1564,7 @@ async function ghGuardar(silent = false) {
       throw new Error(err.message || r.status);
     }
   } catch (e) {
-    if (st) st.innerHTML = `<span style="color:red">❌ ${e.message}</span>`;
+    if (st) st.innerHTML = `<span style="color:red">❌ ${esc(e.message)}</span>`;
   }
 }
 
@@ -1718,7 +1720,7 @@ async function cargarPlan() {
     console.error('cargarPlan:', e);
     const _pc = document.getElementById('planContainer');
     if (_pc) _pc.innerHTML =
-      `<p style="color:#c0392b;font-size:13px">Error cargando base de datos: ${e.message}</p>`;
+      `<p style="color:#c0392b;font-size:13px">Error cargando base de datos: ${esc(e.message)}</p>`;
   }
 }
 
@@ -1786,7 +1788,7 @@ function renderPlan() {
             <strong style="white-space:nowrap">${local.codigo}</strong>
             <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(localLabel)}</span>
             <span style="font-size:11px;color:#999;white-space:nowrap">${esc(local.marca||'')}</span>
-            ${mesVal === '' ? `<span style="font-size:11px;color:#8e44ad;font-weight:600;white-space:nowrap">${local.mes||''}</span>` : ''}
+            ${mesVal === '' ? `<span style="font-size:11px;color:#8e44ad;font-weight:600;white-space:nowrap">${esc(local.mes||'')}</span>` : ''}
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
             <span class="badge-${status}">${isVisitado ? 'VISITADO' : 'PENDIENTE'}</span>
@@ -1915,7 +1917,7 @@ async function renderCertsList() {
         <a href="${esc(f.download_url)}" download="${esc(f.name)}" class="btn btn-sm btn-info" style="font-size:12px">⬇️ Descargar</a>
       </div>`).join('');
   } catch (e) {
-    cont.innerHTML = `<p style="color:#c0392b;font-size:13px">Error cargando certificados: ${e.message}</p>`;
+    cont.innerHTML = `<p style="color:#c0392b;font-size:13px">Error cargando certificados: ${esc(e.message)}</p>`;
   }
 }
 
@@ -2142,7 +2144,7 @@ async function generarDetalle() {
         });
         // fr/lr: Excel rows spanning this cotización's items
         const fr = cotFirst + 3, lr = data.length + 2;
-        data[cotFirst][12] = {f:`SUM(L${fr}:L${lr})`};
+        data[cotFirst][12] = {f:`SUMPRODUCT(G${fr}:G${lr},L${fr}:L${lr})`};
         data[cotFirst][13] = {f:`M${fr}*0.15`};
         data[cotFirst][14] = {f:`N${fr}+M${fr}`};
       });
@@ -2710,6 +2712,13 @@ function cerrarCertModal() {
 }
 
 function certPaso(n) {
+  if (n === 2) {
+    const tipoSel = document.querySelector('input[name="certTipoServ"]:checked');
+    if (!tipoSel) { alert('Selecciona el tipo de servicio (Mantenimiento o Recarga)'); return; }
+  }
+  if (n === 3) {
+    if (!getSignatureB64()) { alert('Dibuja la firma en el recuadro antes de continuar'); return; }
+  }
   [1,2,3].forEach(i => {
     document.getElementById('certPaso'+i).style.display = i === n ? '' : 'none';
     const ind = document.getElementById('csi'+i);
