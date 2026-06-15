@@ -1952,7 +1952,7 @@ async function renderCertsList() {
       return;
     }
     const files = await r.json();
-    const pdfs = (Array.isArray(files) ? files : []).filter(f => f.name.endsWith('.pdf'));
+    const pdfs = (Array.isArray(files) ? files : []).filter(f => f.type === 'file' && f.name.endsWith('.pdf'));
     if (!pdfs.length) {
       cont.innerHTML = '<p style="color:#999;font-size:13px">Aún no hay certificados guardados para este mes.</p>';
       return;
@@ -2261,7 +2261,8 @@ async function generarDetalle() {
     log(`  MANT: ${hojaOrder.length} empresas`, 'ok');
   }
 
-  XLSX.writeFile(wb, `DETALLE FACT MENSUAL ${getMesLabel()}.xlsx`);
+  try { XLSX.writeFile(wb, `DETALLE FACT MENSUAL ${getMesLabel()}.xlsx`); }
+  catch(e) { log('❌ Error al descargar DETALLE: ' + e.message, 'error'); return; }
   log('✅ DETALLE FACT MENSUAL descargado', 'ok');
   markOutput('out1');
 }
@@ -2320,7 +2321,8 @@ async function generarDistribucion() {
   });
 
   if (!wb.SheetNames.length) { log('⚠️ No hay datos para generar DISTRIBUCIÓN', 'warn'); return; }
-  XLSX.writeFile(wb, `DISTRIBUCION ${getMesLabel()}.xlsx`);
+  try { XLSX.writeFile(wb, `DISTRIBUCION ${getMesLabel()}.xlsx`); }
+  catch(e) { log('❌ Error al descargar DISTRIBUCIÓN: ' + e.message, 'error'); return; }
   log(`✅ DISTRIBUCIÓN descargado (${keyOrder.length} hojas)`, 'ok');
   markOutput('out2');
 }
@@ -2380,7 +2382,8 @@ async function generarFormatoFact() {
   });
 
   if (!wb.SheetNames.length) { log('⚠️ No hay datos para generar FORMATO_FACTURACIÓN', 'warn'); return; }
-  XLSX.writeFile(wb, `FORMATO_FACTURACIÓN ${getMesLabel()}.xlsx`);
+  try { XLSX.writeFile(wb, `FORMATO_FACTURACIÓN ${getMesLabel()}.xlsx`); }
+  catch(e) { log('❌ Error al descargar FORMATO: ' + e.message, 'error'); return; }
   log('✅ FORMATO_FACTURACIÓN descargado', 'ok');
   markOutput('out3');
 }
@@ -2745,6 +2748,7 @@ async function generarCertificados() {
   }
   log(`✅ ${count} certificado(s) generado(s)${errors ? `, ${errors} con error` : ''}`, errors ? 'warn' : 'ok');
   markOutput('out4');
+  if (document.getElementById('sec-certs')?.style.display !== 'none') renderCertsList();
 }
 
 function abrirCertModal(codigo) {
@@ -3096,8 +3100,7 @@ function init() {
   renderTabla();
   renderEmpresaFacturas();
   if (cotizaciones.length) enableGenerarBtns();
-  cargarPlan();
-  if (getGhToken()) ghCargar();
+  cargarPlan().then(() => { if (getGhToken()) ghCargar(); });
 
   // Preparar vista interna con el perfil guardado sin mostrar aún
   const isAdmin = currentProfile === 'admin';
