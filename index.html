@@ -877,7 +877,8 @@ function toggleCard(id) {
 const _CN_BS = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
 function normalizeLocalCode(rawCode) {
   // KFCK02 → K02, GUSG49 → G49, CN031 → BS031 (shared Cinnabon/Baskin Robbins locals)
-  let code = String(rawCode ?? '').toUpperCase().trim();
+  // Also handles hyphenated forms: K-02 → K002, BS-031 → BS031
+  let code = String(rawCode ?? '').toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
   if (code.startsWith('KFCK')) code = 'K' + code.slice(4);
   else if (code.startsWith('GUSG')) code = 'G' + code.slice(4);
   // Apply CN→BS remapping and canonical 3-digit padding for all codes
@@ -1063,6 +1064,7 @@ function goToSection(name) {
 let currentProfile = localStorage.getItem('perfil') || 'admin';
 
 function setPerfil(p) {
+  if (p !== 'admin' && p !== 'empleado') return;
   currentProfile = p;
   localStorage.setItem('perfil', p);
   applyPerfil();
@@ -1355,12 +1357,13 @@ async function leerFotosNE() {
         : null;
 
       if (cot) {
-        if (json.notaEntrega) cot.notaEntrega = String(json.notaEntrega);
-        if (json.categoria)   cot.category = normCategoria(json.categoria);
-        if (json.descripcion) cot.descripcionFact = json.descripcion;
-        if (json.observacion) cot.observacion = json.observacion;
-        if (json.ciudad)      cot.ciudad = json.ciudad;
-        if (json.fecha)       cot.fecha = json.fecha;
+        if (json.notaEntrega)  cot.notaEntrega = String(json.notaEntrega);
+        if (json.categoria)    cot.category = normCategoria(json.categoria);
+        if (json.descripcion)  cot.descripcionFact = json.descripcion;
+        if (json.observacion)  cot.observacion = json.observacion;
+        if (json.ciudad)       cot.ciudad = json.ciudad;
+        if (json.fecha)        cot.fecha = json.fecha;
+        if (json.localNombre)  cot.localName = json.localNombre;
         if (json.subtotal > 0 && !cot.subtotal) cot.subtotal = parseFloat(json.subtotal) || 0;
         if (json.iva > 0 && !cot.iva)           cot.iva = parseFloat(json.iva) || 0;
         if (json.total > 0 && !cot.total)       cot.total = parseFloat(json.total) || 0;
@@ -1378,9 +1381,9 @@ async function leerFotosNE() {
           ciudad: json.ciudad || '',
           fecha: json.fecha || '',
           items: (Array.isArray(json.extintores) ? json.extintores : []).map(e => ({
-            qty: e.cantidad ?? 1, desc: `${e.tipo} ${e.capacidad}`,
+            qty: e.cantidad || 1, desc: `${e.tipo} ${e.capacidad}`,
             tipo: e.tipo, capacidad: e.capacidad,
-            unitPrice: e.valorUnit || 0, total: (e.cantidad ?? 1) * (e.valorUnit || 0),
+            unitPrice: e.valorUnit || 0, total: (e.cantidad || 1) * (e.valorUnit || 0),
             serviceType: normCategoria(json.categoria) === 'MANGES' ? 'MANTENIMIENTO' : 'VARIOS',
             isExtintor: true
           })),
@@ -2082,8 +2085,13 @@ function numeroEnLetras(num) {
   const b1000 = n => n===100 ? 'CIEN' : n<100 ? b100(n) : (n%100===0 ? ce[~~(n/100)] : ce[~~(n/100)]+' '+b100(n%100));
   const safe = (isFinite(num) && num >= 0) ? num : 0;
   const int = Math.floor(safe), dec = Math.round(Math.round(safe * 100) % 100);
-  let txt = int===0 ? 'CERO' : int<1000 ? b1000(int)
-    : (int<1000000 ? (~~(int/1000)===1?'MIL':b1000(~~(int/1000))+' MIL')+(int%1000===0?'':' '+b1000(int%1000)) : 'MONTO');
+  const bMiles = n => { const t=~~(n/1000),r=n%1000; return t===0?b1000(r):(t===1?'MIL':b1000(t)+' MIL')+(r===0?'':' '+b1000(r)); };
+  let txt;
+  if (int===0) txt='CERO';
+  else if (int<1000) txt=b1000(int);
+  else if (int<1000000) txt=bMiles(int);
+  else if (int<1000000000) { const m=~~(int/1000000),r=int%1000000; txt=(m===1?'UN MILLÓN':b1000(m)+' MILLONES')+(r===0?'':' '+bMiles(r)); }
+  else txt='MONTO';
   return `                ${txt} CON ${String(dec).padStart(2,'0')}/100 USD`;
 }
 
@@ -2099,11 +2107,7 @@ function getMesLabel() {
 }
 
 function _cloneSheet(ws) {
-  const out = {};
-  for (const k of Object.keys(ws)) {
-    out[k] = k.startsWith('!') ? JSON.parse(JSON.stringify(ws[k])) : Object.assign({}, ws[k]);
-  }
-  return out;
+  return JSON.parse(JSON.stringify(ws));
 }
 
 function _clearSheetRows(ws, fromRow) {
@@ -2116,6 +2120,7 @@ function _clearSheetRows(ws, fromRow) {
   }
   range.e.r = Math.max(range.s.r, fromRow - 2);
   ws['!ref'] = XLSX.utils.encode_range(range);
+  if (ws['!merges']) ws['!merges'] = ws['!merges'].filter(m => m.e.r < fromRow - 1);
 }
 
 async function _fetchTemplate(path) {
@@ -2727,7 +2732,7 @@ function abrirCertModal(codigo) {
   certModalCodigo = codigo;
   certFotos = {}; certHayNovedades = false; certAccsSelected = new Set();
   document.getElementById('certModalTitle').textContent =
-    codigo+' — '+local.nombre.replace(codigo+' - ','');
+    codigo+' — '+(local.nombre||'').replace(codigo+' - ','');
   // Reset foto previews
   ['antes','despues','cilindro'].forEach(k => {
     const prev = document.getElementById('certFotoPreview_'+k);
@@ -3041,6 +3046,10 @@ function updatePerfilIndicator() {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init() {
+  if (typeof XLSX === 'undefined') {
+    document.body.innerHTML = '<div style="padding:2rem;font-family:sans-serif;color:#c0392b"><h2>Error de carga</h2><p>No se pudo cargar la librería XLSX (SheetJS). Verifica tu conexión a internet y recarga la página.</p></div>';
+    return;
+  }
   loadConfig();
 
   if (localStorage.getItem('darkMode') === '1') document.body.classList.add('dark');
