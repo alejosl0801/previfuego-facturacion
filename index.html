@@ -863,7 +863,7 @@ function saveConfig() {
 }
 
 function getGhToken() {
-  return localStorage.getItem('ghToken') || document.getElementById('ghToken').value.trim();
+  return localStorage.getItem('ghToken') || document.getElementById('ghToken')?.value?.trim() || '';
 }
 
 function toggleCard(id) {
@@ -1111,6 +1111,7 @@ function normCategoria(v) {
 
 // Cambia MANTGES/MANT de un registro desde la tabla y re-renderiza.
 function eliminarCotizacion(idx) {
+  if (!confirm('¿Eliminar esta nota de entrega?')) return;
   cotizaciones.splice(idx, 1);
   if (!cotizaciones.length) {
     ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => {
@@ -1452,7 +1453,7 @@ function fileToBase64(file) {
   return new Promise((res, rej) => {
     const reader = new FileReader();
     reader.onload = e => res(e.target.result.split(',')[1]);
-    reader.onerror = rej;
+    reader.onerror = e => rej(new Error('Error leyendo foto: ' + (e.target.error?.message || 'desconocido')));
     reader.readAsDataURL(file);
   });
 }
@@ -2374,15 +2375,16 @@ const ACCESSORIES = [
   { desc: 'Etiqueta de control',   precio: 0.50 },
 ];
 
-let _LOGO_CACHE = null;
+let _LOGO_CACHE = undefined;
 async function fetchLogo() {
-  if (_LOGO_CACHE) return _LOGO_CACHE;
+  if (_LOGO_CACHE !== undefined) return _LOGO_CACHE;
   try {
     const r = await fetch('https://raw.githubusercontent.com/alejosl0801/previfuego-backend/main/logo.js');
     const t = await r.text();
     const m = t.match(/var LOGO_B64\s*=\s*"([^"]+)"/);
     if (m) { _LOGO_CACHE = m[1]; return m[1]; }
   } catch(e) { console.warn('Logo no disponible:', e); }
+  _LOGO_CACHE = null; // cache negative result to avoid repeated fetches
   return null;
 }
 
@@ -2655,7 +2657,7 @@ async function hacerPDF(opts) {
       });
       y2 += 4;
     }
-    bloqueAutorizacion(y2);
+    y2 = bloqueAutorizacion(y2);
   }
 
   const tipoLabel2 = tipoServ === 'recarga' ? 'RECARGA' : 'MANT';
@@ -2772,13 +2774,18 @@ function certAbrirFoto(tipo, modo) {
   let input = document.getElementById('_fi_'+tipo+'_'+modo);
   if (!input) {
     input = document.createElement('input');
-    input.type = 'file'; input.accept = 'image/*';
+    input.type = 'file'; input.accept = 'image/jpeg,image/png';
     input.id = '_fi_'+tipo+'_'+modo;
     input.style.display = 'none';
     if (modo === 'cam') input.setAttribute('capture', 'environment');
     input.addEventListener('change', () => {
       const file = input.files[0];
       if (!file) return;
+      if (file.size > 4 * 1024 * 1024) {
+        alert(`La foto es demasiado grande (${(file.size/1024/1024).toFixed(1)} MB). Usa una foto menor a 4 MB.`);
+        input.value = '';
+        return;
+      }
       certFotos[tipo] = file;
       const reader = new FileReader();
       reader.onload = e => {
@@ -2899,7 +2906,7 @@ async function generarCertLocal() {
   // Fotos del nuevo estado
   const FB64 = {};
   for (const [key, file] of Object.entries(certFotos)) {
-    if (file) FB64[key] = await fileToBase64(file);
+    if (file) { try { FB64[key] = await fileToBase64(file); } catch(e) { console.warn('Foto no leída:', key, e); } }
   }
   // Firma digital del canvas
   const firmaB64 = getSignatureB64();
@@ -2972,16 +2979,19 @@ function showStatus(elId, type, msg) {
   const el = document.getElementById(elId);
   if (!el) return;
   el.className = 'status-bar status-' + type;
-  el.innerHTML = msg;
+  el.textContent = msg;
   el.style.display = 'flex';
 }
 
 
 function enableGenerarBtns() {
-  ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => {
+  const hasManges = cotizaciones.some(c => c.category === 'MANGES');
+  ['btn1','btn2','btn3','btnGenerarTodo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.disabled = false;
   });
+  const btn4 = document.getElementById('btn4');
+  if (btn4) btn4.disabled = !hasManges;
 }
 
 function markOutput(id) {
