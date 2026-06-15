@@ -880,9 +880,9 @@ function normalizeLocalCode(rawCode) {
   let code = String(rawCode ?? '').toUpperCase().trim();
   if (code.startsWith('KFCK')) code = 'K' + code.slice(4);
   else if (code.startsWith('GUSG')) code = 'G' + code.slice(4);
-  // Apply CN→BS remapping (same normCode logic as cargarPlan)
-  const mc = code.match(/^([A-Z]+)(\d+)$/);
-  if (mc) { const n = mc[1] + String(parseInt(mc[2])).padStart(3,'0'); code = _CN_BS[n] || code; }
+  // Apply CN→BS remapping and canonical 3-digit padding for all codes
+  const mc = code.match(/^([A-Z]+)(\d+)/);
+  if (mc) { const n = mc[1] + String(parseInt(mc[2])).padStart(3,'0'); code = _CN_BS[n] || n; }
   return code;
 }
 
@@ -899,7 +899,7 @@ function costCenter(localCode) {
 function getEmpresa(localCode) {
   const code = localCode.toUpperCase();
   // Try multi-char prefixes first (longest match)
-  const prefixes = ['CJNC','GUSG','ILCI','AMCA','ESPE','JV','BS','DI','CA','KN','K','M','T','V','I','G','J','A','B','E','F','H','R','CN'];
+  const prefixes = ['CJNC','ILCI','AMCA','ESPE','JV','BS','DI','CA','KN','K','M','T','V','I','G','J','A','B','E','F','H','R','CN'];
   for (const p of prefixes) {
     if (code.startsWith(p)) return EMPRESAS_MAP[p] || null;
   }
@@ -1332,7 +1332,7 @@ async function leerFotosNE() {
         json = JSON.parse(result.replace(/```json|```/g, '').trim());
       } catch(pe) {
         const m = result.match(/\{[\s\S]*\}/);
-        if (m) json = JSON.parse(m[0]);
+        if (m) { try { json = JSON.parse(m[0]); } catch(pe2) { throw new Error('Respuesta no es JSON válido'); } }
         else throw new Error('Respuesta no es JSON válido');
       }
 
@@ -1368,7 +1368,7 @@ async function leerFotosNE() {
           localName: json.localNombre || localCodeNorm,
           ciudad: json.ciudad || '',
           fecha: json.fecha || '',
-          items: (json.extintores || []).map(e => ({
+          items: (Array.isArray(json.extintores) ? json.extintores : []).map(e => ({
             qty: e.cantidad ?? 1, desc: `${e.tipo} ${e.capacidad}`,
             tipo: e.tipo, capacidad: e.capacidad,
             unitPrice: e.valorUnit || 0, total: (e.cantidad ?? 1) * (e.valorUnit || 0),
@@ -2387,7 +2387,7 @@ async function fetchLogo() {
 }
 
 async function hacerPDF(opts) {
-  const { localNom, puntNom, localCode, exts, FB64, ACCS, certNum, MA, MAS, anio } = opts;
+  const { localNom, puntNom, localCode, exts, FB64, ACCS, certNum, MA, MAS, anio, tipoServ } = opts;
   if (!window.jspdf || !window.jspdf.jsPDF) { alert('jsPDF no cargado'); return; }
   const { jsPDF } = window.jspdf;
   const LOGO_B64 = await fetchLogo();
@@ -2603,7 +2603,7 @@ async function hacerPDF(opts) {
         doc.text(fotos[0].lbl, fx+fw/2, y2+fh+4.2, {align:'center'});
         y2 += fh+10;
       } else {
-        const fw=85,fh=64; let col=0;
+        const fw=83,fh=64; let col=0;
         fotos.forEach(foto => {
           const fx=ML+col*(fw+10), fy=y2;
           doc.setFillColor(200,200,200); doc.rect(fx+2,fy+2,fw,fh,'F');
@@ -2636,6 +2636,7 @@ async function hacerPDF(opts) {
     }
 
     if (ACCS&&ACCS.length>0) {
+      if (y2 + 30 > PH - 15) { doc.addPage(); fondoBase(); piePagina(); y2 = 18; }
       y2 += 4;
       dR(); doc.setLineWidth(0.5); doc.line(ML,y2,ML+CW,y2); y2 += 5;
       doc.setFont('helvetica','bold'); doc.setFontSize(7.5); tR();
@@ -2657,7 +2658,8 @@ async function hacerPDF(opts) {
     bloqueAutorizacion(y2);
   }
 
-  doc.save('CERT-'+localCode+'-'+anio+'.pdf');
+  const tipoLabel2 = tipoServ === 'recarga' ? 'RECARGA' : 'MANT';
+  doc.save(`CERT-${localCode}-${tipoLabel2}-${anio}.pdf`);
   return doc;
 }
 
