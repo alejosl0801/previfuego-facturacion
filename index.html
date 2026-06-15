@@ -2602,13 +2602,12 @@ async function hacerPDF(opts) {
     doc.addPage(); fondoBase(); piePagina();
     let y2 = 18;
 
-    const evTit = 'EVIDENCIA FOTOGRÁFICA — '+(localNom||'').toUpperCase().substring(0,30);
-    fR(); doc.rect(ML,y2-4,CW,8,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); tW();
-    doc.text(evTit, ML+3, y2+0.5);
-    y2 += 10;
-
     if (fotoKeys.length>0) {
+      const evTit = 'EVIDENCIA FOTOGRÁFICA — '+(localNom||'').toUpperCase().substring(0,30);
+      fR(); doc.rect(ML,y2-4,CW,8,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); tW();
+      doc.text(evTit, ML+3, y2+0.5);
+      y2 += 10;
       const lblMap = {antes:'ANTES',despues:'DESPUÉS',cilindro:'CILINDRO CO₂'};
       const fotos  = fotoKeys.map(k=>({b64:FB64[k],lbl:lblMap[k]}));
       if (fotos.length===1) {
@@ -2741,7 +2740,7 @@ function abrirCertModal(codigo) {
     if (card) card.classList.remove('has-foto');
   });
   // Ocultar foto de cilindro CO₂ si el local no tiene CO2
-  const tieneCO2 = local.extintores.some(e => (e.tipo||'').toUpperCase() === 'CO2');
+  const tieneCO2 = (local.extintores||[]).some(e => (e.tipo||'').toUpperCase() === 'CO2');
   const cilCard = document.getElementById('certFotoCard_cilindro');
   if (cilCard) cilCard.style.display = tieneCO2 ? '' : 'none';
   // Preseleccionar tipo de servicio
@@ -2771,6 +2770,9 @@ function cerrarCertModal() {
   document.body.style.overflow = '';
   certModalCodigo = null; certFotos = {}; certAccsSelected = new Set();
   certHayNovedades = false; sigDrawing = false;
+  sigCtx = null;
+  const c = document.getElementById('sigCanvas');
+  if (c) c._initialized = false;
 }
 
 function certPaso(n) {
@@ -2956,7 +2958,7 @@ async function generarCertLocal() {
     localNom:  (local.nombre||'').replace(local.codigo+' - ',''),
     puntNom:   local.nombre || local.codigo,
     localCode: local.codigo,
-    exts: local.extintores.map(e=>({tipo:e.tipo,cap:e.cap})),
+    exts: (local.extintores||[]).map(e=>({tipo:e.tipo,cap:e.cap})),
     FB64,
     ACCS: ACCS_SEL,
     certNum: local.codigo+'-'+tipoLabel+' EXTINTORES-'+anio,
