@@ -868,9 +868,10 @@ function getGhToken() {
 
 function toggleCard(id) {
   const body = document.getElementById(id + '-body');
-  const tog = document.getElementById(id + '-toggle');
+  const tog  = document.getElementById(id + '-toggle');
+  if (!body) return;
   const hidden = body.classList.toggle('hidden');
-  tog.textContent = hidden ? '▶' : '▼';
+  if (tog) tog.textContent = hidden ? '▶' : '▼';
 }
 
 // ─── LOCAL CODE NORMALIZATION ─────────────────────────────────────────────────
@@ -1634,6 +1635,14 @@ async function ghCargar() {
       return;
     }
     const data = await r.json();
+    if (!data.content) {
+      // GitHub returns content:'' + encoding:'none' for files >1MB; fall back gracefully
+      const ok = localRestore();
+      if (ok) { renderTabla(); renderEmpresaFacturas(); if (cotizaciones.length) enableGenerarBtns(); renderPlan(); }
+      const gs = document.getElementById('ghStatus');
+      if (gs) gs.textContent = '⚠️ Archivo de nube muy grande — cargando datos locales';
+      return;
+    }
     const json = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))));
 
     facturaMap = json.facturaMap || {};
@@ -2033,6 +2042,9 @@ async function generarNELocal(codigo, neNum) {
       groups[k].qty++;
     });
     const items = Object.values(groups);
+
+    if (items.some(it => it.price === 0))
+      log(`⚠️ NE ${codigo}: uno o más tipos de extintor sin precio en la base de datos (verifica BASE_DATOS_KFC.xlsx)`, 'warn');
 
     let subtotalCalc = 0;
     items.forEach((item, i) => {
