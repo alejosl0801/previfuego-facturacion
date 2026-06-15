@@ -1097,7 +1097,7 @@ async function onMonthChange() {
     ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
     await cargarPlan();
     if (getGhToken()) await ghCargar(); // ghCargar falls back to localRestore on error
-    else localRestore();
+    else { localRestore(); renderPlan(); } // re-render plan with restored visitaStatus
     renderTabla();
     renderEmpresaFacturas();
     if (cotizaciones.length) enableGenerarBtns();
