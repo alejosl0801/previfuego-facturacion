@@ -1083,17 +1083,25 @@ function applyPerfil() {
 }
 
 // ─── CAMBIO DE MES ────────────────────────────────────────────────────────────
+let _monthChangePending = false;
 async function onMonthChange() {
-  cotizaciones = [];
-  facturaMap = {};
-  ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
-  localRestore();
-  await cargarPlan();
-  if (getGhToken()) await ghCargar();
-  renderTabla();
-  renderEmpresaFacturas();
-  if (cotizaciones.length) enableGenerarBtns();
-  renderBD();
+  if (_monthChangePending) return;
+  _monthChangePending = true;
+  try {
+    cotizaciones = [];
+    facturaMap = {};
+    visitaStatus = {};
+    ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
+    await cargarPlan();
+    if (getGhToken()) await ghCargar(); // ghCargar falls back to localRestore on error
+    else localRestore();
+    renderTabla();
+    renderEmpresaFacturas();
+    if (cotizaciones.length) enableGenerarBtns();
+    renderBD();
+  } finally {
+    _monthChangePending = false;
+  }
 }
 
 // ─── MODO OSCURO ──────────────────────────────────────────────────────────────
@@ -1919,7 +1927,11 @@ async function renderCertsList() {
       headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
     });
     if (!r.ok) {
-      cont.innerHTML = '<p style="color:#999;font-size:13px">Aún no hay certificados guardados para este mes.</p>';
+      if (r.status === 404) {
+        cont.innerHTML = '<p style="color:#999;font-size:13px">Aún no hay certificados guardados para este mes.</p>';
+      } else {
+        cont.innerHTML = `<p style="color:#c0392b;font-size:13px">Error ${r.status} al cargar certificados. Revisa el token de GitHub.</p>`;
+      }
       return;
     }
     const files = await r.json();
@@ -2674,27 +2686,38 @@ async function generarCertificados() {
   const anio   = document.getElementById('selAnio').value;
   const mesNum = mesVal ? mesVal.substring(0,2) : (new Date().getMonth()+1).toString().padStart(2,'0');
 
-  let count = 0;
+  let count = 0, errors = 0;
+  const total = mangesCots.length;
   for (const cot of mangesCots) {
-    const exts = [];
-    (cot.items||[]).filter(i=>i.isExtintor).forEach(i => {
-      for (let q=0;q<(i.qty??1);q++) exts.push({tipo:i.tipo, cap:i.capacidad||i.cap||'—'});
-    });
-    await hacerPDF({
-      localNom:  cot.localName||cot.localCode,
-      puntNom:   cot.ciudad||cot.localName||'',
-      localCode: cot.localCode,
-      exts, FB64:{}, ACCS:[],
-      certNum:   cot.localCode+'-MANT EXTINTORES-'+anio,
-      MA:  mesNum+'/'+anio,
-      MAS: mesNum+'/'+(parseInt(anio)+1),
-      anio,
-    }); // Note: generarCertificados only runs for MANGES (maintenance), so +1 year is correct here
-    count++;
-    log('  📜 '+cot.localCode+' — '+(cot.localName||cot.localCode),'ok');
+    log(`  [${count+errors+1}/${total}] 📜 ${cot.localCode}…`);
+    try {
+      const exts = [];
+      (cot.items||[]).filter(i=>i.isExtintor).forEach(i => {
+        for (let q=0;q<(i.qty??1);q++) exts.push({tipo:i.tipo, cap:i.capacidad||i.cap||'—'});
+      });
+      const doc = await hacerPDF({
+        localNom:  cot.localName||cot.localCode,
+        puntNom:   cot.ciudad||cot.localName||'',
+        localCode: cot.localCode,
+        exts, FB64:{}, ACCS:[],
+        certNum:   cot.localCode+'-MANT EXTINTORES-'+anio,
+        MA:  mesNum+'/'+anio,
+        MAS: mesNum+'/'+(parseInt(anio)+1),
+        anio, tipoServ: 'mantenimiento',
+      });
+      if (doc) {
+        try { await subirCertGitHub(cot.localCode, anio, mesVal, doc, 'MANT'); }
+        catch(e) { console.warn('subirCert:', cot.localCode, e); }
+      }
+      count++;
+      log('  ✅ '+cot.localCode+' — '+(cot.localName||cot.localCode),'ok');
+    } catch(e) {
+      errors++;
+      log('  ❌ '+cot.localCode+': '+e.message,'error');
+    }
     await new Promise(r=>setTimeout(r,300));
   }
-  log('✅ '+count+' certificado(s) generado(s)','ok');
+  log(`✅ ${count} certificado(s) generado(s)${errors ? `, ${errors} con error` : ''}`, errors ? 'warn' : 'ok');
   markOutput('out4');
 }
 
