@@ -1539,6 +1539,7 @@ function localRestore() {
     }
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
+      filename: c.filename || '',
       empresa: (c.empresaKey ? EMPRESAS_MAP[c.empresaKey] : null) || Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
       notaEntrega: c.notaEntrega || ''
     }));
@@ -1649,6 +1650,7 @@ async function ghCargar() {
     visitaStatus = json.visitaStatus || {};
     cotizaciones = (json.cotizaciones || []).map(c => ({
       ...c,
+      filename: c.filename || '',
       empresa: (c.empresaKey ? EMPRESAS_MAP[c.empresaKey] : null) || Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
       notaEntrega: c.notaEntrega || ''
     }));
