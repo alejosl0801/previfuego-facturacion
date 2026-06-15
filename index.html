@@ -1061,7 +1061,8 @@ function goToSection(name) {
 }
 
 // ─── PERFILES (admin / empleado) ──────────────────────────────────────────────
-let currentProfile = localStorage.getItem('perfil') || 'admin';
+const _savedPerfil = localStorage.getItem('perfil');
+let currentProfile = (_savedPerfil === 'admin' || _savedPerfil === 'empleado') ? _savedPerfil : 'admin';
 
 function setPerfil(p) {
   if (p !== 'admin' && p !== 'empleado') return;
@@ -1193,7 +1194,7 @@ function renderTabla() {
           <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderTabla();renderEmpresaFacturas();autosave()">
             ${!c.empresa ? '<option value="" disabled selected>— Seleccionar —</option>' : ''}
             ${Object.entries(EMPRESAS_MAP).map(([k,v]) =>
-              `<option value="${k}" ${c.empresa?.hoja===v.hoja?'selected':''}>${v.empresa}</option>`
+              `<option value="${k}" ${c.empresa===v?'selected':''}>${v.empresa}</option>`
             ).join('')}
           </select>
         </td>
@@ -1203,12 +1204,12 @@ function renderTabla() {
             <option value="MANT" ${c.category==='MANT'?'selected':''}>MANT (extra)</option>
           </select>
         </td>
-        <td style="font-size:11px;max-width:180px" contenteditable="true" onblur="cotizaciones[${idx}].descripcionFact=this.textContent.trim();autosave()">${esc(c.descripcionFact)}</td>
+        <td style="font-size:11px;max-width:180px" contenteditable="true" oninput="cotizaciones[${idx}]&&(cotizaciones[${idx}].descripcionFact=this.textContent.trim(),autosave())">${esc(c.descripcionFact)}</td>
         <td style="text-align:right">$${(c.subtotal||0).toFixed(2)}</td>
         <td style="text-align:right">$${(c.iva||0).toFixed(2)}</td>
         <td style="text-align:right;font-weight:700">$${(c.total||0).toFixed(2)}</td>
         <td><input type="text" value="${esc(c.notaEntrega)}" placeholder="ej: 6494" style="width:80px" oninput="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
-        <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim();autosave()">${esc(c.observacion)}</td>
+        <td style="font-size:11px" contenteditable="true" oninput="cotizaciones[${idx}]&&(cotizaciones[${idx}].observacion=this.textContent.trim(),autosave())">${esc(c.observacion)}</td>
       </tr>
     `;
   });
@@ -1350,14 +1351,15 @@ async function leerFotosNE() {
       // Normalize the local code from AI (handles "KFCK02" → "K02")
       const localCodeNorm = normalizeLocalCode((json.localCode || '').toUpperCase().trim());
 
-      // Match by normalized code AND category so MANGES/MANT records don't cross-update
-      const aiCat = normCategoria(json.categoria);
+      // Match by normalized code AND category so MANGES/MANT records don't cross-update.
+      // If AI omits categoria, match by code only to avoid creating a duplicate under the wrong category.
+      const aiCat = json.categoria ? normCategoria(json.categoria) : null;
       const cot = localCodeNorm
-        ? cotizaciones.find(c => normalizeLocalCode(c.localCode) === localCodeNorm && c.category === aiCat)
+        ? cotizaciones.find(c => normalizeLocalCode(c.localCode) === localCodeNorm && (!aiCat || c.category === aiCat))
         : null;
 
       if (cot) {
-        if (json.notaEntrega)  cot.notaEntrega = String(json.notaEntrega);
+        if (json.notaEntrega)  cot.notaEntrega = Array.isArray(json.notaEntrega) ? String(json.notaEntrega[0]||'') : String(json.notaEntrega);
         if (json.categoria)    cot.category = normCategoria(json.categoria);
         if (json.descripcion)  cot.descripcionFact = json.descripcion;
         if (json.observacion)  cot.observacion = json.observacion;
@@ -1393,7 +1395,7 @@ async function leerFotosNE() {
           category: normCategoria(json.categoria),
           descripcionFact: json.descripcion || 'EXTINTORES MANTENIMIENTO ANUAL',
           observacion: json.observacion || '',
-          notaEntrega: String(json.notaEntrega || ''),
+          notaEntrega: Array.isArray(json.notaEntrega) ? String(json.notaEntrega[0]||'') : String(json.notaEntrega||''),
           empresa: emp
         });
         procesadas++;
@@ -2298,7 +2300,9 @@ async function generarDistribucion() {
     data.push([null, 'TOTAL:',
       {f:`SUM(C2:C${last})`}, {f:`SUM(D2:D${last})`}, {f:`SUM(E2:E${last})`}]);
     XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A2' });
-    const sheetName = `FACT ${num}`.slice(0, 31);
+    let sheetName = `FACT ${num}`.slice(0, 31);
+    let snIdx = 1;
+    while (wb.SheetNames.includes(sheetName)) sheetName = `FACT ${num} (${++snIdx})`.slice(0, 31);
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
     log(`  Hoja: ${sheetName} (${items.length} líneas)`, 'ok');
   });
@@ -2356,7 +2360,10 @@ async function generarFormatoFact() {
     data.push([null, 'TOTALES', null,
       {f:`SUM(D2:D${last})`}, {f:`SUM(E2:E${last})`}, {f:`SUM(F2:F${last})`}, null]);
     XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A2' });
-    XLSX.utils.book_append_sheet(wb, ws, hoja.slice(0, 31));
+    let _sn = hoja.slice(0, 31);
+    let _snI = 1;
+    while (wb.SheetNames.includes(_sn)) _sn = hoja.slice(0, 28) + ` (${++_snI})`;
+    XLSX.utils.book_append_sheet(wb, ws, _sn);
     log(`  Hoja: ${hoja} (${items.length} líneas)`, 'ok');
   });
 
@@ -2697,7 +2704,7 @@ async function generarCertificados() {
     try {
       const exts = [];
       (cot.items||[]).filter(i=>i.isExtintor).forEach(i => {
-        for (let q=0;q<(i.qty??1);q++) exts.push({tipo:i.tipo, cap:i.capacidad||i.cap||'—'});
+        for (let q=0;q<(i.qty||1);q++) exts.push({tipo:i.tipo, cap:i.capacidad||i.cap||'—'});
       });
       const doc = await hacerPDF({
         localNom:  cot.localName||cot.localCode,
