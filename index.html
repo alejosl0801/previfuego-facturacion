@@ -1750,7 +1750,7 @@ function renderPlan() {
 
   const statsEl = document.getElementById('planStats');
   if (statsEl) statsEl.innerHTML =
-    `${mesNom}: <span style="color:#27ae60">✅ ${visitados} visitados</span> &nbsp;·&nbsp; ` +
+    `${esc(mesNom)}: <span style="color:#27ae60">✅ ${visitados} visitados</span> &nbsp;·&nbsp; ` +
     `<span style="color:#e74c3c">🔴 ${pendientes} pendientes</span> &nbsp;·&nbsp; ${total} total`;
 
   const cont = document.getElementById('planContainer');
@@ -1792,16 +1792,16 @@ function renderPlan() {
 
     const btnNE = isAdmin ? `
             <button class="btn btn-sm btn-info" style="font-size:11px;padding:3px 8px;white-space:nowrap"
-              onclick="event.stopPropagation();generarNELocal('${local.codigo}',${neNum})">
+              onclick="event.stopPropagation();generarNELocal('${esc(local.codigo)}',${neNum})">
               📄 NE #${neNum}
             </button>` : '';
 
     return `
-      <div class="local-card ${status}" id="lcard-${local.codigo}">
-        <div class="local-card-header" onclick="toggleLocalCard('${local.codigo}')">
+      <div class="local-card ${status}" id="lcard-${esc(local.codigo)}">
+        <div class="local-card-header" onclick="toggleLocalCard('${esc(local.codigo)}')">
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
             <span class="badge-${status}">${isVisitado ? '✅' : '🔴'}</span>
-            <strong style="white-space:nowrap">${local.codigo}</strong>
+            <strong style="white-space:nowrap">${esc(local.codigo)}</strong>
             <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(localLabel)}</span>
             <span style="font-size:11px;color:#999;white-space:nowrap">${esc(local.marca||'')}</span>
             ${mesVal === '' ? `<span style="font-size:11px;color:#8e44ad;font-weight:600;white-space:nowrap">${esc(local.mes||'')}</span>` : ''}
@@ -1810,16 +1810,16 @@ function renderPlan() {
             <span class="badge-${status}">${isVisitado ? 'VISITADO' : 'PENDIENTE'}</span>
             <span style="font-size:12px;font-weight:600;color:#333;white-space:nowrap">${local.nExt} ext · $${local.cobro.toFixed(2)}</span>
             <button class="btn btn-sm ${isVisitado ? 'btn-warning' : 'btn-success'}" style="font-size:11px;padding:3px 8px;white-space:nowrap"
-              onclick="event.stopPropagation();toggleVisita('${local.codigo}')">
+              onclick="event.stopPropagation();toggleVisita('${esc(local.codigo)}')">
               ${isVisitado ? '↩ Pendiente' : '✅ Visitado'}
             </button>${btnNE}
             <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
-              onclick="event.stopPropagation();abrirCertModal('${local.codigo}')">
+              onclick="event.stopPropagation();abrirCertModal('${esc(local.codigo)}')">
               📜 Generar Certificado
             </button>
           </div>
         </div>
-        <div class="local-card-body" id="lbody-${local.codigo}">
+        <div class="local-card-body" id="lbody-${esc(local.codigo)}">
           <div style="margin-bottom:6px">${extList || '<em style="color:#e74c3c">⚠️ Sin extintores en la base de datos</em>'}</div>
           <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;align-items:center">
             ${tipoServ}
