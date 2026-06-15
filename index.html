@@ -1333,10 +1333,11 @@ async function leerFotosNE() {
   let procesadas = 0, errores = 0;
   const errLog = [];
 
+  try {
   for (const file of files) {
     statusEl.textContent = `🤖 [${procesadas + errores + 1}/${files.length}] Leyendo ${file.name}…`;
-    const base64 = await fileToBase64(file);
     try {
+      const base64 = await fileToBase64(file);
       const result = await callGroq(groqKey, base64, file.type || 'image/jpeg', NE_PROMPT);
 
       let json;
@@ -1413,8 +1414,9 @@ async function leerFotosNE() {
       console.warn('Groq error:', file.name, e);
     }
   }
-
-  btnIA.disabled = false;
+  } finally {
+    btnIA.disabled = false;
+  }
   if (errores > 0) {
     statusEl.innerHTML = `✅ ${procesadas} procesadas, <span style="color:#c0392b;font-weight:700">${errores} con error</span> — ver consola`;
     console.warn('Errores Groq NE:', errLog);
@@ -1449,11 +1451,21 @@ async function callGroq(apiKey, base64, mimeType, prompt) {
         `⏳ Rate limit — reintentando en ${delays[attempt]/1000}s… (intento ${attempt+1}/3)`;
       await new Promise(r => setTimeout(r, delays[attempt]));
     }
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: reqBody
-    });
+    const ctrl = new AbortController();
+    const tOut = setTimeout(() => ctrl.abort(), 30000);
+    let r;
+    try {
+      r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: reqBody, signal: ctrl.signal
+      });
+    } catch(fe) {
+      clearTimeout(tOut);
+      if (fe.name === 'AbortError') throw new Error('Groq: tiempo de espera agotado (30s)');
+      throw fe;
+    }
+    clearTimeout(tOut);
     if (r.status === 429 && attempt < delays.length - 1) continue;
     const data = await r.json();
     if (!r.ok) throw new Error(data?.error?.message || `HTTP ${r.status}`);
@@ -2666,12 +2678,15 @@ async function hacerPDF(opts) {
       dR(); doc.setLineWidth(0.5); doc.line(ML,y2,ML+CW,y2); y2 += 5;
       doc.setFont('helvetica','bold'); doc.setFontSize(7.5); tR();
       doc.text('ACCESORIOS UTILIZADOS:', ML+5, y2+3); y2 += 8;
-      fN(); doc.rect(ML,y2-3.5,CW,7.5,'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); tW();
-      doc.text('DESCRIPCIÓN DEL ACCESORIO', ML+4, y2+0.8);
-      y2 += 8;
+      const _drawAccHeader = () => {
+        fN(); doc.rect(ML,y2-3.5,CW,7.5,'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(9); tW();
+        doc.text('DESCRIPCIÓN DEL ACCESORIO', ML+4, y2+0.8);
+        y2 += 8;
+      };
+      _drawAccHeader();
       ACCS.forEach((acc,i) => {
-        if (y2 + 7 > PH - 15) { doc.addPage(); fondoBase(); piePagina(); y2 = 18; }
+        if (y2 + 7 > PH - 15) { doc.addPage(); fondoBase(); piePagina(); y2 = 18; _drawAccHeader(); }
         if (i%2===0) doc.setFillColor(255,255,255); else fBG();
         doc.rect(ML,y2-3.5,CW,7,'F');
         doc.setFont('helvetica','normal'); doc.setFontSize(9); tN();
@@ -2997,7 +3012,7 @@ async function subirCertGitHub(localCode, anio, mesVal, doc, tipoLabel='MANT') {
   const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
     headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
   });
-  if (check.ok) { const d = await check.json(); sha = d.sha; }
+  if (check.ok) { const d = await check.json().catch(() => ({})); sha = d.sha || null; }
   const body = { message: `cert: ${localCode} ${mes}-${anio}`, content, branch: GH_BRANCH };
   if (sha) body.sha = sha;
   const putResp = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
