@@ -1051,6 +1051,8 @@ function goToSection(name) {
   localStorage.setItem('lastSection', name);
   if (name === 'bd') renderBD();
   if (name === 'certs') renderCertsList();
+  if (name === 'ne') { renderTabla(); renderEmpresaFacturas(); }
+  if (name === 'plan') renderPlan();
 }
 
 // ─── PERFILES (admin / empleado) ──────────────────────────────────────────────
@@ -1357,10 +1359,11 @@ async function leerFotosNE() {
           ciudad: json.ciudad || '',
           fecha: json.fecha || '',
           items: (json.extintores || []).map(e => ({
-            qty: e.cantidad || 1, desc: `${e.tipo} ${e.capacidad}`,
+            qty: e.cantidad ?? 1, desc: `${e.tipo} ${e.capacidad}`,
             tipo: e.tipo, capacidad: e.capacidad,
-            unitPrice: e.valorUnit || 0, total: (e.cantidad || 1) * (e.valorUnit || 0),
-            serviceType: 'MANTENIMIENTO', isExtintor: true
+            unitPrice: e.valorUnit || 0, total: (e.cantidad ?? 1) * (e.valorUnit || 0),
+            serviceType: normCategoria(json.categoria) === 'MANGES' ? 'MANTENIMIENTO' : 'VARIOS',
+            isExtintor: true
           })),
           subtotal: parseFloat(json.subtotal) || 0,
           iva: parseFloat(json.iva) || 0,
@@ -1610,6 +1613,7 @@ async function ghCargar() {
 // ─── GENERADORES ─────────────────────────────────────────────────────────────
 function log(msg, type='') {
   const box = document.getElementById('genLog');
+  if (!box) { console.warn('[log]', msg); return; }
   box.style.display = '';
   const line = document.createElement('div');
   line.className = 'log-line' + (type ? ' log-' + type : '');
@@ -2586,6 +2590,7 @@ async function hacerPDF(opts) {
 
     // Firma del encargado
     if (FB64 && FB64.firma) {
+      if (y2 + 48 > PH - 15) { doc.addPage(); fondoBase(); piePagina(); y2 = 18; }
       y2 += 4;
       dR(); doc.setLineWidth(0.5); doc.line(ML,y2,ML+CW,y2); y2 += 5;
       doc.setFillColor(253,251,251); dR(); doc.setLineWidth(0.3);
@@ -2973,7 +2978,12 @@ function init() {
   if (opt) selMes.value = opt.value;
   const anioActual = String(hoy.getFullYear());
   const selAnio = document.getElementById('selAnio');
-  if (Array.from(selAnio.options).some(o => o.value === anioActual)) selAnio.value = anioActual;
+  if (!Array.from(selAnio.options).some(o => o.value === anioActual)) {
+    const opt2 = document.createElement('option');
+    opt2.value = anioActual; opt2.textContent = anioActual;
+    selAnio.insertBefore(opt2, selAnio.firstChild);
+  }
+  selAnio.value = anioActual;
 
   localRestore();
   renderTabla();
