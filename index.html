@@ -1300,6 +1300,11 @@ async function leerFotosNE() {
   const btnIA = document.getElementById('btnLeerIA');
   const statusEl = document.getElementById('fotoStatus');
 
+  if (!document.getElementById('selMes').value) {
+    statusEl.textContent = '⚠️ Selecciona un mes específico antes de leer fotos. Los datos en vista "Todos los meses" no se guardan.';
+    return;
+  }
+
   if (!groqKey) {
     statusEl.textContent = '⚠️ Configura tu API Key de Groq en Configuración antes de usar esta función';
     return;
@@ -1933,6 +1938,10 @@ function toggleLocalCard(codigo) {
 }
 
 function toggleVisita(codigo) {
+  if (!document.getElementById('selMes').value) {
+    alert('Selecciona un mes específico para marcar visitas. Los cambios en vista "Todos los meses" no se guardan.');
+    return;
+  }
   const cur = visitaStatus[codigo] || 'pendiente';
   visitaStatus[codigo] = cur === 'visitado' ? 'pendiente' : 'visitado';
   renderPlan();
