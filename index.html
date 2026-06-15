@@ -1495,6 +1495,7 @@ function buildPayload() {
 function lsKey() { return 'sesion_' + ghFilePath(); }
 
 function localSave() {
+  if (!document.getElementById('selMes').value) return;
   try { localStorage.setItem(lsKey(), JSON.stringify(buildPayload())); } catch(e) {}
 }
 
@@ -1518,7 +1519,7 @@ function localRestore() {
   } catch(e) { return false; }
 }
 
-let _autosaveTimer = null;
+let _autosaveTimer = null, _ghSaving = false;
 function autosave() {
   localSave();                       // inmediato y local — nunca se pierde
   if (getGhToken()) {                // y a la nube, con debounce de 2.5s
@@ -1528,12 +1529,14 @@ function autosave() {
 }
 
 async function ghGuardar(silent = false) {
+  if (_ghSaving) return;
   const token = getGhToken();
   const st = document.getElementById('ghStatus');
   if (!token) return;
   if (!cotizaciones.length && !Object.keys(visitaStatus).length) return;
   if (!document.getElementById('selMes').value) return; // Don't save when "all months" is selected
 
+  _ghSaving = true;
   const path = ghFilePath();
   const payload = buildPayload();
 
@@ -1576,6 +1579,8 @@ async function ghGuardar(silent = false) {
     }
   } catch (e) {
     if (st) st.innerHTML = `<span style="color:red">❌ ${esc(e.message)}</span>`;
+  } finally {
+    _ghSaving = false;
   }
 }
 
