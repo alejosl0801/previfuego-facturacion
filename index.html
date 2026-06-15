@@ -1420,7 +1420,8 @@ async function callGroq(apiKey, base64, mimeType, prompt) {
   const delays = [0, 3000, 8000];
   for (let attempt = 0; attempt < delays.length; attempt++) {
     if (delays[attempt] > 0) {
-      document.getElementById('fotoStatus').textContent =
+      const _fs = document.getElementById('fotoStatus');
+      if (_fs) _fs.textContent =
         `⏳ Rate limit — reintentando en ${delays[attempt]/1000}s… (intento ${attempt+1}/3)`;
       await new Promise(r => setTimeout(r, delays[attempt]));
     }
@@ -3025,6 +3026,8 @@ function init() {
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (document.getElementById('certModal').style.display !== 'none') cerrarCertModal();
+  if (document.getElementById('profileSelector').style.display !== 'none')
+    document.getElementById('profileSelector').style.display = 'none';
 });
 init();
 </script>
