@@ -474,7 +474,7 @@
   <!-- ════════════ SECCIÓN: PLAN DEL MES ════════════ -->
   <div class="app-section" id="sec-plan">
     <div class="section-title">📅 Plan del Mes</div>
-    <div class="section-desc">Locales a visitar este mes. Selecciona un local, realiza el trabajo y genera su certificado.</div>
+    <div class="section-desc" id="planDesc">Locales a visitar este mes.</div>
 
     <input type="text" id="planSearch" class="search-box" placeholder="🔍 Buscar local por código o nombre…" oninput="renderPlan()" />
 
@@ -1076,6 +1076,10 @@ function applyPerfil() {
   const isAdmin = currentProfile === 'admin';
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
   document.getElementById('monthSelector').style.display = isAdmin ? '' : 'none';
+  const planDesc = document.getElementById('planDesc');
+  if (planDesc) planDesc.textContent = isAdmin
+    ? 'Locales a visitar este mes. Revisa el avance del equipo técnico y genera las Notas de Entrega.'
+    : 'Locales a visitar este mes. Selecciona un local, realiza el trabajo y genera el certificado.';
   if (!isAdmin) {
     goToSection('plan');
   } else {
@@ -1407,13 +1411,13 @@ async function leerFotosNE() {
         errLog.push(`${file.name}: datos insuficientes (código=${localCodeNorm || '?'}, total=${json.total})`);
         console.warn('Groq: datos insuficientes', file.name, json);
       }
-      renderTabla();
-      renderEmpresaFacturas();
     } catch(e) {
       errores++;
       errLog.push(`${file.name}: ${e.message}`);
       console.warn('Groq error:', file.name, e);
     }
+    renderTabla();
+    renderEmpresaFacturas();
   }
   } finally {
     btnIA.disabled = false;
@@ -1842,25 +1846,25 @@ function renderPlan() {
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
             <span class="badge-${status}">${isVisitado ? 'VISITADO' : 'PENDIENTE'}</span>
-            <span style="font-size:12px;font-weight:600;color:#333;white-space:nowrap">${local.nExt} ext · $${local.cobro.toFixed(2)}</span>
+            <span style="font-size:12px;font-weight:600;color:#333;white-space:nowrap">${local.nExt} ext${isAdmin ? ` · $${local.cobro.toFixed(2)}` : ''}</span>
             <button class="btn btn-sm ${isVisitado ? 'btn-warning' : 'btn-success'}" style="font-size:11px;padding:3px 8px;white-space:nowrap"
               onclick="event.stopPropagation();toggleVisita('${esc(local.codigo)}')">
               ${isVisitado ? '↩ Pendiente' : '✅ Visitado'}
             </button>${btnNE}
-            <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
+            ${!isAdmin ? `<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
               onclick="event.stopPropagation();abrirCertModal('${esc(local.codigo)}')">
               📜 Generar Certificado
-            </button>
+            </button>` : ''}
           </div>
         </div>
         <div class="local-card-body" id="lbody-${neNum}">
           <div style="margin-bottom:6px">${extList || '<em style="color:#e74c3c">⚠️ Sin extintores en la base de datos</em>'}</div>
           <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;align-items:center">
             ${tipoServ}
-            <span>Subtotal: <strong>$${local.cobro.toFixed(2)}</strong></span>
+            ${isAdmin ? `<span>Subtotal: <strong>$${local.cobro.toFixed(2)}</strong></span>
             <span>IVA 15%: <strong>$${iva.toFixed(2)}</strong></span>
             <span>Total: <strong>$${totalCobro.toFixed(2)}</strong></span>
-            ${isAdmin ? `<span style="color:#888">NE asignado: <strong>#${neNum}</strong></span>` : ''}
+            <span style="color:#888">NE asignado: <strong>#${neNum}</strong></span>` : ''}
           </div>
         </div>
       </div>`;
@@ -2075,6 +2079,10 @@ async function generarNELocal(codigo, neNum) {
 
     // ── Amount in words ──────────────────────────────────────────────────────
     ws['B29'] = { t:'s', v: numeroEnLetras(tot) };
+
+    // ── Expand !ref to cover all written cells (rows up to 32) ───────────────
+    const _r = XLSX.utils.decode_range(ws['!ref'] || 'A1:N32');
+    if (_r.e.r < 31) { _r.e.r = 31; ws['!ref'] = XLSX.utils.encode_range(_r); }
 
     XLSX.writeFile(wb, `NE-${neNum}-${local.codigo}.xlsx`);
     log(`✅ NE #${neNum} — ${local.codigo} descargada`, 'ok');
