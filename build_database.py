@@ -638,12 +638,11 @@ def get_nombre_local(ckey):
     pinfo = presupuesto_map.get(ckey)
     if pinfo and pinfo["nombre"]:
         return pinfo["nombre"]
-    # Para ubicaciones compartidas, tomar el nombre de la entrada CN del PRESUPUESTO
     if ckey in SHARED_BS_CN:
         cn = presupuesto_map.get(SHARED_BS_CN[ckey])
         if cn and cn["nombre"]:
             return cn["nombre"]
-    return ""
+    return fmt_code(*ckey)
 
 
 # ── 5. Build final rows ───────────────────────────────────────────────────────
