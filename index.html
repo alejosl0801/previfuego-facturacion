@@ -197,6 +197,38 @@
   body.dark .bd-note-card { background: #2a2210 !important; border-color: #5a4a10 !important; color: #d4b94a !important; }
   body.dark code { background: #2d323a !important; color: #d6d6d6; border-radius: 3px; padding: 1px 4px; }
 
+  /* ── Responsive (mobile) ── */
+  @media (max-width: 600px) {
+    .local-card-header {
+      flex-wrap: wrap; padding: 8px 10px; gap: 4px;
+    }
+    .local-card-header > div:first-child {
+      flex: 1 1 100% !important; min-width: 0;
+    }
+    .local-card-header > div:last-child {
+      flex: 1 1 100% !important; flex-wrap: wrap; justify-content: flex-start;
+    }
+    .local-card-header button {
+      min-height: 36px; font-size: 12px !important; padding: 6px 10px !important;
+    }
+    .badge-pendiente, .badge-visitado { font-size: 10px; padding: 2px 6px; }
+    .nav-tab { padding: 8px 10px; font-size: 12px; }
+    .section-title { font-size: 16px; }
+    .section-desc { font-size: 12px; }
+    .search-box { font-size: 13px; padding: 8px 10px; }
+    header { padding: 12px 10px !important; gap: 8px 12px; }
+    .hdr-right { gap: 8px; }
+    .month-sel select { min-width: 70px; font-size: 12px; }
+    main { padding: 12px 10px !important; }
+    .cert-steps { font-size: 12px; }
+    .cert-step-ind { padding: 7px 8px !important; font-size: 11px; }
+    .cert-foto-btns { flex-wrap: wrap; }
+    .plan-stats { font-size: 12px; gap: 8px; }
+  }
+  @media (max-width: 900px) {
+    .local-card-header button { min-height: 32px; }
+  }
+
   /* ── Selector de Perfil ── */
   #profileSelector {
     position: fixed; inset: 0;
@@ -632,8 +664,14 @@ function loadConfig() {
 
 function saveConfig() {
   const gt = document.getElementById('ghToken').value.trim();
-  if (gt) localStorage.setItem('ghToken', gt); else localStorage.removeItem('ghToken');
   const el = document.getElementById('cfgStatus');
+  if (gt && !gt.startsWith('ghp_') && !gt.startsWith('github_pat_')) {
+    el.textContent = '⚠️ El token debe empezar con ghp_ o github_pat_';
+    clearTimeout(saveConfig._t);
+    saveConfig._t = setTimeout(() => el.textContent = '', 5000);
+    return;
+  }
+  if (gt) localStorage.setItem('ghToken', gt); else localStorage.removeItem('ghToken');
   el.textContent = '✅ Guardado permanentemente en este navegador';
   clearTimeout(saveConfig._t);
   saveConfig._t = setTimeout(() => el.textContent = '', 3000);
@@ -845,8 +883,8 @@ async function ghGuardar(silent = false) {
       if (st) st.innerHTML =
         `<span style="color:green">✅ Guardado en la nube · ${new Date().toLocaleTimeString()}</span>`;
     } else {
-      const err = await r.json();
-      throw new Error(err.message || r.status);
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.message || `Error HTTP ${r.status}`);
     }
   } catch (e) {
     if (st) st.innerHTML = `<span style="color:red">❌ ${esc(e.message)}</span>`;
@@ -891,8 +929,11 @@ async function ghCargar() {
     const gs = document.getElementById('ghStatus');
     if (gs) gs.textContent = `☁️ Sincronizado (${json.savedAt ? new Date(json.savedAt).toLocaleString() : 'fecha desconocida'})`;
   } catch (e) {
+    console.warn('ghCargar error:', e);
     const ok = localRestore();
     if (ok) { renderPlan(); }
+    const gs2 = document.getElementById('ghStatus');
+    if (gs2) gs2.textContent = '⚠️ Sin conexión — usando datos locales';
   }
 }
 
@@ -1070,13 +1111,13 @@ function renderPlan() {
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
             <span class="badge-${status}">${isVisitado ? 'VISITADO' : 'PENDIENTE'}</span>
             <span style="font-size:12px;font-weight:600;color:#333;white-space:nowrap">${local.nExt} ext${isAdmin ? ` · $${local.cobro.toFixed(2)}` : ''}</span>
-            <button class="btn btn-sm ${isVisitado ? 'btn-warning' : 'btn-success'}" style="font-size:11px;padding:3px 8px;white-space:nowrap"
+            <button class="btn btn-sm ${isVisitado ? 'btn-warning' : 'btn-success'}" style="font-size:12px;padding:6px 10px;white-space:nowrap"
               onclick="event.stopPropagation();toggleVisita('${esc(local.codigo)}')">
               ${isVisitado ? '↩ Pendiente' : '✅ Visitado'}
             </button>
-            ${!isAdmin ? `<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
+            ${!isAdmin ? `<button class="btn btn-sm" style="font-size:12px;padding:6px 10px;white-space:nowrap;background:#8e44ad;color:white"
               onclick="event.stopPropagation();abrirCertModal('${esc(local.codigo)}')">
-              📜 Generar Certificado
+              📜 Certificado
             </button>` : ''}
           </div>
         </div>
@@ -1790,7 +1831,14 @@ async function _doGenerarCert() {
     tipoServ: tipoServSel,
   });
 
-  try { if (doc) await subirCertGitHub(local.codigo, anio, mesVal, doc, tipoLabel); } catch(e) { console.warn('subirCert:', e); }
+  if (doc && getGhToken()) {
+    try { await subirCertGitHub(local.codigo, anio, mesVal, doc, tipoLabel); }
+    catch(e) {
+      console.warn('subirCert:', e);
+      const gs = document.getElementById('ghStatus');
+      if (gs) gs.innerHTML = `<span style="color:#e67e22">⚠️ PDF guardado local, pero no se pudo subir: ${esc(e.message)}</span>`;
+    }
+  }
 
   if (certModalCodigo && visitaStatus[certModalCodigo] !== 'visitado') {
     visitaStatus[certModalCodigo] = 'visitado';
