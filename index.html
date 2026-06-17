@@ -48,6 +48,7 @@
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
+    -webkit-user-select: none;
     user-select: none;
   }
   .card-header h2 { font-size: 14px; font-weight: 700; color: var(--rojo); }
@@ -228,10 +229,21 @@
   @media (max-width: 900px) {
     .local-card-header button { min-height: 32px; }
   }
+  @supports not (gap: 1px) {
+    header > * + *, .nav-tabs > * + *, .hdr-right > * + * { margin-left: 8px; }
+    .local-card-header > div + div { margin-left: 8px; }
+    .plan-stats > * + * { margin-left: 12px; }
+    .cert-steps > * + * { margin-left: 0; }
+    .cert-foto-btns > * + * { margin-left: 6px; }
+    .psel-cards > * + * { margin-top: 10px; }
+    .form-row > * + * { margin-left: 16px; }
+    .acc-row > * + * { margin-left: 10px; }
+    .cert-novedades-toggle > * + * { margin-left: 6px; }
+  }
 
   /* ── Selector de Perfil ── */
   #profileSelector {
-    position: fixed; inset: 0;
+    position: fixed; top: 0; right: 0; bottom: 0; left: 0;
     background: linear-gradient(160deg, #fff 0%, #f4f4f4 100%);
     z-index: 9999;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -497,6 +509,10 @@
           </div>
         </div>
         <span id="cfgStatus" style="font-size:12px;color:#27ae60"></span>
+        <div style="margin-top:10px">
+          <button class="btn btn-sm btn-info" onclick="testGhConnection()" style="font-size:12px">🔌 Probar conexión</button>
+          <span id="ghTestResult" style="font-size:12px;margin-left:8px"></span>
+        </div>
       </div>
     </div>
 
@@ -518,7 +534,7 @@
 </div>
 
 <!-- CERT MODAL (3 pasos) -->
-<div id="certModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)cerrarCertModal()">
+<div id="certModal" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)cerrarCertModal()">
   <div style="background:white;border-radius:12px;padding:22px;max-width:480px;width:93%;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -679,6 +695,41 @@ function saveConfig() {
 
 function getGhToken() {
   return localStorage.getItem('ghToken') || document.getElementById('ghToken')?.value?.trim() || '';
+}
+
+async function testGhConnection() {
+  const el = document.getElementById('ghTestResult');
+  const token = getGhToken();
+  if (!token) { el.innerHTML = '<span style="color:#e74c3c">No hay token configurado</span>'; return; }
+  el.innerHTML = '<span style="color:#999">Probando...</span>';
+  try {
+    const r1 = await fetch('https://api.github.com/user', {
+      headers: { Authorization: `token ${token}` }
+    });
+    if (r1.status === 401) { el.innerHTML = '<span style="color:#e74c3c">Token inválido o expirado</span>'; return; }
+    if (!r1.ok) { el.innerHTML = `<span style="color:#e74c3c">Error HTTP ${r1.status}</span>`; return; }
+    const user = await r1.json();
+    const r2 = await fetch(`https://api.github.com/repos/${GH_REPO}`, {
+      headers: { Authorization: `token ${token}` }
+    });
+    if (r2.status === 404) {
+      el.innerHTML = `<span style="color:#e67e22">Usuario: ${esc(user.login)} — pero sin acceso al repo ${esc(GH_REPO)}</span>`;
+      return;
+    }
+    const repo = await r2.json();
+    const perms = repo.permissions || {};
+    if (!perms.push) {
+      el.innerHTML = `<span style="color:#e67e22">Usuario: ${esc(user.login)} — solo lectura (necesita permiso de escritura)</span>`;
+      return;
+    }
+    el.innerHTML = `<span style="color:#27ae60">Conectado: ${esc(user.login)} con acceso completo al repo</span>`;
+  } catch (e) {
+    if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+      el.innerHTML = '<span style="color:#e74c3c">Sin conexión a internet</span>';
+    } else {
+      el.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`;
+    }
+  }
 }
 
 function toggleCard(id) {
@@ -975,6 +1026,7 @@ async function cargarPlan() {
     const normMes = s => String(s || '').trim().toUpperCase();
     const locals = {};
     let lastCod = null, lastMes = null;
+    let _orphanCount = 0;
 
     detalle.slice(1).forEach(r => {
       const marca = String(r[0] || '');
@@ -991,6 +1043,7 @@ async function cargarPlan() {
         cod = lastCod;
         mes = lastMes;
       } else {
+        if (r[4]) _orphanCount++;
         return;
       }
 
@@ -1038,7 +1091,13 @@ async function cargarPlan() {
     });
 
     const _ls2 = document.getElementById('loadStatus');
-    if (_ls2) _ls2.innerHTML = '';
+    if (_ls2) {
+      if (_orphanCount > 0) {
+        _ls2.innerHTML = `<div class="status-bar status-warn">⚠️ ${_orphanCount} extintores en el Excel no tienen código de local asignado y fueron excluidos.</div>`;
+      } else {
+        _ls2.innerHTML = '';
+      }
+    }
     renderPlan();
     renderBD();
   } catch(e) {
@@ -1252,9 +1311,14 @@ async function descargarCert(path, name) {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = name; a.click();
-    URL.revokeObjectURL(url);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      window.open(url, '_blank');
+    } else {
+      const a = document.createElement('a');
+      a.href = url; a.download = name; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }
   } catch(e) { alert('Error descargando certificado: ' + e.message); }
 }
 
@@ -1586,7 +1650,14 @@ async function hacerPDF(opts) {
   }
 
   const tipoLabel2 = tipoServ === 'recarga' ? 'RECARGA' : 'MANT';
-  doc.save(`CERT-${localCode}-${tipoLabel2}-${anio}.pdf`);
+  const pdfName = `CERT-${localCode}-${tipoLabel2}-${anio}.pdf`;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    const blobUrl = doc.output('bloburl');
+    window.open(blobUrl, '_blank');
+  } else {
+    doc.save(pdfName);
+  }
   return doc;
 }
 
@@ -1666,6 +1737,11 @@ function certAbrirFoto(tipo, modo) {
     input.addEventListener('change', () => {
       const file = input.files[0];
       if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        alert('Solo se permiten archivos de imagen (JPG, PNG).');
+        input.value = '';
+        return;
+      }
       if (file.size > 4 * 1024 * 1024) {
         alert(`La foto es demasiado grande (${(file.size/1024/1024).toFixed(1)} MB). Usa una foto menor a 4 MB.`);
         input.value = '';
@@ -1678,6 +1754,10 @@ function certAbrirFoto(tipo, modo) {
         const card = document.getElementById('certFotoCard_'+tipo);
         if (prev) { prev.src = e.target.result; prev.classList.add('show'); }
         if (card) card.classList.add('has-foto');
+      };
+      reader.onerror = () => {
+        alert('No se pudo leer la foto. Intenta con otra imagen.');
+        input.value = '';
       };
       reader.readAsDataURL(file);
     });
