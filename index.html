@@ -486,107 +486,6 @@
     </div>
   </div>
 
-  <!-- ════════════ SECCIÓN: NOTAS DE ENTREGA (admin) ════════════ -->
-  <div class="app-section admin-only" id="sec-ne" style="display:none">
-    <div class="section-title">📄 Notas de Entrega</div>
-    <div class="section-desc">
-      Para servicios <strong>fuera del presupuesto</strong> (mantenimientos extra, ventas, cambios de accesorios):
-      sube la foto de la nota y la IA la registra. Para los locales del presupuesto, genera la NE directamente
-      desde el <strong>Plan del Mes</strong>.
-    </div>
-
-    <!-- Registrar notas con foto -->
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('fotos')">
-        <h2>📸 Registrar notas de entrega (foto + IA)</h2>
-        <span class="toggle" id="fotos-toggle">▼</span>
-      </div>
-      <div class="card-body" id="fotos-body">
-        <p style="font-size:13px;color:#555;margin-bottom:12px">
-          Sube la <strong>foto de cada nota de entrega</strong>. La IA (Groq) la lee y la registra sola:
-          local, # nota de entrega, extintores/servicio, valores y si es <strong>MANTGES</strong> (presupuestado)
-          o <strong>MANT</strong> (fuera de presupuesto). Puedes corregir cualquier dato en la tabla.
-        </p>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <input type="file" id="fotoNE" accept="image/*" multiple style="font-size:13px" />
-          <button class="btn btn-info" id="btnLeerIA" onclick="leerFotosNE()">🤖 Leer con IA</button>
-          <span id="fotoStatus" style="font-size:13px;color:#666"></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Revisar registros -->
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('tabla')">
-        <h2>📋 Revisar registros del mes</h2>
-        <span class="toggle" id="tabla-toggle">▼</span>
-      </div>
-      <div class="card-body" id="tabla-body">
-        <p style="font-size:12px;color:#777;margin-bottom:8px">
-          Revisa lo que leyó la IA. Puedes cambiar empresa, <strong>MANTGES/MANT</strong>,
-          descripción, # nota de entrega y observación directamente en la tabla.
-        </p>
-        <div id="tablaContainer"></div>
-      </div>
-    </div>
-
-    <!-- Facturas por empresa -->
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('fact')">
-        <h2>🧾 Números de factura por empresa</h2>
-        <span class="toggle" id="fact-toggle">▼</span>
-      </div>
-      <div class="card-body" id="fact-body">
-        <p style="font-size:13px;color:#555;margin-bottom:16px">
-          Ingresa el número de factura por empresa (MANGES y MANT) antes de generar los Excels.
-        </p>
-        <div id="empresaFacturasContainer"></div>
-      </div>
-    </div>
-
-    <!-- Generar Excels -->
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('gen')">
-        <h2>⬇️ Generar Excels</h2>
-        <span class="toggle" id="gen-toggle">▼</span>
-      </div>
-      <div class="card-body" id="gen-body">
-        <div class="outputs">
-          <div class="output-card" id="out1">
-            <div class="icon">📊</div>
-            <h3>DETALLE FACT MENSUAL</h3>
-            <p>Hojas: MANGES + MANT<br>Detalle extintores por local</p>
-            <button class="btn btn-success btn-sm" onclick="generarDetalle()" disabled id="btn1">Generar</button>
-          </div>
-          <div class="output-card" id="out2">
-            <div class="icon">📑</div>
-            <h3>DISTRIBUCIÓN</h3>
-            <p>Una hoja por factura<br>C.C. + descripción + valores</p>
-            <button class="btn btn-success btn-sm" onclick="generarDistribucion()" disabled id="btn2">Generar</button>
-          </div>
-          <div class="output-card" id="out3">
-            <div class="icon">🏢</div>
-            <h3>FORMATO FACTURACIÓN</h3>
-            <p>Una hoja por empresa<br>Resumen con # factura</p>
-            <button class="btn btn-success btn-sm" onclick="generarFormatoFact()" disabled id="btn3">Generar</button>
-          </div>
-          <div class="output-card" id="out4">
-            <div class="icon">📜</div>
-            <h3>CERTIFICADOS PDF</h3>
-            <p>Un PDF por local MANGES<br>Formato Previfuego/Pyroshield</p>
-            <button class="btn btn-success btn-sm" onclick="generarCertificados()" disabled id="btn4">Generar</button>
-          </div>
-        </div>
-        <div style="margin-top:16px">
-          <button class="btn btn-primary" onclick="generarTodo()" id="btnGenerarTodo" disabled>
-            ⬇️ Generar y descargar los 3 Excels
-          </button>
-        </div>
-        <div id="genLog" class="log-box" style="display:none"></div>
-      </div>
-    </div>
-  </div>
-
   <!-- ════════════ SECCIÓN: CERTIFICADOS ════════════ -->
   <div class="app-section" id="sec-certs" style="display:none">
     <div class="section-title">📜 Certificados</div>
@@ -662,7 +561,7 @@
       <div class="card-body">
         <div class="form-row">
           <div class="form-group" style="flex:2">
-            <label>🟢 API Key Groq — requerida para leer fotos de notas de entrega</label>
+            <label>🟢 API Key Groq — requerida para procesar fotos con IA</label>
             <input type="password" id="groqKey" placeholder="gsk_..." autocomplete="off" oninput="saveConfig()" />
           </div>
           <div class="form-group" style="flex:2">
@@ -829,8 +728,6 @@ const EMPRESAS_MAP = {
   'KN':   { empresa:'SUSHICORP SAS',                         marca:'KOBE / NOE',         ruc:'1792256267001', hoja:'SUSHICORP' },
 };
 
-let cotizaciones = []; // array of parsed cotizacion objects
-let facturaMap = {};   // { hojaKey: { factManges: 'XXXX', factMant: 'YYYY' } }
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
@@ -903,144 +800,6 @@ function getEmpresa(localCode) {
   return null;
 }
 
-// ─── PARSE COTIZACION EXCEL ───────────────────────────────────────────────────
-function parseCotizacion(arrayBuffer, filename) {
-  const wb = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-  if (!wb.SheetNames.length) throw new Error('Archivo Excel sin hojas');
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
-
-  // Extract from filename: "COTIZACION1262 KFCK02 9 DE OCT Y CHIMBORAZO.xlsx"
-  const fnMatch = filename.match(/COTIZACION(\d+)\s+([A-Z0-9]+)/i);
-  const proformaNum = fnMatch ? fnMatch[1] : '?';
-  const rawLocalCode = fnMatch ? fnMatch[2].toUpperCase() : '?';
-  const localCode = normalizeLocalCode(rawLocalCode);
-  const cc = costCenter(localCode);
-  const empresa = getEmpresa(localCode);
-
-  let localName = '';
-  let currentServiceType = 'MANTENIMIENTO';
-  let items = [];
-  let subtotal = 0, iva = 0, total = 0;
-  let ciudad = '';
-
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row) continue;
-
-    // Detect service type header (col D = index 3)
-    const colD = row[3];
-    if (typeof colD === 'string') {
-      const upper = colD.toUpperCase().trim();
-      if (upper === 'MANTENIMIENTO') { currentServiceType = 'MANTENIMIENTO'; continue; }
-      if (upper.includes('RECARGA')) { currentServiceType = 'RECARGA'; continue; }
-      if (upper.includes('VENTA') || upper.includes('INSTALACION')) { currentServiceType = 'VENTA'; continue; }
-      if (upper.includes('VARIOS')) { currentServiceType = 'VARIOS'; continue; }
-
-      // LOCAL line
-      if (upper.startsWith('LOCAL:')) {
-        localName = colD.replace(/LOCAL\s*:/i, '').trim();
-        continue;
-      }
-    }
-
-    // Subtotal (col I = index 8 contains 'SUBTOTAL')
-    if (row[8] === 'SUBTOTAL' || row[7] === 'SUBTOTAL') {
-      subtotal = parseFloat(row[9] || row[10] || 0);
-      continue;
-    }
-    // IVA (col H = index 7)
-    if (typeof row[7] === 'string' && row[7].includes('IVA')) {
-      iva = parseFloat(row[9] || 0);
-      continue;
-    }
-    // TOTAL
-    if (row[8] === 'TOTAL') {
-      total = parseFloat(row[10] || 0);
-      continue;
-    }
-
-    // Item row: col C (index 2) = qty (number), col D (index 3) = description
-    const qty = row[2];
-    const desc = row[3];
-    const unitPrice = row[9];
-    const totalItem = row[12];
-
-    if (typeof qty === 'number' && typeof desc === 'string' && desc.length > 2) {
-      // Classify item
-      const descU = desc.toUpperCase();
-      let tipo = '-', capacidad = '-';
-
-      if (descU.includes('CO2') || descU.includes('GAS CARBONICO')) tipo = 'CO2';
-      else if (descU.includes('PQS') || descU.includes('POLVO QUIMICO')) tipo = 'PQS';
-      else if (descU.includes('TIPO K') || descU.includes('ACETATO')) tipo = 'K';
-      else if (descU.includes('FOAM') || descU.includes('AGUA QUIMICA')) tipo = 'FOAM';
-      else tipo = '-';
-
-      // Extract capacity
-      const capMatch = desc.match(/(\d+[\.,]?\d*)\s*(LIBRAS?|LBS|GLNS|GL)/i);
-      if (capMatch) capacidad = capMatch[1] + (capMatch[2].toUpperCase().includes('G') ? ' GLNS' : ' LBS');
-
-      items.push({
-        qty, desc, tipo, capacidad,
-        unitPrice: parseFloat(unitPrice || 0),
-        total: parseFloat(totalItem || 0),
-        serviceType: currentServiceType,
-        isExtintor: descU.includes('EXTINTOR')
-      });
-    }
-  }
-
-  // Determine overall service category
-  const hasOnlyBudgeted = items.length > 0 && items.every(i => i.serviceType === 'MANTENIMIENTO' || i.serviceType === 'RECARGA');
-  const category = hasOnlyBudgeted ? 'MANGES' : 'MANT';
-
-  // Description for FORMATO_FACTURACIÓN
-  let descripcionFact = 'EXTINTORES MANTENIMIENTO ANUAL';
-  if (category === 'MANT') {
-    const types = [...new Set(items.map(i => {
-      const d = i.desc.toUpperCase();
-      if (d.includes('LAMPARA')) return 'LAMPARA EMERGENCIA';
-      if (d.includes('LETRERO') || d.includes('SEÑALET')) return 'SEÑALETICAS';
-      if (d.includes('PEDESTAL')) return 'PEDESTAL';
-      if (d.includes('NUEVO')) return 'EXTINTOR NUEVO';
-      if (d.includes('RECARGA') || d.includes('REC')) return 'RECARGA';
-      if (d.includes('REUBICACION')) return 'REUBICACION';
-      if (d.includes('ACCESORIOS')) return 'ACCESORIOS';
-      if (d.includes('VISITA')) return 'VISITA TECNICA';
-      return 'VARIOS';
-    }))];
-    descripcionFact = types.join(' Y ');
-  }
-
-  // Extract observacion (first non-empty mant description)
-  let observacion = '';
-  if (category === 'MANT') {
-    const mantItems = items.filter(i => !i.isExtintor || i.serviceType !== 'MANTENIMIENTO');
-    if (mantItems.length) observacion = mantItems[0].desc.toUpperCase().includes('DAÑADO')
-      ? 'ACCESORIOS DAÑADOS DURANTE MANTENIMIENTO ANUAL' : 'SOLICITADO POR EL LOCAL';
-  }
-
-  return {
-    filename,
-    proformaNum,
-    rawLocalCode,
-    localCode,
-    cc,
-    empresa,
-    localName: localName || rawLocalCode,
-    ciudad,
-    items,
-    subtotal,
-    iva,
-    total,
-    category,
-    descripcionFact,
-    observacion,
-    notaEntrega: '' // to be filled by user
-  };
-}
-
 // ─── NAVEGACIÓN POR SECCIONES ─────────────────────────────────────────────────
 function goToSection(name) {
   document.querySelectorAll('.app-section').forEach(s => s.style.display = 'none');
@@ -1052,7 +811,6 @@ function goToSection(name) {
   localStorage.setItem('lastSection', name);
   if (name === 'bd') renderBD();
   if (name === 'certs') renderCertsList();
-  if (name === 'ne') { renderTabla(); renderEmpresaFacturas(); }
   if (name === 'plan') renderPlan();
 }
 
@@ -1073,7 +831,7 @@ function applyPerfil() {
   document.getElementById('monthSelector').style.display = isAdmin ? '' : 'none';
   const planDesc = document.getElementById('planDesc');
   if (planDesc) planDesc.textContent = isAdmin
-    ? 'Locales a visitar este mes. Revisa el avance del equipo técnico y genera las Notas de Entrega.'
+    ? 'Locales a visitar este mes. Revisa el avance del equipo técnico.'
     : 'Locales a visitar este mes. Selecciona un local, realiza el trabajo y genera el certificado.';
   if (!isAdmin) {
     goToSection('plan');
@@ -1091,16 +849,10 @@ async function onMonthChange() {
   if (_monthChangePending) return;
   _monthChangePending = true;
   try {
-    cotizaciones = [];
-    facturaMap = {};
     visitaStatus = {};
-    ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
     await cargarPlan();
-    if (getGhToken()) await ghCargar(); // ghCargar falls back to localRestore on error
-    else { localRestore(); renderPlan(); } // re-render plan with restored visitaStatus
-    renderTabla();
-    renderEmpresaFacturas();
-    if (cotizaciones.length) enableGenerarBtns();
+    if (getGhToken()) await ghCargar();
+    else { localRestore(); renderPlan(); }
     renderBD();
   } finally {
     _monthChangePending = false;
@@ -1113,321 +865,6 @@ function toggleDark() {
   localStorage.setItem('darkMode', dark ? '1' : '0');
 }
 
-// Normaliza la categoría a 'MANGES' (presupuestado) o 'MANT' (extra fuera de presupuesto).
-// La IA devuelve "MANTGES"; internamente usamos 'MANGES'.
-function normCategoria(v) {
-  const s = String(v || '').toUpperCase();
-  return s.includes('GES') ? 'MANGES' : 'MANT';
-}
-
-// Cambia MANTGES/MANT de un registro desde la tabla y re-renderiza.
-function eliminarCotizacion(idx) {
-  if (!confirm('¿Eliminar esta nota de entrega?')) return;
-  cotizaciones.splice(idx, 1);
-  if (!cotizaciones.length) {
-    ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.disabled = true;
-    });
-  }
-  renderTabla();
-  renderEmpresaFacturas();
-  autosave();
-}
-
-function setCategoria(idx, val) {
-  if (cotizaciones[idx]) {
-    cotizaciones[idx].category = normCategoria(val);
-    renderTabla();
-    renderEmpresaFacturas();
-    autosave();
-  }
-}
-
-// ─── RENDER TABLA ─────────────────────────────────────────────────────────────
-function renderTabla() {
-  const container = document.getElementById('tablaContainer');
-  if (!container) return;
-
-  const manges = cotizaciones.filter(c => c.category === 'MANGES');
-  const mant = cotizaciones.filter(c => c.category === 'MANT');
-
-  let html = `
-    <div style="margin-bottom:8px;font-size:13px;color:#666">
-      <span class="badge badge-manges">MANGES: ${manges.length}</span>&nbsp;
-      <span class="badge badge-mant">MANT: ${mant.length}</span>&nbsp;
-      Total: ${cotizaciones.length} notas de entrega
-    </div>
-    <div style="overflow-x:auto">
-    <table>
-      <thead>
-        <tr>
-          <th></th>
-          <th>#</th>
-          <th>Archivo</th>
-          <th>Cód. Local</th>
-          <th>C.C.</th>
-          <th>Empresa</th>
-          <th>Tipo</th>
-          <th>Descripción Serv.</th>
-          <th>Subtotal</th>
-          <th>IVA</th>
-          <th>Total</th>
-          <th># N.E.</th>
-          <th>Obs.</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  cotizaciones.forEach((c, idx) => {
-    const empNombre = c.empresa?.empresa || '❓ Sin empresa';
-    const cls = c.category === 'MANGES' ? 'manges' : 'mant';
-    html += `
-      <tr class="${cls}">
-        <td><button onclick="eliminarCotizacion(${idx})" title="Eliminar" style="background:#e74c3c;color:white;border:none;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:13px;font-weight:700">✕</button></td>
-        <td>${idx+1}</td>
-        <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.filename)}">${esc(c.filename.replace('.xlsx',''))}</td>
-        <td><strong>${esc(c.localCode)}</strong></td>
-        <td style="font-family:monospace;font-size:11px">${esc(c.cc)}</td>
-        <td style="font-size:11px">
-          <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderTabla();renderEmpresaFacturas();autosave()">
-            ${!c.empresa ? '<option value="" disabled selected>— Seleccionar —</option>' : ''}
-            ${Object.entries(EMPRESAS_MAP).map(([k,v]) =>
-              `<option value="${k}" ${c.empresa===v?'selected':''}>${v.empresa}</option>`
-            ).join('')}
-          </select>
-        </td>
-        <td>
-          <select style="font-size:11px;padding:2px 4px" onchange="setCategoria(${idx}, this.value)">
-            <option value="MANGES" ${c.category==='MANGES'?'selected':''}>MANTGES (presup.)</option>
-            <option value="MANT" ${c.category==='MANT'?'selected':''}>MANT (extra)</option>
-          </select>
-        </td>
-        <td style="font-size:11px;max-width:180px" contenteditable="true" oninput="cotizaciones[${idx}]&&(cotizaciones[${idx}].descripcionFact=this.textContent.trim(),autosave())">${esc(c.descripcionFact)}</td>
-        <td style="text-align:right">$${(c.subtotal||0).toFixed(2)}</td>
-        <td style="text-align:right">$${(c.iva||0).toFixed(2)}</td>
-        <td style="text-align:right;font-weight:700">$${(c.total||0).toFixed(2)}</td>
-        <td><input type="text" value="${esc(c.notaEntrega)}" placeholder="ej: 6494" style="width:80px" oninput="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
-        <td style="font-size:11px" contenteditable="true" oninput="cotizaciones[${idx}]&&(cotizaciones[${idx}].observacion=this.textContent.trim(),autosave())">${esc(c.observacion)}</td>
-      </tr>
-    `;
-  });
-
-  html += '</tbody></table></div>';
-  container.innerHTML = html;
-}
-
-// ─── RENDER FACTURAS POR EMPRESA ──────────────────────────────────────────────
-function renderEmpresaFacturas() {
-  const container = document.getElementById('empresaFacturasContainer');
-  if (!container) return;
-
-  // Group by hoja
-  const byHoja = {};
-  cotizaciones.forEach(c => {
-    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-    if (!byHoja[hoja]) byHoja[hoja] = { empresa: c.empresa, manges: [], mant: [] };
-    if (c.category === 'MANGES') byHoja[hoja].manges.push(c);
-    else byHoja[hoja].mant.push(c);
-  });
-
-  let html = '';
-  for (const [hoja, data] of Object.entries(byHoja)) {
-    if (!facturaMap[hoja]) facturaMap[hoja] = { factManges: '', factMant: '' };
-    const subtManges = data.manges.reduce((s,c) => s + (c.subtotal || 0), 0);
-    const subtMant = data.mant.reduce((s,c) => s + (c.subtotal || 0), 0);
-
-    html += `
-      <div class="empresa-section">
-        <div class="empresa-header">
-          <div>
-            <div class="empresa-nombre">${esc(data.empresa?.empresa || hoja)}</div>
-            <div style="font-size:11px;color:#777">
-              MANGES: ${data.manges.length} locales ($${subtManges.toFixed(2)}) &nbsp;|&nbsp;
-              MANT: ${data.mant.length} locales ($${subtMant.toFixed(2)})
-            </div>
-          </div>
-          <div class="empresa-facturas">
-            ${data.manges.length ? `
-            <div class="fact-input-group">
-              <label>Fact. MANGES:</label>
-              <input type="text" placeholder="ej: 3296 MANTGES" value="${esc(facturaMap[hoja].factManges)}"
-                data-hoja="${esc(hoja)}" onchange="const _k=this.dataset.hoja;if(!facturaMap[_k])facturaMap[_k]={factManges:'',factMant:''};facturaMap[_k].factManges=this.value.trim();autosave()" />
-            </div>` : ''}
-            ${data.mant.length ? `
-            <div class="fact-input-group">
-              <label>Fact. MANT:</label>
-              <input type="text" placeholder="ej: 3299 MANTT" value="${esc(facturaMap[hoja].factMant)}"
-                data-hoja="${esc(hoja)}" onchange="const _k=this.dataset.hoja;if(!facturaMap[_k])facturaMap[_k]={factManges:'',factMant:''};facturaMap[_k].factMant=this.value.trim();autosave()" />
-            </div>` : ''}
-          </div>
-        </div>
-      </div>
-    `;
-  }
-  container.innerHTML = html || '<p style="color:#999;font-size:13px">Sin datos cargados</p>';
-}
-
-// ─── LEER FOTOS NE ────────────────────────────────────────────────────────────
-const NE_PROMPT = `Eres un asistente experto en facturación de extintores de Previfuego (Ecuador).
-Analiza esta nota de entrega/servicio (puede ser escrita a mano o impresa) y extrae TODOS los datos visibles.
-
-CAMPOS A EXTRAER:
-1. notaEntrega: número de nota (4-5 dígitos; busca "N°", "No.", "NOTA DE ENTREGA", "NE")
-2. localCode: código del local KFC. Formato: letra(s) + número (ej: K02, K105, M35, T032, V091, BS04, KN01).
-   IMPORTANTE: ignora prefijos como "KFC" o "GUS" que aparecen antes; extrae solo el código real.
-3. empresa: nombre de la empresa cliente (ej: "INT FOOD SERVICES CORP SA", "SHEMLON SA")
-4. ciudad: ciudad del local (ej: "GUAYAQUIL", "QUITO", "CUENCA")
-5. localNombre: nombre o dirección del local (ej: "KFC POLICENTRO", "ALBAN BORJA")
-6. fecha: fecha del servicio en formato DD/MM/YYYY (busca en el documento)
-7. categoria: SOLO dos valores posibles:
-   - "MANTGES" = mantenimiento anual presupuestado de extintores
-   - "MANT" = accesorios, señaléticas, lámparas de emergencia, recargas extra, instalaciones, ventas
-8. descripcion: descripción del servicio (ej: "EXTINTORES MANTENIMIENTO ANUAL", "ACCESORIOS EXTINTORES Y SEÑALETICAS")
-9. extintores: array de extintores servidos [{tipo:"CO2"|"PQS"|"K", capacidad:"50LBS"|"10LBS"|"2.5 GLNS", cantidad:1, valorUnit:25.00}]
-10. subtotal: valor ANTES del IVA (número decimal)
-11. iva: valor del IVA (número decimal)
-12. total: valor TOTAL con IVA (número decimal)
-13. observacion: observación o nota especial (ej: "ACCESORIOS DAÑADOS", "SOLICITADO POR EL LOCAL", "")
-
-REGLAS:
-- Si un valor no es legible o no existe, usa "" para texto o 0 para números.
-- NO inventes valores. Solo extrae lo que está escrito.
-- Para categoria: si ves "mantenimiento anual" o referencias a PRESUPUESTO → "MANTGES". Si ves accesorios, señales, lámparas, recarga extra → "MANT".
-- Responde ÚNICAMENTE con el objeto JSON, sin texto adicional.
-
-JSON de respuesta:
-{
-  "notaEntrega": "", "localCode": "", "empresa": "", "ciudad": "",
-  "localNombre": "", "fecha": "", "categoria": "MANTGES",
-  "descripcion": "EXTINTORES MANTENIMIENTO ANUAL",
-  "extintores": [],
-  "subtotal": 0, "iva": 0, "total": 0,
-  "observacion": ""
-}`;
-
-async function leerFotosNE() {
-  const groqKey = getGroqKey();
-  const btnIA = document.getElementById('btnLeerIA');
-  const statusEl = document.getElementById('fotoStatus');
-
-  if (!document.getElementById('selMes').value) {
-    statusEl.textContent = '⚠️ Selecciona un mes específico antes de leer fotos. Los datos en vista "Todos los meses" no se guardan.';
-    return;
-  }
-
-  if (!groqKey) {
-    statusEl.textContent = '⚠️ Configura tu API Key de Groq en Configuración antes de usar esta función';
-    return;
-  }
-
-  const files = document.getElementById('fotoNE').files;
-  if (!files.length) {
-    statusEl.textContent = '⚠️ Selecciona al menos una foto';
-    return;
-  }
-
-  btnIA.disabled = true;
-  statusEl.textContent = `🤖 Procesando ${files.length} foto(s) con Groq...`;
-  let procesadas = 0, errores = 0;
-  const errLog = [];
-
-  try {
-  for (const file of files) {
-    statusEl.textContent = `🤖 [${procesadas + errores + 1}/${files.length}] Leyendo ${file.name}…`;
-    try {
-      const base64 = await fileToBase64(file);
-      const result = await callGroq(groqKey, base64, file.type || 'image/jpeg', NE_PROMPT);
-
-      let json;
-      try {
-        json = JSON.parse(result.replace(/```json|```/g, '').trim());
-      } catch(pe) {
-        const m = result.match(/\{[\s\S]*\}/);
-        if (m) { try { json = JSON.parse(m[0]); } catch(pe2) { throw new Error('Respuesta no es JSON válido'); } }
-        else throw new Error('Respuesta no es JSON válido');
-      }
-
-      // Normalize the local code from AI (handles "KFCK02" → "K02")
-      const localCodeNorm = normalizeLocalCode((json.localCode || '').toUpperCase().trim());
-
-      // Match by normalized code AND category so MANGES/MANT records don't cross-update.
-      // If AI omits categoria, match by code only to avoid creating a duplicate under the wrong category.
-      const aiCat = json.categoria ? normCategoria(json.categoria) : null;
-      const cot = localCodeNorm
-        ? cotizaciones.find(c => normalizeLocalCode(c.localCode) === localCodeNorm && (!aiCat || c.category === aiCat))
-        : null;
-
-      if (cot) {
-        if (json.notaEntrega)  cot.notaEntrega = Array.isArray(json.notaEntrega) ? String(json.notaEntrega[0]||'') : String(json.notaEntrega);
-        if (json.categoria)    cot.category = normCategoria(json.categoria);
-        if (json.descripcion)  cot.descripcionFact = json.descripcion;
-        if (json.observacion)  cot.observacion = json.observacion;
-        if (json.ciudad)       cot.ciudad = json.ciudad;
-        if (json.fecha)        cot.fecha = json.fecha;
-        if (json.localNombre)  cot.localName = json.localNombre;
-        if (json.subtotal > 0 && !cot.subtotal) cot.subtotal = parseFloat(json.subtotal) || 0;
-        if (json.iva > 0 && !cot.iva)           cot.iva = parseFloat(json.iva) || 0;
-        if (json.total > 0 && !cot.total)       cot.total = parseFloat(json.total) || 0;
-        procesadas++;
-        statusEl.textContent = `🤖 [${procesadas}/${files.length}] ✅ ${localCodeNorm} NE:${json.notaEntrega || '?'}`;
-      } else if (json.subtotal > 0 || json.total > 0) {
-        const emp = getEmpresa(localCodeNorm);
-        cotizaciones.push({
-          filename: `foto-${file.name}`,
-          proformaNum: '',
-          rawLocalCode: localCodeNorm,
-          localCode: localCodeNorm,
-          cc: costCenter(localCodeNorm),
-          localName: json.localNombre || localCodeNorm,
-          ciudad: json.ciudad || '',
-          fecha: json.fecha || '',
-          items: (Array.isArray(json.extintores) ? json.extintores : []).map(e => ({
-            qty: e.cantidad || 1, desc: `${e.tipo} ${e.capacidad}`,
-            tipo: e.tipo, capacidad: e.capacidad,
-            unitPrice: e.valorUnit || 0, total: (e.cantidad || 1) * (e.valorUnit || 0),
-            serviceType: normCategoria(json.categoria) === 'MANGES' ? 'MANTENIMIENTO' : 'VARIOS',
-            isExtintor: true
-          })),
-          subtotal: parseFloat(json.subtotal) || 0,
-          iva: parseFloat(json.iva) || 0,
-          total: parseFloat(json.total) || 0,
-          category: normCategoria(json.categoria),
-          descripcionFact: json.descripcion || 'EXTINTORES MANTENIMIENTO ANUAL',
-          observacion: json.observacion || '',
-          notaEntrega: Array.isArray(json.notaEntrega) ? String(json.notaEntrega[0]||'') : String(json.notaEntrega||''),
-          empresa: emp
-        });
-        procesadas++;
-        statusEl.textContent = `🤖 [${procesadas}/${files.length}] ➕ ${localCodeNorm || '?'} NE:${json.notaEntrega || '?'} (nuevo)`;
-      } else {
-        errores++;
-        errLog.push(`${file.name}: datos insuficientes (código=${localCodeNorm || '?'}, total=${json.total})`);
-        console.warn('Groq: datos insuficientes', file.name, json);
-      }
-    } catch(e) {
-      errores++;
-      errLog.push(`${file.name}: ${e.message}`);
-      console.warn('Groq error:', file.name, e);
-    }
-    renderTabla();
-    renderEmpresaFacturas();
-  }
-  } finally {
-    btnIA.disabled = false;
-  }
-  if (errores > 0) {
-    statusEl.innerHTML = `✅ ${procesadas} procesadas, <span style="color:#c0392b;font-weight:700">${errores} con error</span> — ver consola`;
-    console.warn('Errores Groq NE:', errLog);
-  } else {
-    statusEl.textContent = `✅ Listo: ${procesadas} notas procesadas correctamente`;
-  }
-
-  if (cotizaciones.length) enableGenerarBtns();
-  document.getElementById('fotoNE').value = '';
-  autosave();
-}
 
 async function callGroq(apiKey, base64, mimeType, prompt) {
   const reqBody = JSON.stringify({
@@ -1494,24 +931,13 @@ function ghFilePath() {
   return `datos/${mesNombre}-${anio}.json`;
 }
 
-// Construye el objeto de la sesión del mes (registros + facturas)
+// Construye el objeto de la sesión del mes
 function buildPayload() {
   return {
     mes: document.getElementById('selMes').value,
     anio: document.getElementById('selAnio').value,
     savedAt: new Date().toISOString(),
-    cotizaciones: cotizaciones.map(c => ({
-      filename: c.filename, proformaNum: c.proformaNum, localCode: c.localCode,
-      cc: c.cc, localName: c.localName, ciudad: c.ciudad,
-      empresaHoja: c.empresa?.hoja || '',
-      empresaKey: (() => { const e = Object.entries(EMPRESAS_MAP).find(([,v]) => v === c.empresa); return e ? e[0] : ''; })(),
-      items: c.items, subtotal: c.subtotal, iva: c.iva, total: c.total,
-      category: c.category, descripcionFact: c.descripcionFact,
-      observacion: c.observacion, notaEntrega: c.notaEntrega
-    })),
-    facturaMap,
     visitaStatus,
-    neInicial: parseInt(document.getElementById('neInicial')?.value) || 6700
   };
 }
 
@@ -1530,18 +956,7 @@ function localRestore() {
     const raw = localStorage.getItem(lsKey());
     if (!raw) return false;
     const json = JSON.parse(raw);
-    facturaMap = json.facturaMap || {};
     visitaStatus = json.visitaStatus || {};
-    if (json.neInicial) {
-      const inp = document.getElementById('neInicial');
-      if (inp) inp.value = json.neInicial;
-    }
-    cotizaciones = (json.cotizaciones || []).map(c => ({
-      ...c,
-      filename: c.filename || '',
-      empresa: (c.empresaKey ? EMPRESAS_MAP[c.empresaKey] : null) || Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
-      notaEntrega: c.notaEntrega || ''
-    }));
     return true;
   } catch(e) { return false; }
 }
@@ -1560,7 +975,7 @@ async function ghGuardar(silent = false) {
   const token = getGhToken();
   const st = document.getElementById('ghStatus');
   if (!token) return;
-  if (!cotizaciones.length && !Object.keys(visitaStatus).length) return;
+  if (!Object.keys(visitaStatus).length) return;
   if (!document.getElementById('selMes').value) return; // Don't save when "all months" is selected
 
   _ghSaving = true;
@@ -1578,7 +993,7 @@ async function ghGuardar(silent = false) {
 
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
     const body = {
-      message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio} (${cotizaciones.length} notas)`,
+      message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio}`,
       content,
       branch: GH_BRANCH
     };
@@ -1596,7 +1011,7 @@ async function ghGuardar(silent = false) {
 
     if (r.ok) {
       if (st) st.innerHTML =
-        `<span style="color:green">✅ Guardado en la nube (${cotizaciones.length} notas) · ${new Date().toLocaleTimeString()}</span>`;
+        `<span style="color:green">✅ Guardado en la nube · ${new Date().toLocaleTimeString()}</span>`;
     } else {
       const err = await r.json();
       throw new Error(err.message || r.status);
@@ -1614,9 +1029,7 @@ async function ghCargar() {
   // No token → try localStorage
   if (!token) {
     const ok = localRestore();
-    if (ok) {
-      renderTabla(); renderEmpresaFacturas(); if (cotizaciones.length) enableGenerarBtns(); renderPlan();
-    }
+    if (ok) { renderPlan(); }
     return;
   }
 
@@ -1626,66 +1039,35 @@ async function ghCargar() {
       headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
     });
     if (!r.ok) {
-      // Fallback to localStorage
       const ok = localRestore();
-      if (ok) { renderTabla(); renderEmpresaFacturas(); if (cotizaciones.length) enableGenerarBtns(); renderPlan(); }
+      if (ok) { renderPlan(); }
       return;
     }
     const data = await r.json();
     if (!data.content) {
-      // GitHub returns content:'' + encoding:'none' for files >1MB; fall back gracefully
       const ok = localRestore();
-      if (ok) { renderTabla(); renderEmpresaFacturas(); if (cotizaciones.length) enableGenerarBtns(); renderPlan(); }
+      if (ok) { renderPlan(); }
       const gs = document.getElementById('ghStatus');
       if (gs) gs.textContent = '⚠️ Archivo de nube muy grande — cargando datos locales';
       return;
     }
     const json = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))));
 
-    facturaMap = json.facturaMap || {};
     visitaStatus = json.visitaStatus || {};
-    cotizaciones = (json.cotizaciones || []).map(c => ({
-      ...c,
-      filename: c.filename || '',
-      empresa: (c.empresaKey ? EMPRESAS_MAP[c.empresaKey] : null) || Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
-      notaEntrega: c.notaEntrega || ''
-    }));
-    if (json.neInicial) { const _ne = document.getElementById('neInicial'); if (_ne) _ne.value = json.neInicial; }
 
-    renderTabla(); renderEmpresaFacturas(); if (cotizaciones.length) enableGenerarBtns(); renderPlan();
+    renderPlan();
     const gs = document.getElementById('ghStatus');
     if (gs) gs.textContent = `☁️ Sincronizado (${json.savedAt ? new Date(json.savedAt).toLocaleString() : 'fecha desconocida'})`;
   } catch (e) {
     const ok = localRestore();
-    if (ok) { renderTabla(); renderEmpresaFacturas(); if (cotizaciones.length) enableGenerarBtns(); renderPlan(); }
+    if (ok) { renderPlan(); }
   }
 }
 
-// ─── GENERADORES ─────────────────────────────────────────────────────────────
-function log(msg, type='') {
-  const box = document.getElementById('genLog');
-  if (!box) { console.warn('[log]', msg); return; }
-  box.style.display = '';
-  const line = document.createElement('div');
-  line.className = 'log-line' + (type ? ' log-' + type : '');
-  line.textContent = new Date().toLocaleTimeString() + ' › ' + msg;
-  box.appendChild(line);
-  box.scrollTop = box.scrollHeight;
-}
-
-// ─── PLAN DEL MES & NOTAS DE ENTREGA ─────────────────────────────────────────
+// ─── PLAN DEL MES ────────────────────────────────────────────────────────────
 let planMes = [];
 let visitaStatus = {};
 const RAW_BASE = '';
-
-const NE_TEMPLATE_MAP = {
-  'INT FOOD SERVICES': 'INT',
-  'SHEMLON':           'SHEMLON',
-  'DELI INTERNACIONAL':'DELI',
-  'PROCAFECOL':        'PROCAFECOL',
-  'NOVOEVENTOS':       'NOVO',
-  'SUSHICORP':         'SUSHICORP',
-};
 
 async function cargarPlan() {
   const mesVal  = document.getElementById('selMes').value;
@@ -1704,20 +1086,12 @@ async function cargarPlan() {
     const buf  = await resp.arrayBuffer();
     const wb   = XLSX.read(buf, { type: 'array' });
 
-    // RESUMEN: CÓDIGO, MARCA, NOMBRE_LOCAL, MES_SERVICIO, N_EXTINTORES,
-    //          TOTAL_MANTT, TOTAL_RECARGA, COBRO_ANUAL, AÑO_ULT_RECARGA, AÑO_RECARGA
-    const wsRes = wb.Sheets['RESUMEN_LOCALES'];
-    if (!wsRes) throw new Error('Hoja RESUMEN_LOCALES no encontrada en BASE_DATOS_KFC.xlsx');
-    const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
-
     // DETALLE: MARCA, NOMBRE_LOCAL, MES_SERVICIO, UBICACIÓN, TIPO, CAPACIDAD,
     //          COSTO_MANTT, PRECIO_RECARGA, AÑO_ULT_RECARGA, AÑO_RECARGA
     const wsDet  = wb.Sheets['DETALLE'];
     if (!wsDet) throw new Error('Hoja DETALLE no encontrada en BASE_DATOS_KFC.xlsx');
     const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
 
-    // Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
-    // Ej: "BS04"→"BS004", "CN31"→"BS031"
     const CN_TO_BS_MAP = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
     function normCode(raw) {
       const m = String(raw).match(/^([A-Z]+)(\d+)/);
@@ -1726,40 +1100,56 @@ async function cargarPlan() {
       return CN_TO_BS_MAP[n] || n;
     }
 
-    // Build extintor map by local code
     const normMes = s => String(s || '').trim().toUpperCase();
-    const extMap = {};
+    const locals = {};
+
     detalle.slice(1).forEach(r => {
+      const marca = String(r[0] || '');
+      if (marca.startsWith('TOTALES') || marca.startsWith('GRAN TOTAL')) return;
       if (!r[1]) return;
+      const nameMatch = String(r[1]).match(/^([A-Z]+\d+)/);
+      if (!nameMatch) return;
+      const cod = normCode(nameMatch[1]);
       if (!todosLosMeses && normMes(r[2]) !== normMes(mesNom)) return;
-      const m = String(r[1]).match(/^([A-Z]+\d+)/);
-      if (!m) return;
-      const cod = normCode(m[1]);
-      if (!extMap[cod]) extMap[cod] = [];
-      extMap[cod].push({ tipo: r[4], cap: r[5], costoMantt: r[6], precioRec: r[7], anioRec: r[9] });
+
+      if (!locals[cod]) {
+        locals[cod] = {
+          marca: r[0], nombre: String(r[1] || cod), mes: r[2],
+          extintores: [], totalMantt: 0, totalRecarga: 0, nExt: 0, anioRec: null
+        };
+      }
+
+      const tipo = String(r[4] || '').trim();
+      const cap = String(r[5] || '').trim();
+      if (!tipo || cap.includes('ext.')) return;
+
+      const mantt = parseFloat(r[6]) || 0;
+      const rec = parseFloat(r[7]) || 0;
+      const rowAnioRec = r[9] != null ? parseInt(r[9]) : null;
+      const isMovil = tipo.toUpperCase().includes('MOVILI');
+
+      locals[cod].totalMantt += mantt;
+      locals[cod].totalRecarga += rec;
+      if (rowAnioRec != null && locals[cod].anioRec == null) locals[cod].anioRec = rowAnioRec;
+
+      if (!isMovil) {
+        locals[cod].nExt++;
+        locals[cod].extintores.push({ tipo: r[4], cap: r[5], costoMantt: r[6], precioRec: r[7], anioRec: r[9] });
+      }
     });
 
-    planMes = resumen.slice(1)
-      .filter(r => r[0] && (todosLosMeses || normMes(r[3]) === normMes(mesNom)))
-      .map(r => {
-        const cod = normCode(String(r[0]));
-        const anioRec = parseInt(r[9]) || 9999;
-        const esRecarga = parseInt(anio) === anioRec;
-        return {
-          codigo: cod,
-          marca: r[1],
-          nombre: String(r[2] || cod),
-          mes: r[3],
-          nExt: r[4] || 0,
-          totalMantt: parseFloat(r[5]) || 0,
-          totalRecarga: parseFloat(r[6]) || 0,
-          cobro: parseFloat(r[7]) || 0,
-          anioRec,
-          esRecarga,
-          empresa: getEmpresa(cod),
-          extintores: extMap[cod] || [],
-        };
-      });
+    planMes = Object.entries(locals).map(([cod, l]) => {
+      const anioRec = l.anioRec || 9999;
+      const esRecarga = parseInt(anio) === anioRec;
+      const totalMantt = parseFloat(l.totalMantt.toFixed(2));
+      const totalRecarga = parseFloat(l.totalRecarga.toFixed(2));
+      return {
+        codigo: cod, marca: l.marca, nombre: l.nombre, mes: l.mes,
+        nExt: l.nExt, totalMantt, totalRecarga,
+        cobro: esRecarga ? totalRecarga : totalMantt,
+        anioRec, esRecarga, empresa: getEmpresa(cod), extintores: l.extintores,
+      };
+    });
 
     const _ls2 = document.getElementById('loadStatus');
     if (_ls2) _ls2.innerHTML = '';
@@ -1796,10 +1186,9 @@ function renderPlan() {
 
   // Filtro de búsqueda
   const q = (document.getElementById('planSearch')?.value || '').toUpperCase().trim();
-  const neBase = parseInt(document.getElementById('neInicial')?.value) || 6700;
 
   const visibles = planMes
-    .map((local, idx) => ({ local, neNum: neBase + idx }))
+    .map((local, idx) => ({ local, idx }))
     .filter(({ local }) => !q ||
       local.codigo.toUpperCase().includes(q) ||
       String(local.nombre).toUpperCase().includes(q) ||
@@ -1810,7 +1199,7 @@ function renderPlan() {
     return;
   }
 
-  function buildCard({ local, neNum }) {
+  function buildCard({ local, idx }) {
     const status     = visitaStatus[local.codigo] || 'pendiente';
     const isVisitado = status === 'visitado';
     const iva        = parseFloat((local.cobro * 0.15).toFixed(2));
@@ -1823,15 +1212,9 @@ function renderPlan() {
       ? `<span style="color:#8e44ad;font-weight:600">⟳ RECARGA ${local.anioRec}</span>`
       : `<span style="color:#2980b9;font-weight:600">🔧 MANTENIMIENTO</span>`;
 
-    const btnNE = isAdmin ? `
-            <button class="btn btn-sm btn-info" style="font-size:11px;padding:3px 8px;white-space:nowrap"
-              onclick="event.stopPropagation();generarNELocal('${esc(local.codigo)}',${neNum})">
-              📄 NE #${neNum}
-            </button>` : '';
-
     return `
-      <div class="local-card ${status}" id="lcard-${neNum}">
-        <div class="local-card-header" onclick="toggleLocalCard(${neNum})">
+      <div class="local-card ${status}" id="lcard-${idx}">
+        <div class="local-card-header" onclick="toggleLocalCard(${idx})">
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
             <span class="badge-${status}">${isVisitado ? '✅' : '🔴'}</span>
             <strong style="white-space:nowrap">${esc(local.codigo)}</strong>
@@ -1845,21 +1228,20 @@ function renderPlan() {
             <button class="btn btn-sm ${isVisitado ? 'btn-warning' : 'btn-success'}" style="font-size:11px;padding:3px 8px;white-space:nowrap"
               onclick="event.stopPropagation();toggleVisita('${esc(local.codigo)}')">
               ${isVisitado ? '↩ Pendiente' : '✅ Visitado'}
-            </button>${btnNE}
+            </button>
             ${!isAdmin ? `<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
               onclick="event.stopPropagation();abrirCertModal('${esc(local.codigo)}')">
               📜 Generar Certificado
             </button>` : ''}
           </div>
         </div>
-        <div class="local-card-body" id="lbody-${neNum}">
+        <div class="local-card-body" id="lbody-${idx}">
           <div style="margin-bottom:6px">${extList || '<em style="color:#e74c3c">⚠️ Sin extintores en la base de datos</em>'}</div>
           <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;align-items:center">
             ${tipoServ}
             ${isAdmin ? `<span>Subtotal: <strong>$${local.cobro.toFixed(2)}</strong></span>
             <span>IVA 15%: <strong>$${iva.toFixed(2)}</strong></span>
-            <span>Total: <strong>$${totalCobro.toFixed(2)}</strong></span>
-            <span style="color:#888">NE asignado: <strong>#${neNum}</strong></span>` : ''}
+            <span>Total: <strong>$${totalCobro.toFixed(2)}</strong></span>` : ''}
           </div>
         </div>
       </div>`;
@@ -1990,417 +1372,6 @@ function toggleVisita(codigo) {
   autosave();
 }
 
-async function generarNELocal(codigo, neNum) {
-  const local = planMes.find(l => l.codigo === codigo);
-  if (!local) { log(`Local ${codigo} no encontrado en el plan`, 'error'); return; }
-
-  const tplKey = NE_TEMPLATE_MAP[local.empresa?.hoja] || 'INT';
-  const tplUrl = `formatos/ne/${tplKey}.xlsx`;
-
-  try {
-    log(`Generando NE #${neNum} para ${codigo}…`);
-    const resp = await fetch(tplUrl);
-    if (!resp.ok) throw new Error(`Template ${tplKey} no encontrado (${resp.status})`);
-    const buf  = await resp.arrayBuffer();
-    const wb   = XLSX.read(buf, { type: 'array', cellStyles: true });
-    const ws   = wb.Sheets[wb.SheetNames[0]];
-
-    // ── Date ────────────────────────────────────────────────────────────────
-    const today = new Date();
-    const MNAMES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
-                    'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-    const fechaStr = `${today.getDate()} DE ${MNAMES[today.getMonth()]} DEL ${today.getFullYear()}`;
-    ws['I10'] = { t:'s', v: fechaStr };
-
-    // ── Company name & RUC: only override when using a dedicated template ──
-    // INT fallback keeps "INT FOOD SERVICES" since KFC/GUS/CN/BS/I all bill via INT
-    const emp = local.empresa || {};
-    const hasOwnTemplate = emp.hoja && NE_TEMPLATE_MAP[emp.hoja] && NE_TEMPLATE_MAP[emp.hoja] !== 'INT';
-    if (hasOwnTemplate) {
-      if (emp.empresa) ws['B10'] = { t:'s', v: emp.empresa };
-      if (emp.ruc)     ws['L11'] = { t:'s', v: emp.ruc };
-    }
-
-    // ── Service type ─────────────────────────────────────────────────────────
-    ws['C13'] = { t:'s', v: local.esRecarga ? 'RECARGA' : 'MANTENIMIENTO' };
-
-    // ── Clear old sample rows 14-24 ──────────────────────────────────────────
-    for (let r = 14; r <= 24; r++) {
-      ['A','B','C','L','M','N'].forEach(col => { delete ws[col + r]; });
-    }
-
-    // ── Build grouped items ──────────────────────────────────────────────────
-    const groups = {};
-    local.extintores.forEach(e => {
-      const k = `${e.tipo}|${e.cap}`;
-      if (!groups[k]) groups[k] = {
-        tipo: e.tipo, cap: e.cap, qty: 0,
-        price: parseFloat(local.esRecarga ? e.precioRec : e.costoMantt) || 0
-      };
-      groups[k].qty++;
-    });
-    const items = Object.values(groups);
-
-    if (items.some(it => it.price === 0))
-      log(`⚠️ NE ${codigo}: uno o más tipos de extintor sin precio en la base de datos (verifica BASE_DATOS_KFC.xlsx)`, 'warn');
-
-    let subtotalCalc = 0;
-    items.forEach((item, i) => {
-      if (i >= 11) { if (i === 11) log(`⚠️ NE ${codigo}: ${items.length - 11} tipos de extintor omitidos (máx 11 filas)`, 'warn'); return; }
-      const r = 14 + i;
-      const desc  = tipoExtDescripcion(item.tipo, item.cap);
-      const lineT = item.qty * item.price;
-      subtotalCalc += lineT;
-      ws[`A${r}`] = { t:'n', v: item.qty };
-      ws[`B${r}`] = { t:'n', v: item.qty };
-      ws[`C${r}`] = { t:'s', v: desc };
-      ws[`L${r}`] = { t:'s', v: '$' };
-      ws[`M${r}`] = { t:'n', v: item.price };
-      ws[`N${r}`] = { t:'n', v: lineT, f: `M${r}*A${r}` };
-    });
-
-    // ── Local info (row 25) ──────────────────────────────────────────────────
-    const localLabel = (local.nombre || '').replace(local.codigo + ' - ', '');
-    ws['C25'] = { t:'s', v: `LOCAL: ${local.codigo} - ${localLabel}` };
-
-    // ── Totals ───────────────────────────────────────────────────────────────
-    const sub = parseFloat(subtotalCalc.toFixed(2));
-    const iva = parseFloat((sub * 0.15).toFixed(2));
-    const tot = parseFloat((sub + iva).toFixed(2));
-    ws['N27'] = { t:'n', v: sub, f:'SUM(N14:N24)' };
-    ws['N29'] = { t:'n', v: iva, f:'N27*0.15' };
-    ws['N31'] = { t:'n', v: tot, f:'N27+N29' };
-    ws['N32'] = { t:'n', v: tot, f:'N31' };
-
-    // ── Amount in words ──────────────────────────────────────────────────────
-    ws['B29'] = { t:'s', v: numeroEnLetras(tot) };
-
-    // ── Expand !ref to cover all written cells (rows up to 32) ───────────────
-    const _r = XLSX.utils.decode_range(ws['!ref'] || 'A1:N32');
-    if (_r.e.r < 31) { _r.e.r = 31; ws['!ref'] = XLSX.utils.encode_range(_r); }
-
-    XLSX.writeFile(wb, `NE-${neNum}-${local.codigo}.xlsx`);
-    log(`✅ NE #${neNum} — ${local.codigo} descargada`, 'ok');
-  } catch(e) {
-    console.error('generarNELocal:', e);
-    log(`❌ Error NE ${codigo}: ${e.message}`, 'error');
-  }
-}
-
-function tipoExtDescripcion(tipo, cap) {
-  const tm = { CO2:'GAS CARBONICO', PQS:'POLVO QUIMICO SECO',
-                K:'TIPO K (ACETATO DE POTASIO)', FOAM:'ESPUMA (AGUA QUIMICA)',
-                AGUA:'AGUA QUIMICA', HCFC:'HCFC-123 (HALOTRON)' };
-  const td = tm[(tipo || '').toUpperCase()] || tipo;
-  const cd = (cap || '').replace(/\bLBS\b/gi,'LIBRAS').replace(/\b(?:GLNS|GLS|GL)\b/gi,'GALONES');
-  return `EXTINTOR ${cd} - ${td}`;
-}
-
-function numeroEnLetras(num) {
-  const un = ['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE',
-              'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS',
-              'DIECISIETE','DIECIOCHO','DIECINUEVE'];
-  const de = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA',
-              'SESENTA','SETENTA','OCHENTA','NOVENTA'];
-  const ce = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS',
-              'QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
-  const b100 = n => {
-    if (n < 20) return un[n];
-    if (n%10 === 0) return de[~~(n/10)];
-    if (n < 30) return (n===21?'VEINTIÚN':n===22?'VEINTIDÓS':n===23?'VEINTITRÉS':n===26?'VEINTISÉIS':'VEINTI'+un[n-20]);
-    return de[~~(n/10)]+' Y '+un[n%10];
-  };
-  const b1000 = n => n===100 ? 'CIEN' : n<100 ? b100(n) : (n%100===0 ? ce[~~(n/100)] : ce[~~(n/100)]+' '+b100(n%100));
-  const safe = (isFinite(num) && num >= 0) ? num : 0;
-  const int = Math.floor(safe), dec = Math.round(Math.round(safe * 100) % 100);
-  const bMiles = n => { const t=~~(n/1000),r=n%1000; return t===0?b1000(r):(t===1?'MIL':b1000(t)+' MIL')+(r===0?'':' '+b1000(r)); };
-  let txt;
-  if (int===0) txt='CERO';
-  else if (int<1000) txt=b1000(int);
-  else if (int<1000000) txt=bMiles(int);
-  else if (int<1000000000) { const m=~~(int/1000000),r=int%1000000; txt=(m===1?'UN MILLÓN':b1000(m)+' MILLONES')+(r===0?'':' '+bMiles(r)); }
-  else txt='MONTO';
-  return `                ${txt} CON ${String(dec).padStart(2,'0')}/100 USD`;
-}
-
-async function generarTodo() {
-  try { await generarDetalle(); } catch(e) { log('❌ Error Detalle: ' + e.message, 'error'); }
-  try { await generarDistribucion(); } catch(e) { log('❌ Error Distribución: ' + e.message, 'error'); }
-  try { await generarFormatoFact(); } catch(e) { log('❌ Error Formato Fact: ' + e.message, 'error'); }
-}
-
-function getMesLabel() {
-  const mes = document.getElementById('selMes').value;
-  return MESES_NOMBRE[mes] || (mes ? mes : 'TODOS');
-}
-
-function _cloneSheet(ws) {
-  return JSON.parse(JSON.stringify(ws));
-}
-
-function _clearSheetRows(ws, fromRow) {
-  if (!ws['!ref']) return;
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  for (let r = fromRow - 1; r <= range.e.r; r++) {
-    for (let c = range.s.c; c <= range.e.c; c++) {
-      delete ws[XLSX.utils.encode_cell({ r, c })];
-    }
-  }
-  range.e.r = Math.max(range.s.r, fromRow - 2);
-  ws['!ref'] = XLSX.utils.encode_range(range);
-  if (ws['!merges']) ws['!merges'] = ws['!merges'].filter(m => m.e.r < fromRow - 1);
-}
-
-async function _fetchTemplate(path) {
-  const resp = await fetch(path);
-  if (!resp.ok) throw new Error(resp.status);
-  return XLSX.read(new Uint8Array(await resp.arrayBuffer()), { type: 'array' });
-}
-
-async function generarDetalle() {
-  if (!cotizaciones.length) { log('⚠️ No hay datos para generar DETALLE', 'warn'); return; }
-  log('Generando DETALLE FACT MENSUAL...');
-  const dateStr = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric' });
-
-  let wb;
-  try {
-    wb = await _fetchTemplate('templates/DETALLE_FACT_MENSUAL.xlsx');
-    log('  Plantilla cargada', 'ok');
-  } catch(e) {
-    log('⚠️ No se pudo cargar plantilla: ' + e.message, 'warn');
-    wb = XLSX.utils.book_new();
-  }
-
-  // ── MANGES ──────────────────────────────────────────────────────────────────
-  {
-    // data[] rows go into Excel starting at row 3 (rows 1-2 are headers in template)
-    // Excel row of data[i] = i + 3
-    const data = [];
-    const byHoja = {}; const hojaOrder = [];
-    cotizaciones.filter(c => c.category === 'MANGES').forEach(c => {
-      const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-      if (!byHoja[hoja]) { byHoja[hoja] = []; hojaOrder.push(hoja); }
-      byHoja[hoja].push(c);
-    });
-    hojaOrder.forEach(hoja => {
-      const group = byHoja[hoja];
-      const gs = data.length + 3; // Excel row of group start
-      group.forEach(c => {
-        const emp = c.empresa || {};
-        const extItems = (c.items || []).filter(i => i.isExtintor);
-        if (!extItems.length) {
-          const r = data.length + 3;
-          data.push([emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
-            c.localCode, null, 0, '-', '-', 'M', null, c.subtotal,
-            {f:`SUM(L${r}:L${r})`}, {f:`M${r}*0.15`}, {f:`N${r}+M${r}`}, c.notaEntrega||'']);
-          return;
-        }
-        const cotFirst = data.length; // index into data[] of this cotización's first row
-        extItems.forEach((item, i) => {
-          data.push(i === 0
-            ? [emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
-               c.localCode, null,
-               item.qty, item.tipo, item.capacidad,
-               item.serviceType === 'RECARGA' ? 'R' : 'M', null, item.unitPrice,
-               null, null, null, c.notaEntrega||'']
-            : [null,null,null,null,null,null,
-               item.qty, item.tipo, item.capacidad,
-               item.serviceType === 'RECARGA' ? 'R' : 'M', null, item.unitPrice,
-               null,null,null,null]);
-        });
-        // fr/lr: Excel rows spanning this cotización's items
-        const fr = cotFirst + 3, lr = data.length + 2;
-        data[cotFirst][12] = {f:`SUMPRODUCT(G${fr}:G${lr},L${fr}:L${lr})`};
-        data[cotFirst][13] = {f:`M${fr}*0.15`};
-        data[cotFirst][14] = {f:`N${fr}+M${fr}`};
-      });
-      const ge = data.length + 2; // Excel row of last data row before totals
-      const factNum = (facturaMap[hoja]?.factManges || '').trim().split(' ')[0];
-      data.push([null,null,null,null,null,null,
-        dateStr, null, `FACT 001-002-${factNum}`, null, null, 'TOTAL:',
-        {f:`SUM(M${gs}:M${ge})`}, {f:`SUM(N${gs}:N${ge})`}, {f:`SUM(O${gs}:O${ge})`}, null]);
-    });
-    let ws = wb.Sheets['MANGES'];
-    if (!ws) {
-      ws = XLSX.utils.aoa_to_sheet([
-        ['DATOS DE LA EMPRESA',null,null,null,null,'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null,null,'DETALLE DE COSTOS',null,null,null,null],
-        ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO','EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R','JEFE DE OPERACIONES QUE AUTORIZA','VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
-      ]);
-      XLSX.utils.book_append_sheet(wb, ws, 'MANGES');
-    } else {
-      _clearSheetRows(ws, 3);
-    }
-    if (data.length) XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A3' });
-    log(`  MANGES: ${hojaOrder.length} empresas`, 'ok');
-  }
-
-  // ── MANT ────────────────────────────────────────────────────────────────────
-  {
-    const data = [];
-    const byHoja = {}; const hojaOrder = [];
-    cotizaciones.filter(c => c.category === 'MANT').forEach(c => {
-      const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-      if (!byHoja[hoja]) { byHoja[hoja] = []; hojaOrder.push(hoja); }
-      byHoja[hoja].push(c);
-    });
-    hojaOrder.forEach(hoja => {
-      const group = byHoja[hoja];
-      const gs = data.length + 3;
-      group.forEach(c => {
-        const emp = c.empresa || {};
-        const r = data.length + 3;
-        data.push([emp.empresa||'', emp.marca||'', c.localName, c.ciudad,
-          c.localCode, c.descripcionFact, '-', '-', '-', null,
-          c.subtotal, {f:`SUM(K${r})`}, {f:`L${r}*0.15`}, {f:`M${r}+L${r}`},
-          c.notaEntrega||'', c.observacion||'', null]);
-      });
-      const ge = data.length + 2;
-      const factNum = (facturaMap[hoja]?.factMant || '').trim().split(' ')[0];
-      data.push([null,null,null,null,null,null,
-        dateStr, null, `FACT 001-002-${factNum}`, null, 'TOTAL:',
-        {f:`SUM(L${gs}:L${ge})`}, {f:`SUM(M${gs}:M${ge})`}, {f:`SUM(N${gs}:N${ge})`},
-        null,null,null]);
-    });
-    let ws = wb.Sheets['MANT'];
-    if (!ws) {
-      ws = XLSX.utils.aoa_to_sheet([
-        ['DATOS DE LA EMPRESA',null,null,null,null,'DESCRIPCIÓN DE TRABAJOS REALIZADOS',null,null,null,null,'DETALLE DE COSTOS',null,null,null,null,'OBSERVACION',null],
-        ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO','EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD','JEFE DE OPERACIONES QUE AUTORIZA','VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA',null,null]
-      ]);
-      XLSX.utils.book_append_sheet(wb, ws, 'MANT');
-    } else {
-      _clearSheetRows(ws, 3);
-    }
-    if (data.length) XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A3' });
-    log(`  MANT: ${hojaOrder.length} empresas`, 'ok');
-  }
-
-  try { XLSX.writeFile(wb, `DETALLE FACT MENSUAL ${getMesLabel()}.xlsx`); }
-  catch(e) { log('❌ Error al descargar DETALLE: ' + e.message, 'error'); return; }
-  log('✅ DETALLE FACT MENSUAL descargado', 'ok');
-  markOutput('out1');
-}
-
-async function generarDistribucion() {
-  if (!cotizaciones.length) { log('⚠️ No hay datos para generar DISTRIBUCIÓN', 'warn'); return; }
-  log('Generando DISTRIBUCIÓN...');
-
-  let templateSheet = null;
-  try {
-    const tWb = await _fetchTemplate('templates/DISTRIBUCION.xlsx');
-    templateSheet = tWb.Sheets[tWb.SheetNames[0]];
-    log('  Plantilla cargada', 'ok');
-  } catch(e) {
-    log('⚠️ No se pudo cargar plantilla: ' + e.message, 'warn');
-  }
-
-  const wb = XLSX.utils.book_new();
-  const byKey = {}; const keyOrder = [];
-  cotizaciones.forEach(c => {
-    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-    const factFull = c.category === 'MANGES'
-      ? (facturaMap[hoja]?.factManges || '')
-      : (facturaMap[hoja]?.factMant || '');
-    const num = factFull.trim().split(' ')[0];
-    const key = hoja + '|' + c.category;
-    if (!byKey[key]) { byKey[key] = { num, items: [] }; keyOrder.push(key); }
-    byKey[key].items.push(c);
-  });
-
-  keyOrder.forEach(key => {
-    const { num, items } = byKey[key];
-    // data[] rows go into Excel starting at row 2 (row 1 is header)
-    // Excel row of data[i] = i + 2
-    let ws;
-    if (templateSheet) {
-      ws = _cloneSheet(templateSheet);
-      _clearSheetRows(ws, 2);
-    } else {
-      ws = XLSX.utils.aoa_to_sheet([['C.C.', 'DESCRIPCION', 'SUBTOTAL', 'IVA', 'TOTAL']]);
-    }
-    const data = [];
-    items.forEach(c => {
-      const r = data.length + 2;
-      data.push([c.cc, c.descripcionFact, c.subtotal, {f:`C${r}*0.15`}, {f:`SUM(D${r},C${r})`}]);
-    });
-    const last = data.length + 1; // Excel row of last data row
-    data.push([null, 'TOTAL:',
-      {f:`SUM(C2:C${last})`}, {f:`SUM(D2:D${last})`}, {f:`SUM(E2:E${last})`}]);
-    XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A2' });
-    let sheetName = `FACT ${num}`.slice(0, 31);
-    let snIdx = 1;
-    while (wb.SheetNames.includes(sheetName)) sheetName = `FACT ${num} (${++snIdx})`.slice(0, 31);
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    log(`  Hoja: ${sheetName} (${items.length} líneas)`, 'ok');
-  });
-
-  if (!wb.SheetNames.length) { log('⚠️ No hay datos para generar DISTRIBUCIÓN', 'warn'); return; }
-  try { XLSX.writeFile(wb, `DISTRIBUCION ${getMesLabel()}.xlsx`); }
-  catch(e) { log('❌ Error al descargar DISTRIBUCIÓN: ' + e.message, 'error'); return; }
-  log(`✅ DISTRIBUCIÓN descargado (${keyOrder.length} hojas)`, 'ok');
-  markOutput('out2');
-}
-
-async function generarFormatoFact() {
-  if (!cotizaciones.length) { log('⚠️ No hay datos para generar FORMATO_FACTURACIÓN', 'warn'); return; }
-  log('Generando FORMATO_FACTURACIÓN...');
-
-  let templateSheet = null;
-  try {
-    const tWb = await _fetchTemplate('templates/FORMATO_FACTURACION.xlsx');
-    templateSheet = tWb.Sheets[tWb.SheetNames[0]];
-    log('  Plantilla cargada', 'ok');
-  } catch(e) {
-    log('⚠️ No se pudo cargar plantilla: ' + e.message, 'warn');
-  }
-
-  const wb = XLSX.utils.book_new();
-  const byHoja = {}; const hojaOrder = [];
-  cotizaciones.forEach(c => {
-    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-    if (!byHoja[hoja]) { byHoja[hoja] = []; hojaOrder.push(hoja); }
-    byHoja[hoja].push(c);
-  });
-
-  hojaOrder.forEach(hoja => {
-    const items = byHoja[hoja];
-    // data[] rows go into Excel starting at row 2 (row 1 is header)
-    // Excel row of data[i] = i + 2
-    let ws;
-    if (templateSheet) {
-      ws = _cloneSheet(templateSheet);
-      _clearSheetRows(ws, 2);
-    } else {
-      ws = XLSX.utils.aoa_to_sheet([
-        ['C.COSTO','DESCRIPCION FACTURA + # ACTA/ORDEN DE TRABAJO','N° FACTURA','SUBTOTAL','IVA','TOTAL','ACTA']
-      ]);
-    }
-    const data = [];
-    items.forEach(c => {
-      const factNum = c.category === 'MANGES'
-        ? (facturaMap[hoja]?.factManges || '')
-        : (facturaMap[hoja]?.factMant || '');
-      const r = data.length + 2;
-      data.push([c.cc, c.descripcionFact, factNum, c.subtotal,
-        {f:`D${r}*0.15`}, {f:`SUM(E${r},D${r})`}, null]);
-    });
-    const last = data.length + 1;
-    data.push([null, 'TOTALES', null,
-      {f:`SUM(D2:D${last})`}, {f:`SUM(E2:E${last})`}, {f:`SUM(F2:F${last})`}, null]);
-    XLSX.utils.sheet_add_aoa(ws, data, { origin: 'A2' });
-    let _sn = hoja.slice(0, 31);
-    let _snI = 1;
-    while (wb.SheetNames.includes(_sn)) _sn = (hoja.slice(0, 28) + ` (${++_snI})`).slice(0, 31);
-    XLSX.utils.book_append_sheet(wb, ws, _sn);
-    log(`  Hoja: ${hoja} (${items.length} líneas)`, 'ok');
-  });
-
-  if (!wb.SheetNames.length) { log('⚠️ No hay datos para generar FORMATO_FACTURACIÓN', 'warn'); return; }
-  try { XLSX.writeFile(wb, `FORMATO_FACTURACIÓN ${getMesLabel()}.xlsx`); }
-  catch(e) { log('❌ Error al descargar FORMATO: ' + e.message, 'error'); return; }
-  log('✅ FORMATO_FACTURACIÓN descargado', 'ok');
-  markOutput('out3');
-}
 
 // ─── CERTIFICADOS PDF ─────────────────────────────────────────────────────────
 let certModalCodigo = null;
@@ -2414,9 +1385,9 @@ const ACCESSORIES = [
   { desc: 'Manómetro PQS',         precio: 2.00 },
   { desc: 'Cabezal extintor PQS',  precio: 8.00 },
   { desc: 'Manguera PQS',          precio: 4.00 },
-  { desc: 'Corneta CO₂ 5lbs',      precio: 8.00 },
-  { desc: 'Corneta CO₂ 10lbs',     precio: 13.00 },
-  { desc: 'Manguera CO₂ 10lbs',    precio: 13.00 },
+  { desc: 'Corneta CO2 5lbs',      precio: 8.00 },
+  { desc: 'Corneta CO2 10lbs',     precio: 13.00 },
+  { desc: 'Manguera CO2 10lbs',    precio: 13.00 },
   { desc: 'Empaque válvula',       precio: 1.50 },
   { desc: 'Soporte metálico',      precio: 5.00 },
   { desc: 'Pitón',                 precio: 1.50 },
@@ -2437,7 +1408,7 @@ async function fetchLogo() {
     const m = t.match(/var LOGO_B64\s*=\s*"([^"]+)"/);
     if (m) { _LOGO_CACHE = m[1]; return m[1]; }
   } catch(e) { console.warn('Logo no disponible:', e); }
-  if (_LOGO_CACHE === undefined) _LOGO_CACHE = null; // only cache failure if no concurrent fetch succeeded
+  if (_LOGO_CACHE === undefined) _LOGO_CACHE = null;
   return null;
 }
 
@@ -2490,7 +1461,6 @@ async function hacerPDF(opts) {
     return yy + 36;
   }
 
-  // ── Page 1 ──────────────────────────────────────────────────────────────────
   fondoBase(); piePagina();
   let y = 9;
 
@@ -2512,9 +1482,9 @@ async function hacerPDF(opts) {
   const iL = [
     'RUC.: 0952773976001  |  ASESORAMIENTO · RECARGA · MANTENIMIENTO · VENTAS',
     'PQS (ABC) · GAS CARBONICO · HALOTRON',
-    'DISEÑO E INSTALACIÓN DE RED HIDRÁULICA CONTRA INCENDIOS',
+    'DISEÑO E INSTALACION DE RED HIDRAULICA CONTRA INCENDIOS',
     'SISTEMAS DE CO2 PARA COCINAS, GENERADORES, TRANSFORMADORES, ETC',
-    'INSTALACIÓN DE LÁMPARAS DE EMERGENCIA Y DETECTORES DE HUMO'
+    'INSTALACION DE LAMPARAS DE EMERGENCIA Y DETECTORES DE HUMO'
   ];
   doc.setFont('helvetica','normal'); doc.setFontSize(7.5); tG();
   iL.forEach((line,i) => {
@@ -2527,7 +1497,7 @@ async function hacerPDF(opts) {
   dL(); doc.setLineWidth(0.3); doc.line(ML,y+1.8,PW-ML,y+1.8);
   y += 8;
 
-  const tits = ['CERTIFICADO DE INSPECCIÓN Y MANTENIMIENTO DE','EXTINTORES PORTÁTILES'];
+  const tits = ['CERTIFICADO DE INSPECCION Y MANTENIMIENTO DE','EXTINTORES PORTATILES'];
   doc.setFont('helvetica','bold'); doc.setFontSize(13); tN();
   tits.forEach(t => {
     const tw = doc.getTextWidth(t);
@@ -2544,7 +1514,7 @@ async function hacerPDF(opts) {
 
   const locUp  = (localNom||'').toUpperCase();
   const puntUp = (puntNom && puntNom !== localNom ? puntNom : localNom).toUpperCase();
-  const ptxt   = 'INSPECCIÓN Y MANTENIMIENTO DE EXTINTORES PORTÁTILES UBICADOS EN LOS DISTINTOS PUNTOS ESTRATÉGICOS DEL LOCAL «'+locUp+'» UBICADO EN '+puntUp+', SIGUIENDO LAS NORMAS NFPA10.';
+  const ptxt   = 'INSPECCION Y MANTENIMIENTO DE EXTINTORES PORTATILES UBICADOS EN LOS DISTINTOS PUNTOS ESTRATEGICOS DEL LOCAL "'+locUp+'" UBICADO EN '+puntUp+', SIGUIENDO LAS NORMAS NFPA10.';
   doc.setFont('helvetica','normal'); doc.setFontSize(8.5); tN();
   const pLines = doc.splitTextToSize(ptxt, CW);
   doc.text(pLines, ML, y);
@@ -2556,8 +1526,8 @@ async function hacerPDF(opts) {
   y += 7;
 
   const compItems = [
-    'REVISION INTEGRAL DE LOS CILINDROS','INSPECCIÓN DE CABEZALES',
-    'INSPECCIÓN DE CORNETAS / MANGUERAS','PESAJE / TARA',
+    'REVISION INTEGRAL DE LOS CILINDROS','INSPECCION DE CABEZALES',
+    'INSPECCION DE CORNETAS / MANGUERAS','PESAJE / TARA',
     'MANTENIMIENTO PREVENTIVO-CORRECTIVO','RECARGA DEL AGENTE'
   ];
   doc.setFont('helvetica','normal'); doc.setFontSize(8); tN();
@@ -2568,7 +1538,6 @@ async function hacerPDF(opts) {
   });
   y += 2;
 
-  // Extinguisher table
   const cws = [18,36,28,50,48], cxs = [ML];
   for (let i=1;i<cws.length;i++) cxs.push(cxs[i-1]+cws[i-1]);
   const rH = 9;
@@ -2581,12 +1550,12 @@ async function hacerPDF(opts) {
     gmap[k].cnt++;
   });
   const grps = Object.values(gmap);
-  if (!grps.length) grps.push({cnt:1,cap:'—',tip:'PQS'});
+  if (!grps.length) grps.push({cnt:1,cap:'---',tip:'PQS'});
 
   const _drawTableHeader = () => {
     fN(); doc.rect(ML,y,CW,rH,'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(8); tW();
-    ['CANT.','CAPACIDAD','TIPO','ÚLTIMO MANT.','PRÓXIMO MANT.'].forEach((h,i) => {
+    ['CANT.','CAPACIDAD','TIPO','ULTIMO MANT.','PROXIMO MANT.'].forEach((h,i) => {
       doc.text(h, cxs[i]+cws[i]/2, y+rH-2.8, {align:'center',maxWidth:cws[i]-2});
     });
     dR(); doc.setLineWidth(0.3);
@@ -2624,7 +1593,7 @@ async function hacerPDF(opts) {
   dR(); doc.setLineWidth(0.6); doc.rect(ML, tableTop, CW, y - tableTop, 'S');
   y += 5;
 
-  const gar = 'Los extintores detallados se encuentran operativos de acuerdo con la norma NFPA10 y normativa ecuatoriana vigente. Cada extintor cuenta con sus respectivos precintos y seguros metálicos, etiqueta de control de carga, accesorios en buen estado y agente extintor en óptimas condiciones, garantizando su funcionamiento con vigencia de un (1) año a partir de su último mantenimiento.';
+  const gar = 'Los extintores detallados se encuentran operativos de acuerdo con la norma NFPA10 y normativa ecuatoriana vigente. Cada extintor cuenta con sus respectivos precintos y seguros metalicos, etiqueta de control de carga, accesorios en buen estado y agente extintor en optimas condiciones, garantizando su funcionamiento con vigencia de un (1) ano a partir de su ultimo mantenimiento.';
   doc.setFont('helvetica','italic'); doc.setFontSize(8); tG();
   const gLines = doc.splitTextToSize(gar, CW);
   doc.text(gLines, ML, y);
@@ -2632,19 +1601,18 @@ async function hacerPDF(opts) {
 
   y = bloqueAutorizacion(y);
 
-  // ── Page 2: Evidence photos + signature + accessories ───────────────────────
   const fotoKeys = ['antes','despues','cilindro'].filter(k => FB64&&FB64[k]);
   if (fotoKeys.length>0 || (FB64&&FB64.firma) || (ACCS&&ACCS.length>0)) {
     doc.addPage(); fondoBase(); piePagina();
     let y2 = 18;
 
     if (fotoKeys.length>0) {
-      const evTit = 'EVIDENCIA FOTOGRÁFICA — '+(localNom||'').toUpperCase().substring(0,30);
+      const evTit = 'EVIDENCIA FOTOGRAFICA --- '+(localNom||'').toUpperCase().substring(0,30);
       fR(); doc.rect(ML,y2-4,CW,8,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(10); tW();
       doc.text(evTit, ML+3, y2+0.5);
       y2 += 10;
-      const lblMap = {antes:'ANTES',despues:'DESPUÉS',cilindro:'CILINDRO CO₂'};
+      const lblMap = {antes:'ANTES',despues:'DESPUES',cilindro:'CILINDRO CO2'};
       const fotos  = fotoKeys.map(k=>({b64:FB64[k],lbl:lblMap[k]}));
       if (fotos.length===1) {
         const fw=100,fh=75, fx=ML+(CW-fw)/2;
@@ -2674,7 +1642,6 @@ async function hacerPDF(opts) {
       }
     }
 
-    // Firma del encargado
     if (FB64 && FB64.firma) {
       if (y2 + 48 > PH - 15) { doc.addPage(); fondoBase(); piePagina(); y2 = 18; }
       y2 += 4;
@@ -2685,7 +1652,7 @@ async function hacerPDF(opts) {
       doc.text('FIRMA DEL ENCARGADO:', ML+5, y2+7);
       try { doc.addImage('data:image/png;base64,'+FB64.firma,'PNG',ML+5,y2+10,70,22); } catch(e){}
       doc.setFont('helvetica','normal'); doc.setFontSize(8.5); tG();
-      doc.text('Encargado del local — '+(localNom||'').toUpperCase(), ML+5, y2+36);
+      doc.text('Encargado del local --- '+(localNom||'').toUpperCase(), ML+5, y2+36);
       y2 += 44;
     }
 
@@ -2698,7 +1665,7 @@ async function hacerPDF(opts) {
       const _drawAccHeader = () => {
         fN(); doc.rect(ML,y2-3.5,CW,7.5,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(9); tW();
-        doc.text('DESCRIPCIÓN DEL ACCESORIO', ML+4, y2+0.8);
+        doc.text('DESCRIPCION DEL ACCESORIO', ML+4, y2+0.8);
         y2 += 8;
       };
       _drawAccHeader();
@@ -2707,7 +1674,7 @@ async function hacerPDF(opts) {
         if (i%2===0) doc.setFillColor(255,255,255); else fBG();
         doc.rect(ML,y2-3.5,CW,7,'F');
         doc.setFont('helvetica','normal'); doc.setFontSize(9); tN();
-        doc.text('• '+(acc.desc||acc.nombre||String(acc)), ML+4, y2+0.5);
+        doc.text('* '+(acc.desc||acc.nombre||String(acc)), ML+4, y2+0.5);
         y2 += 7;
       });
       y2 += 4;
@@ -2718,51 +1685,6 @@ async function hacerPDF(opts) {
   const tipoLabel2 = tipoServ === 'recarga' ? 'RECARGA' : 'MANT';
   doc.save(`CERT-${localCode}-${tipoLabel2}-${anio}.pdf`);
   return doc;
-}
-
-async function generarCertificados() {
-  log('Generando Certificados PDF...');
-  const mangesCots = cotizaciones.filter(c => c.category === 'MANGES');
-  if (!mangesCots.length) { log('⚠️ No hay registros MANGES para certificar','warn'); return; }
-
-  const mesVal = document.getElementById('selMes').value;
-  const anio   = document.getElementById('selAnio').value;
-  const mesNum = mesVal ? mesVal.substring(0,2) : (new Date().getMonth()+1).toString().padStart(2,'0');
-
-  let count = 0, errors = 0;
-  const total = mangesCots.length;
-  for (const cot of mangesCots) {
-    log(`  [${count+errors+1}/${total}] 📜 ${cot.localCode}…`);
-    try {
-      const exts = [];
-      (cot.items||[]).filter(i=>i.isExtintor).forEach(i => {
-        for (let q=0;q<(i.qty||1);q++) exts.push({tipo:i.tipo, cap:i.capacidad||i.cap||'—'});
-      });
-      const doc = await hacerPDF({
-        localNom:  cot.localName||cot.localCode,
-        puntNom:   cot.ciudad||cot.localName||'',
-        localCode: cot.localCode,
-        exts, FB64:{}, ACCS:[],
-        certNum:   cot.localCode+'-MANT EXTINTORES-'+anio,
-        MA:  mesNum+'/'+anio,
-        MAS: mesNum+'/'+(parseInt(anio)+1),
-        anio, tipoServ: 'mantenimiento',
-      });
-      if (doc) {
-        try { await subirCertGitHub(cot.localCode, anio, mesVal, doc, 'MANT'); }
-        catch(e) { console.warn('subirCert:', cot.localCode, e); }
-      }
-      count++;
-      log('  ✅ '+cot.localCode+' — '+(cot.localName||cot.localCode),'ok');
-    } catch(e) {
-      errors++;
-      log('  ❌ '+cot.localCode+': '+e.message,'error');
-    }
-    await new Promise(r=>setTimeout(r,300));
-  }
-  log(`✅ ${count} certificado(s) generado(s)${errors ? `, ${errors} con error` : ''}`, errors ? 'warn' : 'ok');
-  markOutput('out4');
-  if (document.getElementById('sec-certs')?.style.display !== 'none') renderCertsList();
 }
 
 function abrirCertModal(codigo) {
@@ -3054,21 +1976,6 @@ function showStatus(elId, type, msg) {
 }
 
 
-function enableGenerarBtns() {
-  const hasManges = cotizaciones.some(c => c.category === 'MANGES');
-  ['btn1','btn2','btn3','btnGenerarTodo'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = false;
-  });
-  const btn4 = document.getElementById('btn4');
-  if (btn4) btn4.disabled = !hasManges;
-}
-
-function markOutput(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.add('ready');
-}
-
 // ─── SELECTOR DE PERFIL ───────────────────────────────────────────────────────
 function elegirPerfil(p) {
   document.getElementById('profileSelector').style.display = 'none';
@@ -3111,9 +2018,6 @@ function init() {
   selAnio.value = anioActual;
 
   localRestore();
-  renderTabla();
-  renderEmpresaFacturas();
-  if (cotizaciones.length) enableGenerarBtns();
   cargarPlan().then(() => { if (getGhToken()) ghCargar(); });
 
   // Preparar vista interna con el perfil guardado sin mostrar aún
