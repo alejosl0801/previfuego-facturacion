@@ -105,70 +105,10 @@
   .status-info { background: #d6eaf8; color: #1a5276; border: 1px solid #85c1e9; }
   .status-warn { background: #fef9e7; color: #b7950b; border: 1px solid #f9e79f; }
 
-  .spinner {
-    display: inline-block;
-    width: 16px; height: 16px;
-    border: 2px solid rgba(0,0,0,0.1);
-    border-top-color: var(--rojo);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th { background: var(--rojo); color: white; padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
   td { padding: 6px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
   tr:hover td { background: #fafafa; }
-  tr.manges td { background: #eafaf1; }
-  tr.mant td { background: #eaf4fb; }
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 700;
-  }
-  .badge-manges { background: #d5f5e3; color: #1e8449; }
-  .badge-mant { background: #d6eaf8; color: #1a5276; }
-
-  td input { padding: 4px 6px; font-size: 12px; width: 100%; }
-
-  .progress-steps { display: flex; gap: 0; margin-bottom: 24px; }
-  .step {
-    flex: 1;
-    text-align: center;
-    padding: 10px;
-    font-size: 12px;
-    font-weight: 600;
-    background: #eee;
-    border-right: 2px solid white;
-    color: #999;
-    transition: all 0.2s;
-  }
-  .step:last-child { border-right: none; }
-  .step.active { background: var(--rojo); color: white; }
-  .step.done { background: var(--verde); color: white; }
-  .step .num { font-size: 18px; font-weight: 900; display: block; }
-
-  .empresa-section {
-    border: 1px solid var(--gris-borde);
-    border-radius: 6px;
-    margin-bottom: 16px;
-    overflow: hidden;
-  }
-  .empresa-header {
-    background: #f8f8f8;
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--gris-borde);
-  }
-  .empresa-nombre { font-weight: 700; font-size: 14px; }
-  .empresa-facturas { display: flex; gap: 12px; align-items: center; }
-  .fact-input-group { display: flex; align-items: center; gap: 6px; }
-  .fact-input-group label { font-size: 11px; white-space: nowrap; color: #666; }
-  .fact-input-group input { width: 110px; }
 
   /* ── Panel de Control ── */
   .local-card { border:1px solid #ddd; border-radius:8px; margin-bottom:8px; overflow:hidden; }
@@ -187,37 +127,6 @@
   .badge-pendiente { background:#e74c3c; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px; white-space:nowrap; }
   .badge-visitado  { background:#27ae60; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px; white-space:nowrap; }
   .plan-stats { display:flex; gap:16px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
-
-  .outputs { display: flex; gap: 12px; flex-wrap: wrap; }
-  .output-card {
-    flex: 1;
-    min-width: 200px;
-    border: 2px dashed var(--gris-borde);
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    transition: all 0.2s;
-  }
-  .output-card.ready { border-color: var(--verde); background: #f0fff4; }
-  .output-card .icon { font-size: 32px; margin-bottom: 8px; }
-  .output-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-  .output-card p { font-size: 11px; color: #666; margin-bottom: 12px; }
-
-  .log-box {
-    background: #1a1a1a;
-    color: #00ff88;
-    font-family: monospace;
-    font-size: 12px;
-    padding: 12px;
-    border-radius: 4px;
-    max-height: 200px;
-    overflow-y: auto;
-    margin-top: 12px;
-  }
-  .log-line { margin-bottom: 2px; }
-  .log-err { color: #ff6b6b; }
-  .log-warn { color: #ffd93d; }
-  .log-ok { color: #6bcb77; }
 
   /* ── Navegación por secciones ── */
   header {
@@ -284,8 +193,6 @@
   body.dark .search-box { background: #262a30; color: #e6e6e6; }
   body.dark td { border-color: #2d2d2d; }
   body.dark tr:hover td { background: #262a30; }
-  body.dark tr.manges td { background: #1c2e22; }
-  body.dark tr.mant td { background: #1c2733; }
   body.dark .section-title { color: #ff7b6b; }
   body.dark code { background: #2d323a !important; color: #d6d6d6; }
 
@@ -380,14 +287,6 @@
   body.dark .acc-row.sel { background: #2d1f1e; }
   body.dark .acc-row-desc { color: #ccc; }
   body.dark .nov-btn { background: #1f2227; border-color: #3a3f47; color: #bbb; }
-  body.dark .output-card { background: #1f2227; border-color: #3a3f47; }
-  body.dark .output-card h3 { color: #e6e6e6; }
-  body.dark .output-card p { color: #888; }
-  body.dark .output-card.ready { background: #1a2e22; border-color: #27ae60; }
-  body.dark .empresa-section { background: #1f2227; border-color: #333; }
-  body.dark .empresa-header { background: #262a30; border-color: #333; }
-  body.dark .empresa-nombre { color: #e6e6e6; }
-  body.dark .fact-input-group label { color: #888; }
   body.dark #certModal > div { background: #1f2227 !important; color: #e6e6e6; }
   body.dark .status-ok { background: #1a2e22; color: #6bcb77; border-color: #27ae60; }
   body.dark .status-error { background: #2e1a1a; color: #ff6b6b; border-color: #c0392b; }
@@ -510,8 +409,8 @@
             <div style="font-size:36px;margin-bottom:8px;">📊</div>
             <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS KFC</div>
             <div style="font-size:12px;color:#666;margin-bottom:14px;">
-              210 locales · 968 extintores<br>
-              2 hojas: Detalle, Resumen Locales<br>
+              207 locales · 968 extintores<br>
+              13 hojas: Detalle + 1 por mes<br>
               Precios MANTT y RECARGA por extintor
             </div>
             <a href="BASE_DATOS_KFC.xlsx" download="BASE_DATOS_KFC.xlsx"
@@ -561,11 +460,7 @@
       <div class="card-body">
         <div class="form-row">
           <div class="form-group" style="flex:2">
-            <label>🟢 API Key Groq — requerida para procesar fotos con IA</label>
-            <input type="password" id="groqKey" placeholder="gsk_..." autocomplete="off" oninput="saveConfig()" />
-          </div>
-          <div class="form-group" style="flex:2">
-            <label>⚫ GitHub Token — respalda tus datos en la nube (opcional)</label>
+            <label>⚫ GitHub Token — respalda tus datos en la nube</label>
             <input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off" oninput="saveConfig()" />
           </div>
         </div>
@@ -731,22 +626,12 @@ const EMPRESAS_MAP = {
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
-function getGroqKey() {
-  return localStorage.getItem('groqKey') ||
-         document.getElementById('groqKey')?.value?.trim() ||
-         '';
-}
-
 function loadConfig() {
-  const saved = localStorage.getItem('groqKey');
-  document.getElementById('groqKey').value = saved || '';
   document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
 }
 
 function saveConfig() {
-  const gk = document.getElementById('groqKey').value.trim();
   const gt = document.getElementById('ghToken').value.trim();
-  if (gk) localStorage.setItem('groqKey', gk); else localStorage.removeItem('groqKey');
   if (gt) localStorage.setItem('ghToken', gt); else localStorage.removeItem('ghToken');
   const el = document.getElementById('cfgStatus');
   el.textContent = '✅ Guardado permanentemente en este navegador';
@@ -764,30 +649,6 @@ function toggleCard(id) {
   if (!body) return;
   const hidden = body.classList.toggle('hidden');
   if (tog) tog.textContent = hidden ? '▶' : '▼';
-}
-
-// ─── LOCAL CODE NORMALIZATION ─────────────────────────────────────────────────
-const _CN_BS = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
-function normalizeLocalCode(rawCode) {
-  // KFCK02 → K02, GUSG49 → G49, CN031 → BS031 (shared Cinnabon/Baskin Robbins locals)
-  // Also handles hyphenated forms: K-02 → K002, BS-031 → BS031
-  let code = String(rawCode ?? '').toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
-  if (code.startsWith('KFCK')) code = 'K' + code.slice(4);
-  else if (code.startsWith('GUSG')) code = 'G' + code.slice(4);
-  // Apply CN→BS remapping and canonical 3-digit padding for all codes
-  const mc = code.match(/^([A-Z]+)(\d+)/);
-  if (mc) { const n = mc[1] + String(parseInt(mc[2])).padStart(3,'0'); code = _CN_BS[n] || n; }
-  return code;
-}
-
-function costCenter(localCode) {
-  // K02 → K002EC, M58 → M058EC, K105 → K105EC, CJNC01 → CJNC01EC
-  const m = localCode.match(/^([A-Z]+)(\d+)$/);
-  if (!m) return localCode + 'EC';
-  const prefix = m[1];
-  const num = m[2];
-  const padded = prefix.length <= 2 ? num.padStart(3, '0') : num;
-  return prefix + padded + 'EC';
 }
 
 function getEmpresa(localCode) {
@@ -849,8 +710,16 @@ async function onMonthChange() {
   if (_monthChangePending) return;
   _monthChangePending = true;
   try {
+    const selMes = document.getElementById('selMes');
+    const selAnio = document.getElementById('selAnio');
+    const startMes = selMes.value;
+    const startAnio = selAnio.value;
     visitaStatus = {};
     await cargarPlan();
+    if (selMes.value !== startMes || selAnio.value !== startAnio) {
+      _monthChangePending = false;
+      return onMonthChange();
+    }
     if (getGhToken()) await ghCargar();
     else { localRestore(); renderPlan(); }
     renderBD();
@@ -866,50 +735,7 @@ function toggleDark() {
 }
 
 
-async function callGroq(apiKey, base64, mimeType, prompt) {
-  const reqBody = JSON.stringify({
-    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-    messages: [{
-      role: 'user',
-      content: [
-        { type: 'text', text: prompt },
-        { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } }
-      ]
-    }],
-    max_tokens: 2048,
-    temperature: 0
-  });
 
-  const delays = [0, 3000, 8000];
-  for (let attempt = 0; attempt < delays.length; attempt++) {
-    if (delays[attempt] > 0) {
-      const _fs = document.getElementById('fotoStatus');
-      if (_fs) _fs.textContent =
-        `⏳ Rate limit — reintentando en ${delays[attempt]/1000}s… (intento ${attempt+1}/3)`;
-      await new Promise(r => setTimeout(r, delays[attempt]));
-    }
-    const ctrl = new AbortController();
-    const tOut = setTimeout(() => ctrl.abort(), 30000);
-    let r;
-    try {
-      r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: reqBody, signal: ctrl.signal
-      });
-    } catch(fe) {
-      clearTimeout(tOut);
-      if (fe.name === 'AbortError') throw new Error('Groq: tiempo de espera agotado (30s)');
-      throw fe;
-    }
-    clearTimeout(tOut);
-    if (r.status === 429 && attempt < delays.length - 1) continue;
-    const data = await r.json();
-    if (!r.ok) throw new Error(data?.error?.message || `HTTP ${r.status}`);
-    return data.choices[0].message.content;
-  }
-  throw new Error('Groq: límite de solicitudes superado, intenta en unos segundos');
-}
 
 function fileToBase64(file) {
   return new Promise((res, rej) => {
@@ -975,8 +801,7 @@ async function ghGuardar(silent = false) {
   const token = getGhToken();
   const st = document.getElementById('ghStatus');
   if (!token) return;
-  if (!Object.keys(visitaStatus).length) return;
-  if (!document.getElementById('selMes').value) return; // Don't save when "all months" is selected
+  if (!document.getElementById('selMes').value) return;
 
   _ghSaving = true;
   const path = ghFilePath();
@@ -1067,7 +892,6 @@ async function ghCargar() {
 // ─── PLAN DEL MES ────────────────────────────────────────────────────────────
 let planMes = [];
 let visitaStatus = {};
-const RAW_BASE = '';
 
 async function cargarPlan() {
   const mesVal  = document.getElementById('selMes').value;
@@ -1713,14 +1537,7 @@ function abrirCertModal(codigo) {
   document.getElementById('novBtnBad').className = 'nov-btn';
   document.getElementById('novBtnOk').className  = 'nov-btn active-ok';
   document.getElementById('accCatalogWrap').style.display = 'none';
-  // Reset signature canvas — reuse listeners if already initialized
   sigDrawing = false;
-  if (sigCtx) {
-    clearSignature();
-  } else {
-    const c = document.getElementById('sigCanvas');
-    if (c) c._initialized = false;
-  }
   // Go to step 1
   certPaso(1);
   document.body.style.overflow = 'hidden';
@@ -1732,9 +1549,6 @@ function cerrarCertModal() {
   document.body.style.overflow = '';
   certModalCodigo = null; certFotos = {}; certAccsSelected = new Set();
   certHayNovedades = false; sigDrawing = false;
-  sigCtx = null;
-  const c = document.getElementById('sigCanvas');
-  if (c) c._initialized = false;
 }
 
 function certPaso(n) {
@@ -1795,8 +1609,7 @@ function certAbrirFoto(tipo, modo) {
 
 function initSignatureCanvas() {
   const canvas = document.getElementById('sigCanvas');
-  if (!canvas || canvas._initialized) return;
-  canvas._initialized = true;
+  if (!canvas) return;
   const W = canvas.offsetWidth || 436;
   const H = 140;
   const dpr = window.devicePixelRatio || 1;
@@ -1809,6 +1622,8 @@ function initSignatureCanvas() {
   sigCtx.strokeStyle = '#1a1a1a'; sigCtx.lineWidth = 2;
   sigCtx.lineCap = 'round'; sigCtx.lineJoin = 'round';
   sigCtx.fillStyle = '#fff'; sigCtx.fillRect(0, 0, W, H);
+  if (canvas._initialized) return;
+  canvas._initialized = true;
   const pos = e => {
     const r = canvas.getBoundingClientRect();
     const src = e.touches ? e.touches[0] : e;
@@ -1870,11 +1685,12 @@ function renderAccCatalog() {
     return true; // accesorios genéricos siempre visibles
   });
 
+  const showPrices = currentProfile === 'admin';
   cat.innerHTML = relevant.map(a => `
     <div class="acc-row ${certAccsSelected.has(a.i)?'sel':''}" onclick="certToggleAcc(${a.i})">
       <input type="checkbox" ${certAccsSelected.has(a.i)?'checked':''} onclick="event.stopPropagation();certToggleAcc(${a.i})" />
       <span class="acc-row-desc">${a.desc}</span>
-      <span class="acc-row-price">$${a.precio.toFixed(2)}</span>
+      ${showPrices ? `<span class="acc-row-price">$${a.precio.toFixed(2)}</span>` : ''}
     </div>`).join('');
   updateAccTotal();
 }
@@ -1887,7 +1703,8 @@ function certToggleAcc(i) {
 function updateAccTotal() {
   const total = [...certAccsSelected].reduce((s,i) => s + ACCESSORIES[i].precio, 0);
   const el = document.getElementById('accTotal');
-  if (el) el.textContent = `Total accesorios: $${total.toFixed(2)}`;
+  if (!el) return;
+  el.textContent = currentProfile === 'admin' ? `Total accesorios: $${total.toFixed(2)}` : `Accesorios: ${certAccsSelected.size}`;
 }
 
 async function generarCertLocal() {
@@ -1966,14 +1783,6 @@ async function subirCertGitHub(localCode, anio, mesVal, doc, tipoLabel='MANT') {
   }
 }
 
-// ─── UI HELPERS ───────────────────────────────────────────────────────────────
-function showStatus(elId, type, msg) {
-  const el = document.getElementById(elId);
-  if (!el) return;
-  el.className = 'status-bar status-' + type;
-  el.textContent = msg;
-  el.style.display = 'flex';
-}
 
 
 // ─── SELECTOR DE PERFIL ───────────────────────────────────────────────────────
