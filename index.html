@@ -433,7 +433,6 @@
   </div>
   <nav class="nav-tabs">
     <button class="nav-tab active" data-sec="plan" onclick="goToSection('plan')">📅 Plan del Mes</button>
-    <button class="nav-tab admin-only" data-sec="ne" onclick="goToSection('ne')">📄 Notas de Entrega</button>
     <button class="nav-tab" data-sec="certs" onclick="goToSection('certs')">📜 Certificados</button>
     <button class="nav-tab admin-only" data-sec="bd" onclick="goToSection('bd')">🗄️ Base de Datos</button>
     <button class="nav-tab admin-only" data-sec="config" onclick="goToSection('config')">⚙️ Configuración</button>
@@ -479,10 +478,6 @@
     <input type="text" id="planSearch" class="search-box" placeholder="🔍 Buscar local por código o nombre…" oninput="renderPlan()" />
 
     <div class="plan-stats">
-      <div class="admin-only">
-        <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial NE</label>
-        <input type="number" id="neInicial" value="6700" min="1" style="width:90px;padding:5px" onchange="renderPlan()" />
-      </div>
       <div id="planStats" style="font-size:13px;color:#555;font-weight:600"></div>
     </div>
     <div id="loadStatus"></div>
