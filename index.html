@@ -695,6 +695,12 @@ function applyPerfil() {
     ? 'Locales a visitar este mes. Revisa el avance del equipo técnico.'
     : 'Locales a visitar este mes. Selecciona un local, realiza el trabajo y genera el certificado.';
   if (!isAdmin) {
+    const selMes = document.getElementById('selMes');
+    if (!selMes.value) {
+      const mm = String(new Date().getMonth() + 1).padStart(2, '0');
+      const opt = Array.from(selMes.options).find(o => o.value.startsWith(mm));
+      if (opt) { selMes.value = opt.value; onMonthChange(); }
+    }
     goToSection('plan');
   } else {
     const last = localStorage.getItem('lastSection') || 'plan';
@@ -712,13 +718,13 @@ async function onMonthChange() {
   try {
     const selMes = document.getElementById('selMes');
     const selAnio = document.getElementById('selAnio');
-    const startMes = selMes.value;
-    const startAnio = selAnio.value;
-    visitaStatus = {};
-    await cargarPlan();
-    if (selMes.value !== startMes || selAnio.value !== startAnio) {
-      _monthChangePending = false;
-      return onMonthChange();
+    let changed = true;
+    while (changed) {
+      const startMes = selMes.value;
+      const startAnio = selAnio.value;
+      visitaStatus = {};
+      await cargarPlan();
+      changed = selMes.value !== startMes || selAnio.value !== startAnio;
     }
     if (getGhToken()) await ghCargar();
     else { localRestore(); renderPlan(); }
@@ -958,7 +964,7 @@ async function cargarPlan() {
 
       if (!isMovil) {
         locals[cod].nExt++;
-        locals[cod].extintores.push({ tipo: r[4], cap: r[5], costoMantt: r[6], precioRec: r[7], anioRec: r[9] });
+        locals[cod].extintores.push({ tipo, cap, costoMantt: r[6], precioRec: r[7], anioRec: r[9] });
       }
     });
 
@@ -1033,7 +1039,7 @@ function renderPlan() {
       .map(e => `<code style="font-size:11px;background:#f5f5f5;padding:1px 4px;border-radius:3px">${esc(e.tipo||'')} ${esc(e.cap||'')}</code>`)
       .join(' ');
     const tipoServ   = local.esRecarga
-      ? `<span style="color:#8e44ad;font-weight:600">⟳ RECARGA ${local.anioRec}</span>`
+      ? `<span style="color:#8e44ad;font-weight:600">⟳ RECARGA ${esc(local.anioRec)}</span>`
       : `<span style="color:#2980b9;font-weight:600">🔧 MANTENIMIENTO</span>`;
 
     return `
@@ -1107,7 +1113,7 @@ function renderBD() {
     <th>Servicio</th><th>Cobro</th></tr></thead><tbody>`;
   html += planMes.map(l => {
     const ext = l.extintores.map(e => `${e.tipo||''} ${e.cap||''}`.trim()).join(', ');
-    const serv = l.esRecarga ? `RECARGA ${l.anioRec}` : 'MANTENIMIENTO';
+    const serv = l.esRecarga ? `RECARGA ${esc(l.anioRec)}` : 'MANTENIMIENTO';
     return `<tr>
       <td><strong>${esc(l.codigo)}</strong></td>
       <td>${esc(l.nombre.replace(l.codigo+' - ',''))}</td>
@@ -1173,11 +1179,27 @@ async function renderCertsList() {
     cont.innerHTML = pdfs.map(f => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid #eee;border-radius:6px;margin-bottom:6px">
         <span style="font-size:13px">📜 ${esc(f.name)}</span>
-        <a href="${esc(f.download_url)}" download="${esc(f.name)}" class="btn btn-sm btn-info" style="font-size:12px">⬇️ Descargar</a>
+        <button class="btn btn-sm btn-info" style="font-size:12px" onclick="descargarCert('${esc(f.path)}','${esc(f.name)}')">⬇️ Descargar</button>
       </div>`).join('');
   } catch (e) {
     cont.innerHTML = `<p style="color:#c0392b;font-size:13px">Error cargando certificados: ${esc(e.message)}</p>`;
   }
+}
+
+async function descargarCert(path, name) {
+  const token = getGhToken();
+  if (!token) return;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3.raw' }
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) { alert('Error descargando certificado: ' + e.message); }
 }
 
 function toggleLocalCard(codigo) {
@@ -1707,8 +1729,13 @@ function updateAccTotal() {
   el.textContent = currentProfile === 'admin' ? `Total accesorios: $${total.toFixed(2)}` : `Accesorios: ${certAccsSelected.size}`;
 }
 
+let _certGenerating = false;
 async function generarCertLocal() {
-  if (!certModalCodigo) return;
+  if (_certGenerating || !certModalCodigo) return;
+  _certGenerating = true;
+  try { await _doGenerarCert(); } finally { _certGenerating = false; }
+}
+async function _doGenerarCert() {
   const local = planMes.find(l=>l.codigo===certModalCodigo);
   if (!local) return;
 
