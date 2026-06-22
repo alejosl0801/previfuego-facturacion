@@ -896,8 +896,14 @@ function saveConfig() {
   const gk = document.getElementById('groqKey').value.trim();
   const gt = document.getElementById('ghToken').value.trim();
   localStorage.setItem('groqKey', gk || GROQ_KEY_DEFAULT);
-  if (gt) localStorage.setItem('ghToken', gt);
   const el = document.getElementById('cfgStatus');
+  if (gt && !gt.startsWith('ghp_') && !gt.startsWith('github_pat_')) {
+    el.textContent = '⚠️ Token debe empezar con ghp_ o github_pat_';
+    clearTimeout(saveConfig._t);
+    saveConfig._t = setTimeout(() => el.textContent = '', 5000);
+    return;
+  }
+  if (gt) localStorage.setItem('ghToken', gt);
   el.textContent = '✅ Guardado permanentemente en este navegador';
   clearTimeout(saveConfig._t);
   saveConfig._t = setTimeout(() => el.textContent = '', 3000);
@@ -1148,11 +1154,15 @@ function applyPerfil() {
 
 // ─── CAMBIO DE MES ────────────────────────────────────────────────────────────
 async function onMonthChange() {
-  if (!cotizaciones.length) localRestore();
-  await cargarPlan();
-  renderTabla();
-  renderEmpresaFacturas();
-  renderBD();
+  if (onMonthChange._loopGuard) return;
+  onMonthChange._loopGuard = true;
+  try {
+    if (!cotizaciones.length) localRestore();
+    await cargarPlan();
+    renderTabla();
+    renderEmpresaFacturas();
+    renderBD();
+  } finally { onMonthChange._loopGuard = false; }
 }
 
 // ─── MODO OSCURO ──────────────────────────────────────────────────────────────
@@ -1662,6 +1672,8 @@ async function ghCargar() {
   } catch (e) {
     const ok = localRestore();
     if (ok) { renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan(); }
+    const gs = document.getElementById('ghStatus');
+    if (gs) gs.textContent = '⚠️ Sin conexión — datos locales';
   }
 }
 
