@@ -5,3 +5,6 @@ __pycache__/
 .ne_templates/
 inspect_raw.py
 .claude/
+index_test.html
+xlsx.full.min.js
+jspdf.umd.min.js

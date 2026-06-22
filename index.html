@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Previfuego – Facturación KFC</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -48,7 +48,7 @@
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
-    user-select: none;
+    -webkit-user-select: none; user-select: none;
   }
   .card-header h2 { font-size: 14px; font-weight: 700; color: var(--rojo); }
   .card-header .toggle { font-size: 18px; color: #999; }
@@ -291,7 +291,7 @@
 
   /* ── Selector de Perfil ── */
   #profileSelector {
-    position: fixed; inset: 0;
+    position: fixed; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%;
     background: linear-gradient(160deg, #fff 0%, #f4f4f4 100%);
     z-index: 9999;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -357,7 +357,7 @@
   .cert-foto-btn.cam { background: #2980b9; color: white; }
   .cert-foto-btn.gal { background: #7f8c8d; color: white; }
   .cert-firma-wrap { border: 1.5px solid #ddd; border-radius: 8px; overflow: hidden; background: #fafafa; margin-bottom: 10px; }
-  #sigCanvas { display: block; touch-action: none; cursor: crosshair; width: 100%; }
+  #sigCanvas { display: block; -webkit-touch-action: none; touch-action: none; cursor: crosshair; width: 100%; }
   .cert-firma-nota { font-size: 11px; color: #aaa; text-align: center; margin-top: 4px; }
   .acc-catalog { border: 1px solid #e8e8e8; border-radius: 8px; overflow: hidden; max-height: 250px; overflow-y: auto; }
   .acc-row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: background 0.1s; }
@@ -394,6 +394,39 @@
   body.dark .status-info { background: #1a2333; color: #85c1e9; border-color: #2980b9; }
   body.dark .status-warn { background: #2a2210; color: #ffd93d; border-color: #f0b400; }
   body.dark code { background: #2d323a !important; color: #d6d6d6; border-radius: 3px; padding: 1px 4px; }
+  @media (max-width: 600px) {
+    .local-card-header { flex-wrap: wrap; padding: 8px 10px; gap: 4px; }
+    .local-card-header > div:first-child { flex: 1 1 100% !important; min-width: 0; }
+    .local-card-header > div:last-child { flex: 1 1 100% !important; flex-wrap: wrap; justify-content: flex-start; }
+    .local-card-header button { min-height: 36px; font-size: 12px !important; padding: 6px 10px !important; }
+    .badge-pendiente, .badge-visitado { font-size: 10px; padding: 2px 6px; }
+    .nav-tab { padding: 8px 10px; font-size: 12px; }
+    .section-title { font-size: 16px; }
+    .section-desc { font-size: 12px; }
+    .search-box { font-size: 13px; padding: 8px 10px; }
+    header { padding: 12px 10px !important; gap: 8px 12px; }
+    .hdr-right { gap: 8px; }
+    .month-sel select { min-width: 70px; font-size: 12px; }
+    main { padding: 12px 10px !important; }
+    .cert-steps { font-size: 12px; }
+    .cert-step-ind { padding: 7px 8px !important; font-size: 11px; }
+    .cert-foto-btns { flex-wrap: wrap; }
+    .plan-stats { font-size: 12px; gap: 8px; }
+  }
+  @media (max-width: 900px) {
+    .local-card-header button { min-height: 32px; }
+  }
+  @supports not (gap: 1px) {
+    header > * + *, .nav-tabs > * + *, .hdr-right > * + * { margin-left: 8px; }
+    .local-card-header > div + div { margin-left: 8px; }
+    .plan-stats > * + * { margin-left: 12px; }
+    .cert-steps > * + * { margin-left: 0; }
+    .cert-foto-btns > * + * { margin-left: 6px; }
+    .psel-cards > * + * { margin-top: 10px; }
+    .form-row > * + * { margin-left: 16px; }
+    .acc-row > * + * { margin-left: 10px; }
+    .cert-novedades-toggle > * + * { margin-left: 6px; }
+  }
 </style>
 </head>
 <body>
@@ -621,6 +654,7 @@
               Precios MANTT y RECARGA por extintor
             </div>
             <a href="BASE_DATOS_KFC.xlsx" download="BASE_DATOS_KFC.xlsx"
+               onclick="iosDownloadFallback(event)"
                style="display:inline-block;background:#1F4E79;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
               ⬇️ Descargar Excel
             </a>
@@ -634,6 +668,7 @@
               Matriz de servicios y costos
             </div>
             <a href="BASE_DATOS_SUSHICORP.xlsx" download="BASE_DATOS_SUSHICORP.xlsx"
+               onclick="iosDownloadFallback(event)"
                style="display:inline-block;background:#1a7a3c;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
               ⬇️ Descargar Excel
             </a>
@@ -676,6 +711,10 @@
           </div>
         </div>
         <span id="cfgStatus" style="font-size:12px;color:#27ae60"></span>
+        <div style="margin-top:10px">
+          <button class="btn btn-sm btn-info" onclick="testGhConnection()" style="font-size:12px">🔌 Probar conexión</button>
+          <span id="ghTestResult" style="font-size:12px;margin-left:8px"></span>
+        </div>
       </div>
     </div>
 
@@ -697,7 +736,7 @@
 </div>
 
 <!-- CERT MODAL (3 pasos) -->
-<div id="certModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)cerrarCertModal()">
+<div id="certModal" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)cerrarCertModal()">
   <div style="background:white;border-radius:12px;padding:22px;max-width:480px;width:93%;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -866,6 +905,36 @@ function saveConfig() {
 
 function getGhToken() {
   return localStorage.getItem('ghToken') || document.getElementById('ghToken').value.trim();
+}
+
+async function testGhConnection() {
+  const el = document.getElementById('ghTestResult');
+  const token = getGhToken();
+  if (!token) { el.innerHTML = '<span style="color:#e74c3c">No hay token configurado</span>'; return; }
+  el.innerHTML = '<span style="color:#999">Probando...</span>';
+  try {
+    const r1 = await fetch('https://api.github.com/user', { headers: { Authorization: `token ${token}` } });
+    if (r1.status === 401) { el.innerHTML = '<span style="color:#e74c3c">Token inválido o expirado</span>'; return; }
+    if (!r1.ok) { el.innerHTML = `<span style="color:#e74c3c">Error HTTP ${r1.status}</span>`; return; }
+    const user = await r1.json();
+    const r2 = await fetch(`https://api.github.com/repos/${GH_REPO}`, { headers: { Authorization: `token ${token}` } });
+    if (r2.status === 404) { el.innerHTML = `<span style="color:#e67e22">Usuario: ${esc(user.login)} — pero sin acceso al repo ${esc(GH_REPO)}</span>`; return; }
+    const repo = await r2.json();
+    const perms = repo.permissions || {};
+    if (!perms.push) { el.innerHTML = `<span style="color:#e67e22">Usuario: ${esc(user.login)} — solo lectura (necesita permiso de escritura)</span>`; return; }
+    el.innerHTML = `<span style="color:#27ae60">Conectado: ${esc(user.login)} con acceso completo al repo</span>`;
+  } catch (e) {
+    if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+      el.innerHTML = '<span style="color:#e74c3c">Sin conexión a internet</span>';
+    } else { el.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`; }
+  }
+}
+
+function iosDownloadFallback(e) {
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+    e.preventDefault();
+    window.open(e.currentTarget.href, '_blank');
+  }
 }
 
 function toggleCard(id) {
@@ -1089,7 +1158,7 @@ async function onMonthChange() {
 // ─── MODO OSCURO ──────────────────────────────────────────────────────────────
 function toggleDark() {
   const dark = document.body.classList.toggle('dark');
-  localStorage.setItem('darkMode', dark ? '1' : '0');
+  try { localStorage.setItem('darkMode', dark ? '1' : '0'); } catch(e) {}
 }
 
 // Normaliza la categoría a 'MANGES' (presupuestado) o 'MANT' (extra fuera de presupuesto).
@@ -1674,7 +1743,8 @@ async function cargarPlan() {
       .filter(r => r[0] && (todosLosMeses || normMes(r[3]) === normMes(mesNom)))
       .map(r => {
         const cod = normCode(String(r[0]));
-        const anioRec = parseInt(r[9]) || 9999;
+        const _rawAnio = r[9] != null && String(r[9]).trim() !== '' ? parseInt(r[9]) : null;
+        const anioRec = (_rawAnio != null && !isNaN(_rawAnio)) ? _rawAnio : 9999;
         const esRecarga = parseInt(anio) === anioRec;
         return {
           codigo: cod,
@@ -2599,7 +2669,19 @@ async function hacerPDF(opts) {
     bloqueAutorizacion(y2);
   }
 
-  doc.save('CERT-'+localCode+'-'+anio+'.pdf');
+  const pdfName = 'CERT-'+localCode+'-'+anio+'.pdf';
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    try {
+      const blobUrl = doc.output('bloburl');
+      window.open(blobUrl, '_blank');
+    } catch(e) {
+      const dataUri = doc.output('dataurlstring');
+      window.open(dataUri, '_blank');
+    }
+  } else {
+    doc.save(pdfName);
+  }
   return doc;
 }
 
@@ -2704,6 +2786,16 @@ function certAbrirFoto(tipo, modo) {
     input.addEventListener('change', () => {
       const file = input.files[0];
       if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        alert('Solo se permiten archivos de imagen (JPG, PNG).');
+        input.value = '';
+        return;
+      }
+      if (file.size > 4 * 1024 * 1024) {
+        alert(`La foto es demasiado grande (${(file.size/1024/1024).toFixed(1)} MB). Usa una foto menor a 4 MB.`);
+        input.value = '';
+        return;
+      }
       certFotos[tipo] = file;
       const reader = new FileReader();
       reader.onload = e => {
@@ -2711,6 +2803,10 @@ function certAbrirFoto(tipo, modo) {
         const card = document.getElementById('certFotoCard_'+tipo);
         if (prev) { prev.src = e.target.result; prev.classList.add('show'); }
         if (card) card.classList.add('has-foto');
+      };
+      reader.onerror = () => {
+        alert('No se pudo leer la foto. Intenta con otra imagen.');
+        input.value = '';
       };
       reader.readAsDataURL(file);
     });
@@ -2811,7 +2907,7 @@ function certToggleAcc(i) {
 }
 
 function updateAccTotal() {
-  const total = [...certAccsSelected].reduce((s,i) => s + ACCESSORIES[i].precio, 0);
+  const total = [...certAccsSelected].reduce((s,i) => s + (ACCESSORIES[i]?.precio || 0), 0);
   const el = document.getElementById('accTotal');
   if (el) el.textContent = `Total accesorios: $${total.toFixed(2)}`;
 }
@@ -2928,7 +3024,7 @@ function updatePerfilIndicator() {
 function init() {
   loadConfig();
 
-  if (localStorage.getItem('darkMode') === '1') document.body.classList.add('dark');
+  try { if (localStorage.getItem('darkMode') === '1') document.body.classList.add('dark'); } catch(e) {}
 
   const hoy = new Date();
   const mesActual = String(hoy.getMonth() + 1).padStart(2, '0');
@@ -2968,7 +3064,7 @@ function init() {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape') return;
+  if (e.key !== 'Escape' && e.key !== 'Esc') return;
   if (document.getElementById('certModal').style.display !== 'none') cerrarCertModal();
 });
 init();
