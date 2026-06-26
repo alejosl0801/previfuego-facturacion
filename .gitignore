@@ -1,8 +1,5 @@
 __pycache__/
-.cotizaciones_cache/
 .dropbox_creds.json
-.muestras_fact/
-.ne_templates/
 inspect_raw.py
 .claude/
 index_test.html
