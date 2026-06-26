@@ -52,7 +52,7 @@
   }
   .card-header h2 { font-size: 14px; font-weight: 700; color: var(--rojo); }
   .card-header .toggle { font-size: 18px; color: #999; }
-  .card-body { padding: 20px; }
+  .card-body { padding: 20px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .card-body.hidden { display: none; }
 
   .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -115,7 +115,7 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 13px; }
   th { background: var(--rojo); color: white; padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
   td { padding: 6px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
   tr:hover td { background: #fafafa; }
