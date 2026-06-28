@@ -604,14 +604,27 @@
         </div>
         <div class="form-row">
           <div class="form-group" style="flex:2">
-            <label>API Key (anon / public)</label>
-            <input type="password" id="sbKey" placeholder="eyJhbGciOi..." autocomplete="off" oninput="saveSbConfig()" />
+            <label>API Key (anon / publishable)</label>
+            <input type="password" id="sbKey" placeholder="sb_publishable_..." autocomplete="off" oninput="saveSbConfig()" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label>Secret Key (solo para subir datos — nunca se comparte)</label>
+            <input type="password" id="sbSecret" placeholder="sb_secret_..." autocomplete="off" oninput="saveSbConfig()" />
           </div>
         </div>
         <span id="sbCfgStatus" style="font-size:12px;color:#27ae60"></span>
-        <div style="margin-top:10px">
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-sm btn-info" onclick="testSbConnection()" style="font-size:12px">🔌 Probar conexión</button>
-          <span id="sbTestResult" style="font-size:12px;margin-left:8px"></span>
+          <span id="sbTestResult" style="font-size:12px;margin-left:4px"></span>
+        </div>
+        <div style="margin-top:14px;padding:14px;background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px">
+          <div style="font-size:12px;font-weight:700;color:#1a5276;margin-bottom:8px">📤 Subir Excel a Supabase</div>
+          <p style="font-size:12px;color:#555;margin-bottom:10px">Selecciona el archivo Excel para migrar los datos a la nube. Esto reemplaza los datos existentes en Supabase.</p>
+          <input type="file" id="sbExcelFile" accept=".xlsx,.xls" style="font-size:12px" />
+          <button class="btn btn-sm btn-primary" onclick="subirExcelASupabase()" style="font-size:12px;margin-top:8px">🚀 Migrar a Supabase</button>
+          <div id="sbMigrateStatus" style="font-size:12px;margin-top:8px"></div>
         </div>
       </div>
     </div>
@@ -786,17 +799,22 @@ function getGhToken() {
 function loadSbConfig() {
   const u = document.getElementById('sbUrl');
   const k = document.getElementById('sbKey');
+  const s = document.getElementById('sbSecret');
   if (u) u.value = localStorage.getItem('supabaseUrl') || '';
   if (k) k.value = localStorage.getItem('supabaseKey') || '';
+  if (s) s.value = localStorage.getItem('supabaseSecret') || '';
 }
 
 function saveSbConfig() {
   const url = (document.getElementById('sbUrl')?.value || '').trim().replace(/\/+$/, '');
   const key = (document.getElementById('sbKey')?.value || '').trim();
+  const sec = (document.getElementById('sbSecret')?.value || '').trim();
   if (url) localStorage.setItem('supabaseUrl', url);
   else localStorage.removeItem('supabaseUrl');
   if (key) localStorage.setItem('supabaseKey', key);
   else localStorage.removeItem('supabaseKey');
+  if (sec) localStorage.setItem('supabaseSecret', sec);
+  else localStorage.removeItem('supabaseSecret');
   const el = document.getElementById('sbCfgStatus');
   if (el && url && key) {
     el.textContent = '✅ Guardado en este navegador';
@@ -824,6 +842,92 @@ async function testSbConnection() {
     if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
       el.innerHTML = '<span style="color:#e74c3c">Sin conexión a internet</span>';
     } else { el.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`; }
+  }
+}
+
+async function subirExcelASupabase() {
+  const st = document.getElementById('sbMigrateStatus');
+  const url = localStorage.getItem('supabaseUrl');
+  const sec = localStorage.getItem('supabaseSecret');
+  if (!url || !sec) { st.innerHTML = '<span style="color:#e74c3c">Configura la URL y la Secret Key primero</span>'; return; }
+  const fileInput = document.getElementById('sbExcelFile');
+  if (!fileInput.files.length) { st.innerHTML = '<span style="color:#e74c3c">Selecciona un archivo Excel primero</span>'; return; }
+
+  st.innerHTML = '<span style="color:#999">⏳ Leyendo Excel...</span>';
+  const hdrs = { 'apikey': sec, 'Authorization': `Bearer ${sec}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+
+  try {
+    const buf = await fileInput.files[0].arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+
+    const wsRes = wb.Sheets['RESUMEN_LOCALES'];
+    const wsDet = wb.Sheets['DETALLE'];
+    if (!wsRes || !wsDet) throw new Error('El Excel debe tener hojas RESUMEN_LOCALES y DETALLE');
+
+    const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
+    const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
+
+    const seenCodes = new Set();
+    const locales = [];
+    resumen.slice(1).forEach(r => {
+      if (!r[0]) return;
+      const codigo = normCode(String(r[0]));
+      if (seenCodes.has(codigo)) return;
+      seenCodes.add(codigo);
+      locales.push({
+        codigo,
+        marca: String(r[1] || '').trim(),
+        nombre_local: String(r[2] || codigo).trim(),
+        mes_servicio: String(r[3] || '').trim().toUpperCase(),
+        n_extintores: parseInt(r[4]) || 0,
+        total_mantt: parseFloat(r[5]) || 0,
+        total_recarga: parseFloat(r[6]) || 0,
+        cobro_anual: parseFloat(r[7]) || 0,
+        anio_ult_recarga: r[8] != null ? parseInt(r[8]) || null : null,
+        anio_recarga: r[9] != null ? parseInt(r[9]) || null : null,
+      });
+    });
+
+    const extintores = [];
+    detalle.slice(1).forEach(r => {
+      if (!r[1]) return;
+      const m = String(r[1]).trim().toUpperCase().match(/^([A-Z]+\d+)/);
+      if (!m) return;
+      const codigo_local = normCode(m[1]);
+      if (!seenCodes.has(codigo_local)) return;
+      extintores.push({
+        codigo_local,
+        marca: String(r[0] || '').trim(),
+        nombre_local: String(r[1] || '').trim(),
+        mes_servicio: String(r[2] || '').trim().toUpperCase(),
+        ubicacion: String(r[3] || '').trim(),
+        tipo: String(r[4] || '').trim().toUpperCase(),
+        capacidad: String(r[5] || '').trim(),
+        costo_mantt: parseFloat(r[6]) || 0,
+        precio_recarga: parseFloat(r[7]) || 0,
+        anio_ult_recarga: r[8] != null ? parseInt(r[8]) || null : null,
+        anio_recarga: r[9] != null ? parseInt(r[9]) || null : null,
+      });
+    });
+
+    st.innerHTML = `<span style="color:#999">⏳ Subiendo ${locales.length} locales + ${extintores.length} extintores...</span>`;
+
+    await fetch(`${url}/rest/v1/extintores?id=gt.0`, { method: 'DELETE', headers: hdrs });
+    await fetch(`${url}/rest/v1/locales?codigo=not.is.null`, { method: 'DELETE', headers: hdrs });
+
+    const rLoc = await fetch(`${url}/rest/v1/locales`, { method: 'POST', headers: hdrs, body: JSON.stringify(locales) });
+    if (!rLoc.ok) { const t = await rLoc.text(); throw new Error(`Locales: ${rLoc.status} — ${t.substring(0, 200)}`); }
+
+    for (let i = 0; i < extintores.length; i += 200) {
+      const batch = extintores.slice(i, i + 200);
+      const rExt = await fetch(`${url}/rest/v1/extintores`, { method: 'POST', headers: hdrs, body: JSON.stringify(batch) });
+      if (!rExt.ok) { const t = await rExt.text(); throw new Error(`Extintores batch ${Math.floor(i/200)+1}: ${rExt.status} — ${t.substring(0, 200)}`); }
+    }
+
+    st.innerHTML = `<span style="color:#27ae60">✅ Migración completa: ${locales.length} locales + ${extintores.length} extintores subidos a Supabase</span>`;
+    cargarPlan();
+  } catch (e) {
+    st.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`;
   }
 }
 
