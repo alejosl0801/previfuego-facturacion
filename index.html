@@ -585,6 +585,36 @@
         <span id="ghStatus" style="font-size:12px;color:#27ae60"></span>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('supabase')">
+        <h2>🗄️ Base de Datos en la Nube (Supabase)</h2>
+        <span class="toggle" id="supabase-toggle">▼</span>
+      </div>
+      <div class="card-body" id="supabase-body">
+        <p style="font-size:13px;color:#555;margin-bottom:10px">
+          Conecta con Supabase para cargar la base de datos de extintores desde la nube.
+          Así no necesitas Dropbox ni archivos locales — funciona en cualquier dispositivo.
+        </p>
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label>URL del Proyecto Supabase</label>
+            <input type="text" id="sbUrl" placeholder="https://xxxxx.supabase.co" oninput="saveSbConfig()" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label>API Key (anon / public)</label>
+            <input type="password" id="sbKey" placeholder="eyJhbGciOi..." autocomplete="off" oninput="saveSbConfig()" />
+          </div>
+        </div>
+        <span id="sbCfgStatus" style="font-size:12px;color:#27ae60"></span>
+        <div style="margin-top:10px">
+          <button class="btn btn-sm btn-info" onclick="testSbConnection()" style="font-size:12px">🔌 Probar conexión</button>
+          <span id="sbTestResult" style="font-size:12px;margin-left:8px"></span>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -750,6 +780,51 @@ function saveConfig() {
 
 function getGhToken() {
   return localStorage.getItem('ghToken') || document.getElementById('ghToken').value.trim();
+}
+
+// ─── SUPABASE CONFIG ─────────────────────────────────────────────────────────
+function loadSbConfig() {
+  const u = document.getElementById('sbUrl');
+  const k = document.getElementById('sbKey');
+  if (u) u.value = localStorage.getItem('supabaseUrl') || '';
+  if (k) k.value = localStorage.getItem('supabaseKey') || '';
+}
+
+function saveSbConfig() {
+  const url = (document.getElementById('sbUrl')?.value || '').trim().replace(/\/+$/, '');
+  const key = (document.getElementById('sbKey')?.value || '').trim();
+  if (url) localStorage.setItem('supabaseUrl', url);
+  else localStorage.removeItem('supabaseUrl');
+  if (key) localStorage.setItem('supabaseKey', key);
+  else localStorage.removeItem('supabaseKey');
+  const el = document.getElementById('sbCfgStatus');
+  if (el && url && key) {
+    el.textContent = '✅ Guardado en este navegador';
+    clearTimeout(saveSbConfig._t);
+    saveSbConfig._t = setTimeout(() => el.textContent = '', 3000);
+  }
+}
+
+async function testSbConnection() {
+  const el = document.getElementById('sbTestResult');
+  const url = localStorage.getItem('supabaseUrl');
+  const key = localStorage.getItem('supabaseKey');
+  if (!url || !key) { el.innerHTML = '<span style="color:#e74c3c">Configura URL y Key primero</span>'; return; }
+  el.innerHTML = '<span style="color:#999">Probando...</span>';
+  try {
+    const r = await fetch(`${url}/rest/v1/locales?select=codigo`, {
+      headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
+    });
+    if (r.status === 401) { el.innerHTML = '<span style="color:#e74c3c">API Key inválida</span>'; return; }
+    if (r.status === 404) { el.innerHTML = '<span style="color:#e74c3c">Tabla "locales" no existe — ejecuta el schema.sql primero</span>'; return; }
+    if (!r.ok) { el.innerHTML = `<span style="color:#e74c3c">Error HTTP ${r.status}</span>`; return; }
+    const data = await r.json();
+    el.innerHTML = `<span style="color:#27ae60">Conectado — ${data.length} locales en la base de datos</span>`;
+  } catch (e) {
+    if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+      el.innerHTML = '<span style="color:#e74c3c">Sin conexión a internet</span>';
+    } else { el.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`; }
+  }
 }
 
 async function testGhConnection() {
@@ -1016,9 +1091,75 @@ let planMes = [];
 let visitaStatus = {};
 const RAW_BASE = '';
 
+// Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
+const CN_TO_BS_MAP = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
+function normCode(raw) {
+  const m = String(raw).match(/^([A-Z]+)(\d+)/);
+  if (!m) return raw;
+  const n = m[1] + String(parseInt(m[2])).padStart(3, '0');
+  return CN_TO_BS_MAP[n] || n;
+}
+
+async function cargarPlanDesdeSupabase(sbUrl, sbKey, mesNom, anio, todosLosMeses) {
+  const hdrs = { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` };
+
+  let urlLoc = `${sbUrl}/rest/v1/locales?select=*&order=codigo`;
+  let urlExt = `${sbUrl}/rest/v1/extintores?select=*`;
+  if (!todosLosMeses && mesNom) {
+    urlLoc += `&mes_servicio=eq.${encodeURIComponent(mesNom)}`;
+    urlExt += `&mes_servicio=eq.${encodeURIComponent(mesNom)}`;
+  }
+
+  const [rLoc, rExt] = await Promise.all([
+    fetch(urlLoc, { headers: hdrs }),
+    fetch(urlExt, { headers: hdrs })
+  ]);
+  if (!rLoc.ok) throw new Error(`Locales: HTTP ${rLoc.status}`);
+  if (!rExt.ok) throw new Error(`Extintores: HTTP ${rExt.status}`);
+
+  const locales    = await rLoc.json();
+  const extintores = await rExt.json();
+
+  const extMap = {};
+  extintores.forEach(r => {
+    const cod = r.codigo_local;
+    if (!cod) return;
+    if (!extMap[cod]) extMap[cod] = [];
+    extMap[cod].push({ tipo: r.tipo, cap: r.capacidad, costoMantt: parseFloat(r.costo_mantt) || 0, precioRec: parseFloat(r.precio_recarga) || 0, anioRec: r.anio_recarga });
+  });
+
+  planMes = locales.map(r => {
+    const cod = r.codigo;
+    const anioRec = r.anio_recarga || 9999;
+    const esRecarga = parseInt(anio) === anioRec;
+    return {
+      codigo: cod,
+      marca: r.marca,
+      nombre: String(r.nombre_local || cod),
+      mes: r.mes_servicio,
+      nExt: r.n_extintores || 0,
+      totalMantt: parseFloat(r.total_mantt) || 0,
+      totalRecarga: parseFloat(r.total_recarga) || 0,
+      cobro: parseFloat(r.cobro_anual) || 0,
+      anioRec,
+      esRecarga,
+      empresa: getEmpresa(cod),
+      extintores: extMap[cod] || [],
+    };
+  });
+
+  const _ls = document.getElementById('loadStatus');
+  if (_ls) {
+    _ls.innerHTML = `<div class="status-bar" style="background:#e8f5e9;border:1px solid #81c784;color:#2e7d32">☁️ Datos cargados desde Supabase (${locales.length} locales)</div>`;
+    setTimeout(() => { if (_ls) _ls.innerHTML = ''; }, 4000);
+  }
+  renderPlan();
+  renderBD();
+}
+
 async function cargarPlan() {
   const mesVal  = document.getElementById('selMes').value;
-  const mesNom  = MESES_NOMBRE[mesVal] || '';   // '' = todos los meses
+  const mesNom  = MESES_NOMBRE[mesVal] || '';
   const anio    = document.getElementById('selAnio').value;
   const todosLosMeses = mesVal === '';
 
@@ -1027,32 +1168,30 @@ async function cargarPlan() {
   const _ls = document.getElementById('loadStatus');
   if (_ls) _ls.innerHTML = '<div class="status-bar status-info">⏳ Cargando base de datos de extintores…</div>';
 
+  // Intenta Supabase primero
+  const sbUrl = localStorage.getItem('supabaseUrl');
+  const sbKey = localStorage.getItem('supabaseKey');
+  if (sbUrl && sbKey) {
+    try {
+      await cargarPlanDesdeSupabase(sbUrl, sbKey, mesNom, anio, todosLosMeses);
+      return;
+    } catch (e) {
+      console.warn('Supabase no disponible, usando Excel:', e.message);
+    }
+  }
+
+  // Fallback: cargar desde Excel local
   try {
     const resp = await fetch(`BASE_DATOS_KFC.xlsx?t=${Date.now()}`);
     const buf  = await resp.arrayBuffer();
     const wb   = XLSX.read(buf, { type: 'array' });
 
-    // RESUMEN: CÓDIGO, MARCA, NOMBRE_LOCAL, MES_SERVICIO, N_EXTINTORES,
-    //          TOTAL_MANTT, TOTAL_RECARGA, COBRO_ANUAL, AÑO_ULT_RECARGA, AÑO_RECARGA
     const wsRes = wb.Sheets['RESUMEN_LOCALES'];
     const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
 
-    // DETALLE: MARCA, NOMBRE_LOCAL, MES_SERVICIO, UBICACIÓN, TIPO, CAPACIDAD,
-    //          COSTO_MANTT, PRECIO_RECARGA, AÑO_ULT_RECARGA, AÑO_RECARGA
     const wsDet  = wb.Sheets['DETALLE'];
     const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
 
-    // Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
-    // Ej: "BS04"→"BS004", "CN31"→"BS031"
-    const CN_TO_BS_MAP = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
-    function normCode(raw) {
-      const m = String(raw).match(/^([A-Z]+)(\d+)/);
-      if (!m) return raw;
-      const n = m[1] + String(parseInt(m[2])).padStart(3, '0');
-      return CN_TO_BS_MAP[n] || n;
-    }
-
-    // Build extintor map by local code
     const normMes = s => String(s || '').trim().toUpperCase();
     const extMap = {};
     detalle.slice(1).forEach(r => {
@@ -1904,6 +2043,7 @@ function updatePerfilIndicator() {
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init() {
   loadConfig();
+  loadSbConfig();
 
   try { if (localStorage.getItem('darkMode') === '1') document.body.classList.add('dark'); } catch(e) {}
 
