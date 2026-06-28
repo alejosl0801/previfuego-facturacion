@@ -585,6 +585,39 @@
         <span id="ghStatus" style="font-size:12px;color:#27ae60"></span>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('supabase')">
+        <h2>🗄️ Base de Datos en la Nube (Supabase)</h2>
+        <span class="toggle" id="supabase-toggle">▼</span>
+      </div>
+      <div class="card-body" id="supabase-body">
+        <p style="font-size:13px;color:#555;margin-bottom:10px">
+          La base de datos de extintores se carga automáticamente desde Supabase en todos los dispositivos.
+          Si no hay conexión, se usa el Excel local como respaldo.
+        </p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-sm btn-info" onclick="testSbConnection()" style="font-size:12px">🔌 Probar conexión</button>
+          <span id="sbTestResult" style="font-size:12px"></span>
+        </div>
+        <div style="padding:14px;background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px">
+          <div style="font-size:12px;font-weight:700;color:#1a5276;margin-bottom:8px">📤 Actualizar datos en Supabase</div>
+          <p style="font-size:12px;color:#555;margin-bottom:10px">Cuando actualices el Excel, súbelo aquí para sincronizar todos los dispositivos.</p>
+          <div class="form-row" style="margin-bottom:8px">
+            <div class="form-group" style="flex:2">
+              <label>Secret Key (solo se ingresa una vez)</label>
+              <input type="password" id="sbSecret" placeholder="sb_secret_..." autocomplete="off" oninput="saveSbSecret()" />
+            </div>
+          </div>
+          <span id="sbCfgStatus" style="font-size:12px;color:#27ae60"></span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
+            <input type="file" id="sbExcelFile" accept=".xlsx,.xls" style="font-size:12px;flex:1;min-width:180px" />
+            <button class="btn btn-sm btn-primary" onclick="subirExcelASupabase()" style="font-size:12px">🚀 Migrar a Supabase</button>
+          </div>
+          <div id="sbMigrateStatus" style="font-size:12px;margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -750,6 +783,133 @@ function saveConfig() {
 
 function getGhToken() {
   return localStorage.getItem('ghToken') || document.getElementById('ghToken').value.trim();
+}
+
+// ─── SUPABASE ────────────────────────────────────────────────────────────────
+const SB_URL = 'https://ewypvxglljanfkwyeank.supabase.co';
+const SB_ANON = 'sb_publishable_kmhHwDBxIbNg6bK-hYV7cQ_tUqpyxNF';
+
+function loadSbConfig() {
+  const s = document.getElementById('sbSecret');
+  if (s) s.value = localStorage.getItem('supabaseSecret') || '';
+}
+
+function saveSbSecret() {
+  const sec = (document.getElementById('sbSecret')?.value || '').trim();
+  if (sec) localStorage.setItem('supabaseSecret', sec);
+  else localStorage.removeItem('supabaseSecret');
+  const el = document.getElementById('sbCfgStatus');
+  if (el && sec) {
+    el.textContent = '✅ Guardado en este navegador';
+    clearTimeout(saveSbSecret._t);
+    saveSbSecret._t = setTimeout(() => el.textContent = '', 3000);
+  }
+}
+
+async function testSbConnection() {
+  const el = document.getElementById('sbTestResult');
+  el.innerHTML = '<span style="color:#999">Probando...</span>';
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/locales?select=codigo`, {
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` }
+    });
+    if (r.status === 401) { el.innerHTML = '<span style="color:#e74c3c">API Key inválida</span>'; return; }
+    if (r.status === 404) { el.innerHTML = '<span style="color:#e74c3c">Tabla "locales" no existe</span>'; return; }
+    if (!r.ok) { el.innerHTML = `<span style="color:#e74c3c">Error HTTP ${r.status}</span>`; return; }
+    const data = await r.json();
+    el.innerHTML = data.length
+      ? `<span style="color:#27ae60">Conectado — ${data.length} locales en Supabase</span>`
+      : `<span style="color:#e67e22">Conectado — sin datos. Sube el Excel abajo.</span>`;
+  } catch (e) {
+    if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+      el.innerHTML = '<span style="color:#e74c3c">Sin conexión a internet</span>';
+    } else { el.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`; }
+  }
+}
+
+async function subirExcelASupabase() {
+  const st = document.getElementById('sbMigrateStatus');
+  const sec = localStorage.getItem('supabaseSecret');
+  if (!sec) { st.innerHTML = '<span style="color:#e74c3c">Ingresa la Secret Key primero</span>'; return; }
+  const fileInput = document.getElementById('sbExcelFile');
+  if (!fileInput.files.length) { st.innerHTML = '<span style="color:#e74c3c">Selecciona un archivo Excel primero</span>'; return; }
+
+  st.innerHTML = '<span style="color:#999">⏳ Leyendo Excel...</span>';
+  const hdrs = { 'apikey': sec, 'Authorization': `Bearer ${sec}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+
+  try {
+    const buf = await fileInput.files[0].arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+
+    const wsRes = wb.Sheets['RESUMEN_LOCALES'];
+    const wsDet = wb.Sheets['DETALLE'];
+    if (!wsRes || !wsDet) throw new Error('El Excel debe tener hojas RESUMEN_LOCALES y DETALLE');
+
+    const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
+    const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
+
+    const seenCodes = new Set();
+    const locales = [];
+    resumen.slice(1).forEach(r => {
+      if (!r[0]) return;
+      const codigo = normCode(String(r[0]));
+      if (seenCodes.has(codigo)) return;
+      seenCodes.add(codigo);
+      locales.push({
+        codigo,
+        marca: String(r[1] || '').trim(),
+        nombre_local: String(r[2] || codigo).trim(),
+        mes_servicio: String(r[3] || '').trim().toUpperCase(),
+        n_extintores: parseInt(r[4]) || 0,
+        total_mantt: parseFloat(r[5]) || 0,
+        total_recarga: parseFloat(r[6]) || 0,
+        cobro_anual: parseFloat(r[7]) || 0,
+        anio_ult_recarga: r[8] != null ? parseInt(r[8]) || null : null,
+        anio_recarga: r[9] != null ? parseInt(r[9]) || null : null,
+      });
+    });
+
+    const extintores = [];
+    detalle.slice(1).forEach(r => {
+      if (!r[1]) return;
+      const m = String(r[1]).trim().toUpperCase().match(/^([A-Z]+\d+)/);
+      if (!m) return;
+      const codigo_local = normCode(m[1]);
+      if (!seenCodes.has(codigo_local)) return;
+      extintores.push({
+        codigo_local,
+        marca: String(r[0] || '').trim(),
+        nombre_local: String(r[1] || '').trim(),
+        mes_servicio: String(r[2] || '').trim().toUpperCase(),
+        ubicacion: String(r[3] || '').trim(),
+        tipo: String(r[4] || '').trim().toUpperCase(),
+        capacidad: String(r[5] || '').trim(),
+        costo_mantt: parseFloat(r[6]) || 0,
+        precio_recarga: parseFloat(r[7]) || 0,
+        anio_ult_recarga: r[8] != null ? parseInt(r[8]) || null : null,
+        anio_recarga: r[9] != null ? parseInt(r[9]) || null : null,
+      });
+    });
+
+    st.innerHTML = `<span style="color:#999">⏳ Subiendo ${locales.length} locales + ${extintores.length} extintores...</span>`;
+
+    await fetch(`${SB_URL}/rest/v1/extintores?id=gt.0`, { method: 'DELETE', headers: hdrs });
+    await fetch(`${SB_URL}/rest/v1/locales?codigo=not.is.null`, { method: 'DELETE', headers: hdrs });
+
+    const rLoc = await fetch(`${SB_URL}/rest/v1/locales`, { method: 'POST', headers: hdrs, body: JSON.stringify(locales) });
+    if (!rLoc.ok) { const t = await rLoc.text(); throw new Error(`Locales: ${rLoc.status} — ${t.substring(0, 200)}`); }
+
+    for (let i = 0; i < extintores.length; i += 200) {
+      const batch = extintores.slice(i, i + 200);
+      const rExt = await fetch(`${SB_URL}/rest/v1/extintores`, { method: 'POST', headers: hdrs, body: JSON.stringify(batch) });
+      if (!rExt.ok) { const t = await rExt.text(); throw new Error(`Extintores batch ${Math.floor(i/200)+1}: ${rExt.status} — ${t.substring(0, 200)}`); }
+    }
+
+    st.innerHTML = `<span style="color:#27ae60">✅ Migración completa: ${locales.length} locales + ${extintores.length} extintores subidos a Supabase</span>`;
+    cargarPlan();
+  } catch (e) {
+    st.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`;
+  }
 }
 
 async function testGhConnection() {
@@ -1016,9 +1176,75 @@ let planMes = [];
 let visitaStatus = {};
 const RAW_BASE = '';
 
+// Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
+const CN_TO_BS_MAP = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
+function normCode(raw) {
+  const m = String(raw).match(/^([A-Z]+)(\d+)/);
+  if (!m) return raw;
+  const n = m[1] + String(parseInt(m[2])).padStart(3, '0');
+  return CN_TO_BS_MAP[n] || n;
+}
+
+async function cargarPlanDesdeSupabase(mesNom, anio, todosLosMeses) {
+  const hdrs = { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` };
+
+  let urlLoc = `${SB_URL}/rest/v1/locales?select=*&order=codigo`;
+  let urlExt = `${SB_URL}/rest/v1/extintores?select=*`;
+  if (!todosLosMeses && mesNom) {
+    urlLoc += `&mes_servicio=eq.${encodeURIComponent(mesNom)}`;
+    urlExt += `&mes_servicio=eq.${encodeURIComponent(mesNom)}`;
+  }
+
+  const [rLoc, rExt] = await Promise.all([
+    fetch(urlLoc, { headers: hdrs }),
+    fetch(urlExt, { headers: hdrs })
+  ]);
+  if (!rLoc.ok) throw new Error(`Locales: HTTP ${rLoc.status}`);
+  if (!rExt.ok) throw new Error(`Extintores: HTTP ${rExt.status}`);
+
+  const locales    = await rLoc.json();
+  const extintores = await rExt.json();
+
+  const extMap = {};
+  extintores.forEach(r => {
+    const cod = r.codigo_local;
+    if (!cod) return;
+    if (!extMap[cod]) extMap[cod] = [];
+    extMap[cod].push({ tipo: r.tipo, cap: r.capacidad, costoMantt: parseFloat(r.costo_mantt) || 0, precioRec: parseFloat(r.precio_recarga) || 0, anioRec: r.anio_recarga });
+  });
+
+  planMes = locales.map(r => {
+    const cod = r.codigo;
+    const anioRec = r.anio_recarga || 9999;
+    const esRecarga = parseInt(anio) === anioRec;
+    return {
+      codigo: cod,
+      marca: r.marca,
+      nombre: String(r.nombre_local || cod),
+      mes: r.mes_servicio,
+      nExt: r.n_extintores || 0,
+      totalMantt: parseFloat(r.total_mantt) || 0,
+      totalRecarga: parseFloat(r.total_recarga) || 0,
+      cobro: parseFloat(r.cobro_anual) || 0,
+      anioRec,
+      esRecarga,
+      empresa: getEmpresa(cod),
+      extintores: extMap[cod] || [],
+    };
+  });
+
+  const _ls = document.getElementById('loadStatus');
+  if (_ls) {
+    _ls.innerHTML = `<div class="status-bar" style="background:#e8f5e9;border:1px solid #81c784;color:#2e7d32">☁️ Datos cargados desde Supabase (${locales.length} locales)</div>`;
+    setTimeout(() => { if (_ls) _ls.innerHTML = ''; }, 4000);
+  }
+  renderPlan();
+  renderBD();
+}
+
 async function cargarPlan() {
   const mesVal  = document.getElementById('selMes').value;
-  const mesNom  = MESES_NOMBRE[mesVal] || '';   // '' = todos los meses
+  const mesNom  = MESES_NOMBRE[mesVal] || '';
   const anio    = document.getElementById('selAnio').value;
   const todosLosMeses = mesVal === '';
 
@@ -1027,32 +1253,26 @@ async function cargarPlan() {
   const _ls = document.getElementById('loadStatus');
   if (_ls) _ls.innerHTML = '<div class="status-bar status-info">⏳ Cargando base de datos de extintores…</div>';
 
+  // Intenta Supabase primero (siempre disponible, sin configuración)
+  try {
+    await cargarPlanDesdeSupabase(mesNom, anio, todosLosMeses);
+    return;
+  } catch (e) {
+    console.warn('Supabase no disponible, usando Excel:', e.message);
+  }
+
+  // Fallback: cargar desde Excel local
   try {
     const resp = await fetch(`BASE_DATOS_KFC.xlsx?t=${Date.now()}`);
     const buf  = await resp.arrayBuffer();
     const wb   = XLSX.read(buf, { type: 'array' });
 
-    // RESUMEN: CÓDIGO, MARCA, NOMBRE_LOCAL, MES_SERVICIO, N_EXTINTORES,
-    //          TOTAL_MANTT, TOTAL_RECARGA, COBRO_ANUAL, AÑO_ULT_RECARGA, AÑO_RECARGA
     const wsRes = wb.Sheets['RESUMEN_LOCALES'];
     const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
 
-    // DETALLE: MARCA, NOMBRE_LOCAL, MES_SERVICIO, UBICACIÓN, TIPO, CAPACIDAD,
-    //          COSTO_MANTT, PRECIO_RECARGA, AÑO_ULT_RECARGA, AÑO_RECARGA
     const wsDet  = wb.Sheets['DETALLE'];
     const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
 
-    // Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
-    // Ej: "BS04"→"BS004", "CN31"→"BS031"
-    const CN_TO_BS_MAP = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
-    function normCode(raw) {
-      const m = String(raw).match(/^([A-Z]+)(\d+)/);
-      if (!m) return raw;
-      const n = m[1] + String(parseInt(m[2])).padStart(3, '0');
-      return CN_TO_BS_MAP[n] || n;
-    }
-
-    // Build extintor map by local code
     const normMes = s => String(s || '').trim().toUpperCase();
     const extMap = {};
     detalle.slice(1).forEach(r => {
@@ -1904,6 +2124,7 @@ function updatePerfilIndicator() {
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init() {
   loadConfig();
+  loadSbConfig();
 
   try { if (localStorage.getItem('darkMode') === '1') document.body.classList.add('dark'); } catch(e) {}
 
