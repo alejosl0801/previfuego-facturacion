@@ -593,37 +593,27 @@
       </div>
       <div class="card-body" id="supabase-body">
         <p style="font-size:13px;color:#555;margin-bottom:10px">
-          Conecta con Supabase para cargar la base de datos de extintores desde la nube.
-          Así no necesitas Dropbox ni archivos locales — funciona en cualquier dispositivo.
+          La base de datos de extintores se carga automáticamente desde Supabase en todos los dispositivos.
+          Si no hay conexión, se usa el Excel local como respaldo.
         </p>
-        <div class="form-row">
-          <div class="form-group" style="flex:2">
-            <label>URL del Proyecto Supabase</label>
-            <input type="text" id="sbUrl" placeholder="https://xxxxx.supabase.co" oninput="saveSbConfig()" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group" style="flex:2">
-            <label>API Key (anon / publishable)</label>
-            <input type="password" id="sbKey" placeholder="sb_publishable_..." autocomplete="off" oninput="saveSbConfig()" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group" style="flex:2">
-            <label>Secret Key (solo para subir datos — nunca se comparte)</label>
-            <input type="password" id="sbSecret" placeholder="sb_secret_..." autocomplete="off" oninput="saveSbConfig()" />
-          </div>
-        </div>
-        <span id="sbCfgStatus" style="font-size:12px;color:#27ae60"></span>
-        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
           <button class="btn btn-sm btn-info" onclick="testSbConnection()" style="font-size:12px">🔌 Probar conexión</button>
-          <span id="sbTestResult" style="font-size:12px;margin-left:4px"></span>
+          <span id="sbTestResult" style="font-size:12px"></span>
         </div>
-        <div style="margin-top:14px;padding:14px;background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px">
-          <div style="font-size:12px;font-weight:700;color:#1a5276;margin-bottom:8px">📤 Subir Excel a Supabase</div>
-          <p style="font-size:12px;color:#555;margin-bottom:10px">Selecciona el archivo Excel para migrar los datos a la nube. Esto reemplaza los datos existentes en Supabase.</p>
-          <input type="file" id="sbExcelFile" accept=".xlsx,.xls" style="font-size:12px" />
-          <button class="btn btn-sm btn-primary" onclick="subirExcelASupabase()" style="font-size:12px;margin-top:8px">🚀 Migrar a Supabase</button>
+        <div style="padding:14px;background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px">
+          <div style="font-size:12px;font-weight:700;color:#1a5276;margin-bottom:8px">📤 Actualizar datos en Supabase</div>
+          <p style="font-size:12px;color:#555;margin-bottom:10px">Cuando actualices el Excel, súbelo aquí para sincronizar todos los dispositivos.</p>
+          <div class="form-row" style="margin-bottom:8px">
+            <div class="form-group" style="flex:2">
+              <label>Secret Key (solo se ingresa una vez)</label>
+              <input type="password" id="sbSecret" placeholder="sb_secret_..." autocomplete="off" oninput="saveSbSecret()" />
+            </div>
+          </div>
+          <span id="sbCfgStatus" style="font-size:12px;color:#27ae60"></span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
+            <input type="file" id="sbExcelFile" accept=".xlsx,.xls" style="font-size:12px;flex:1;min-width:180px" />
+            <button class="btn btn-sm btn-primary" onclick="subirExcelASupabase()" style="font-size:12px">🚀 Migrar a Supabase</button>
+          </div>
           <div id="sbMigrateStatus" style="font-size:12px;margin-top:8px"></div>
         </div>
       </div>
@@ -795,49 +785,41 @@ function getGhToken() {
   return localStorage.getItem('ghToken') || document.getElementById('ghToken').value.trim();
 }
 
-// ─── SUPABASE CONFIG ─────────────────────────────────────────────────────────
+// ─── SUPABASE ────────────────────────────────────────────────────────────────
+const SB_URL = 'https://ewypvxglljanfkwyeank.supabase.co';
+const SB_ANON = 'sb_publishable_kmhHwDBxIbNg6bK-hYV7cQ_tUqpyxNF';
+
 function loadSbConfig() {
-  const u = document.getElementById('sbUrl');
-  const k = document.getElementById('sbKey');
   const s = document.getElementById('sbSecret');
-  if (u) u.value = localStorage.getItem('supabaseUrl') || '';
-  if (k) k.value = localStorage.getItem('supabaseKey') || '';
   if (s) s.value = localStorage.getItem('supabaseSecret') || '';
 }
 
-function saveSbConfig() {
-  const url = (document.getElementById('sbUrl')?.value || '').trim().replace(/\/+$/, '');
-  const key = (document.getElementById('sbKey')?.value || '').trim();
+function saveSbSecret() {
   const sec = (document.getElementById('sbSecret')?.value || '').trim();
-  if (url) localStorage.setItem('supabaseUrl', url);
-  else localStorage.removeItem('supabaseUrl');
-  if (key) localStorage.setItem('supabaseKey', key);
-  else localStorage.removeItem('supabaseKey');
   if (sec) localStorage.setItem('supabaseSecret', sec);
   else localStorage.removeItem('supabaseSecret');
   const el = document.getElementById('sbCfgStatus');
-  if (el && url && key) {
+  if (el && sec) {
     el.textContent = '✅ Guardado en este navegador';
-    clearTimeout(saveSbConfig._t);
-    saveSbConfig._t = setTimeout(() => el.textContent = '', 3000);
+    clearTimeout(saveSbSecret._t);
+    saveSbSecret._t = setTimeout(() => el.textContent = '', 3000);
   }
 }
 
 async function testSbConnection() {
   const el = document.getElementById('sbTestResult');
-  const url = localStorage.getItem('supabaseUrl');
-  const key = localStorage.getItem('supabaseKey');
-  if (!url || !key) { el.innerHTML = '<span style="color:#e74c3c">Configura URL y Key primero</span>'; return; }
   el.innerHTML = '<span style="color:#999">Probando...</span>';
   try {
-    const r = await fetch(`${url}/rest/v1/locales?select=codigo`, {
-      headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
+    const r = await fetch(`${SB_URL}/rest/v1/locales?select=codigo`, {
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` }
     });
     if (r.status === 401) { el.innerHTML = '<span style="color:#e74c3c">API Key inválida</span>'; return; }
-    if (r.status === 404) { el.innerHTML = '<span style="color:#e74c3c">Tabla "locales" no existe — ejecuta el schema.sql primero</span>'; return; }
+    if (r.status === 404) { el.innerHTML = '<span style="color:#e74c3c">Tabla "locales" no existe</span>'; return; }
     if (!r.ok) { el.innerHTML = `<span style="color:#e74c3c">Error HTTP ${r.status}</span>`; return; }
     const data = await r.json();
-    el.innerHTML = `<span style="color:#27ae60">Conectado — ${data.length} locales en la base de datos</span>`;
+    el.innerHTML = data.length
+      ? `<span style="color:#27ae60">Conectado — ${data.length} locales en Supabase</span>`
+      : `<span style="color:#e67e22">Conectado — sin datos. Sube el Excel abajo.</span>`;
   } catch (e) {
     if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
       el.innerHTML = '<span style="color:#e74c3c">Sin conexión a internet</span>';
@@ -847,9 +829,8 @@ async function testSbConnection() {
 
 async function subirExcelASupabase() {
   const st = document.getElementById('sbMigrateStatus');
-  const url = localStorage.getItem('supabaseUrl');
   const sec = localStorage.getItem('supabaseSecret');
-  if (!url || !sec) { st.innerHTML = '<span style="color:#e74c3c">Configura la URL y la Secret Key primero</span>'; return; }
+  if (!sec) { st.innerHTML = '<span style="color:#e74c3c">Ingresa la Secret Key primero</span>'; return; }
   const fileInput = document.getElementById('sbExcelFile');
   if (!fileInput.files.length) { st.innerHTML = '<span style="color:#e74c3c">Selecciona un archivo Excel primero</span>'; return; }
 
@@ -912,15 +893,15 @@ async function subirExcelASupabase() {
 
     st.innerHTML = `<span style="color:#999">⏳ Subiendo ${locales.length} locales + ${extintores.length} extintores...</span>`;
 
-    await fetch(`${url}/rest/v1/extintores?id=gt.0`, { method: 'DELETE', headers: hdrs });
-    await fetch(`${url}/rest/v1/locales?codigo=not.is.null`, { method: 'DELETE', headers: hdrs });
+    await fetch(`${SB_URL}/rest/v1/extintores?id=gt.0`, { method: 'DELETE', headers: hdrs });
+    await fetch(`${SB_URL}/rest/v1/locales?codigo=not.is.null`, { method: 'DELETE', headers: hdrs });
 
-    const rLoc = await fetch(`${url}/rest/v1/locales`, { method: 'POST', headers: hdrs, body: JSON.stringify(locales) });
+    const rLoc = await fetch(`${SB_URL}/rest/v1/locales`, { method: 'POST', headers: hdrs, body: JSON.stringify(locales) });
     if (!rLoc.ok) { const t = await rLoc.text(); throw new Error(`Locales: ${rLoc.status} — ${t.substring(0, 200)}`); }
 
     for (let i = 0; i < extintores.length; i += 200) {
       const batch = extintores.slice(i, i + 200);
-      const rExt = await fetch(`${url}/rest/v1/extintores`, { method: 'POST', headers: hdrs, body: JSON.stringify(batch) });
+      const rExt = await fetch(`${SB_URL}/rest/v1/extintores`, { method: 'POST', headers: hdrs, body: JSON.stringify(batch) });
       if (!rExt.ok) { const t = await rExt.text(); throw new Error(`Extintores batch ${Math.floor(i/200)+1}: ${rExt.status} — ${t.substring(0, 200)}`); }
     }
 
@@ -1204,11 +1185,11 @@ function normCode(raw) {
   return CN_TO_BS_MAP[n] || n;
 }
 
-async function cargarPlanDesdeSupabase(sbUrl, sbKey, mesNom, anio, todosLosMeses) {
-  const hdrs = { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` };
+async function cargarPlanDesdeSupabase(mesNom, anio, todosLosMeses) {
+  const hdrs = { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` };
 
-  let urlLoc = `${sbUrl}/rest/v1/locales?select=*&order=codigo`;
-  let urlExt = `${sbUrl}/rest/v1/extintores?select=*`;
+  let urlLoc = `${SB_URL}/rest/v1/locales?select=*&order=codigo`;
+  let urlExt = `${SB_URL}/rest/v1/extintores?select=*`;
   if (!todosLosMeses && mesNom) {
     urlLoc += `&mes_servicio=eq.${encodeURIComponent(mesNom)}`;
     urlExt += `&mes_servicio=eq.${encodeURIComponent(mesNom)}`;
@@ -1272,16 +1253,12 @@ async function cargarPlan() {
   const _ls = document.getElementById('loadStatus');
   if (_ls) _ls.innerHTML = '<div class="status-bar status-info">⏳ Cargando base de datos de extintores…</div>';
 
-  // Intenta Supabase primero
-  const sbUrl = localStorage.getItem('supabaseUrl');
-  const sbKey = localStorage.getItem('supabaseKey');
-  if (sbUrl && sbKey) {
-    try {
-      await cargarPlanDesdeSupabase(sbUrl, sbKey, mesNom, anio, todosLosMeses);
-      return;
-    } catch (e) {
-      console.warn('Supabase no disponible, usando Excel:', e.message);
-    }
+  // Intenta Supabase primero (siempre disponible, sin configuración)
+  try {
+    await cargarPlanDesdeSupabase(mesNom, anio, todosLosMeses);
+    return;
+  } catch (e) {
+    console.warn('Supabase no disponible, usando Excel:', e.message);
   }
 
   // Fallback: cargar desde Excel local
