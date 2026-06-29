@@ -611,7 +611,7 @@
           </div>
           <span id="sbCfgStatus" style="font-size:12px;color:#27ae60"></span>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
-            <input type="file" id="sbExcelFile" accept=".xlsx,.xls" style="font-size:12px;flex:1;min-width:180px" />
+            <input type="file" id="sbExcelFile" accept=".xlsx,.xls" multiple style="font-size:12px;flex:1;min-width:180px" />
             <button class="btn btn-sm btn-primary" onclick="subirExcelASupabase()" style="font-size:12px">🚀 Migrar a Supabase</button>
           </div>
           <div id="sbMigrateStatus" style="font-size:12px;margin-top:8px"></div>
@@ -832,64 +832,67 @@ async function subirExcelASupabase() {
   const sec = localStorage.getItem('supabaseSecret');
   if (!sec) { st.innerHTML = '<span style="color:#e74c3c">Ingresa la Secret Key primero</span>'; return; }
   const fileInput = document.getElementById('sbExcelFile');
-  if (!fileInput.files.length) { st.innerHTML = '<span style="color:#e74c3c">Selecciona un archivo Excel primero</span>'; return; }
+  if (!fileInput.files.length) { st.innerHTML = '<span style="color:#e74c3c">Selecciona uno o más archivos Excel</span>'; return; }
 
-  st.innerHTML = '<span style="color:#999">⏳ Leyendo Excel...</span>';
+  st.innerHTML = `<span style="color:#999">⏳ Leyendo ${fileInput.files.length} archivo(s)...</span>`;
   const hdrs = { 'apikey': sec, 'Authorization': `Bearer ${sec}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
 
   try {
-    const buf = await fileInput.files[0].arrayBuffer();
-    const wb = XLSX.read(buf, { type: 'array' });
-
-    const wsRes = wb.Sheets['RESUMEN_LOCALES'];
-    const wsDet = wb.Sheets['DETALLE'];
-    if (!wsRes || !wsDet) throw new Error('El Excel debe tener hojas RESUMEN_LOCALES y DETALLE');
-
-    const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
-    const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
-
     const seenCodes = new Set();
     const locales = [];
-    resumen.slice(1).forEach(r => {
-      if (!r[0]) return;
-      const codigo = normCode(String(r[0]));
-      if (seenCodes.has(codigo)) return;
-      seenCodes.add(codigo);
-      locales.push({
-        codigo,
-        marca: String(r[1] || '').trim(),
-        nombre_local: String(r[2] || codigo).trim(),
-        mes_servicio: String(r[3] || '').trim().toUpperCase(),
-        n_extintores: parseInt(r[4]) || 0,
-        total_mantt: parseFloat(r[5]) || 0,
-        total_recarga: parseFloat(r[6]) || 0,
-        cobro_anual: parseFloat(r[7]) || 0,
-        anio_ult_recarga: r[8] != null ? parseInt(r[8]) || null : null,
-        anio_recarga: r[9] != null ? parseInt(r[9]) || null : null,
-      });
-    });
-
     const extintores = [];
-    detalle.slice(1).forEach(r => {
-      if (!r[1]) return;
-      const m = String(r[1]).trim().toUpperCase().match(/^([A-Z]+\d+)/);
-      if (!m) return;
-      const codigo_local = normCode(m[1]);
-      if (!seenCodes.has(codigo_local)) return;
-      extintores.push({
-        codigo_local,
-        marca: String(r[0] || '').trim(),
-        nombre_local: String(r[1] || '').trim(),
-        mes_servicio: String(r[2] || '').trim().toUpperCase(),
-        ubicacion: String(r[3] || '').trim(),
-        tipo: String(r[4] || '').trim().toUpperCase(),
-        capacidad: String(r[5] || '').trim(),
-        costo_mantt: parseFloat(r[6]) || 0,
-        precio_recarga: parseFloat(r[7]) || 0,
-        anio_ult_recarga: r[8] != null ? parseInt(r[8]) || null : null,
-        anio_recarga: r[9] != null ? parseInt(r[9]) || null : null,
+
+    for (const file of fileInput.files) {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array' });
+
+      const wsRes = wb.Sheets['RESUMEN_LOCALES'];
+      const wsDet = wb.Sheets['DETALLE'];
+      if (!wsRes || !wsDet) throw new Error(`${file.name}: debe tener hojas RESUMEN_LOCALES y DETALLE`);
+
+      const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
+      const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
+
+      resumen.slice(1).forEach(r => {
+        if (!r[0]) return;
+        const codigo = normCode(String(r[0]));
+        if (seenCodes.has(codigo)) return;
+        seenCodes.add(codigo);
+        locales.push({
+          codigo,
+          marca: String(r[1] || '').trim(),
+          nombre_local: String(r[2] || codigo).trim(),
+          mes_servicio: String(r[3] || '').trim().toUpperCase(),
+          n_extintores: parseInt(r[4]) || 0,
+          total_mantt: parseFloat(r[5]) || 0,
+          total_recarga: parseFloat(r[6]) || 0,
+          cobro_anual: parseFloat(r[7]) || 0,
+          anio_ult_recarga: r[8] != null ? parseInt(r[8]) || null : null,
+          anio_recarga: r[9] != null ? parseInt(r[9]) || null : null,
+        });
       });
-    });
+
+      detalle.slice(1).forEach(r => {
+        if (!r[1]) return;
+        const m = String(r[1]).trim().toUpperCase().match(/^([A-Z]+\d+)/);
+        if (!m) return;
+        const codigo_local = normCode(m[1]);
+        if (!seenCodes.has(codigo_local)) return;
+        extintores.push({
+          codigo_local,
+          marca: String(r[0] || '').trim(),
+          nombre_local: String(r[1] || '').trim(),
+          mes_servicio: String(r[2] || '').trim().toUpperCase(),
+          ubicacion: String(r[3] || '').trim(),
+          tipo: String(r[4] || '').trim().toUpperCase(),
+          capacidad: String(r[5] || '').trim(),
+          costo_mantt: parseFloat(r[6]) || 0,
+          precio_recarga: parseFloat(r[7]) || 0,
+          anio_ult_recarga: r[8] != null ? parseInt(r[8]) || null : null,
+          anio_recarga: r[9] != null ? parseInt(r[9]) || null : null,
+        });
+      });
+    }
 
     st.innerHTML = `<span style="color:#999">⏳ Subiendo ${locales.length} locales + ${extintores.length} extintores...</span>`;
 
