@@ -15,9 +15,15 @@ CREATE TABLE IF NOT EXISTS locales (
   cobro_anual    NUMERIC(10,2) DEFAULT 0,
   anio_ult_recarga INTEGER,
   anio_recarga     INTEGER,
+  viatico_ruta   TEXT,                      -- ruta del viático (ej. GYE-MACHALA 185KM)
+  viatico_costo  NUMERIC(10,2),             -- costo del viático/movilización
   created_at     TIMESTAMPTZ DEFAULT NOW(),
   updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Si la tabla ya existe sin estas columnas, ejecuta:
+ALTER TABLE locales ADD COLUMN IF NOT EXISTS viatico_ruta  TEXT;
+ALTER TABLE locales ADD COLUMN IF NOT EXISTS viatico_costo NUMERIC(10,2);
 
 -- Detalle: un registro por extintor (968+ extintores)
 CREATE TABLE IF NOT EXISTS extintores (
