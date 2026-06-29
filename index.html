@@ -601,14 +601,33 @@
           <span id="sbTestResult" style="font-size:12px"></span>
         </div>
         <div style="padding:14px;background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px">
-          <div style="font-size:12px;font-weight:700;color:#1a5276;margin-bottom:8px">📤 Actualizar datos en Supabase</div>
+          <div style="font-size:12px;font-weight:700;color:#1a5276;margin-bottom:8px">📤 Actualizar datos en Supabase (un click)</div>
           <p style="font-size:12px;color:#555;margin-bottom:10px">
-            Genera los archivos CSV de las bases y súbelos en el panel de Supabase
-            (Table Editor → Import data from CSV). Es seguro y solo se hace cuando cambian los datos.
+            Configura una sola vez el Worker (URL + token). Luego sincroniza con un click — los datos
+            oficiales se suben de forma segura a todos los dispositivos. La clave secreta vive en el Worker, nunca aquí.
           </p>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm btn-primary" onclick="generarCSVSupabase()" style="font-size:12px">📥 Generar CSV para Supabase</button>
+          <div class="form-row" style="margin-bottom:8px">
+            <div class="form-group" style="flex:2">
+              <label>URL del Worker</label>
+              <input type="text" id="syncUrl" placeholder="https://previfuego-sync.xxxx.workers.dev" oninput="saveSyncCfg()" />
+            </div>
           </div>
+          <div class="form-row" style="margin-bottom:8px">
+            <div class="form-group" style="flex:2">
+              <label>Token de sincronización</label>
+              <input type="password" id="syncToken" placeholder="el SYNC_TOKEN del Worker" autocomplete="off" oninput="saveSyncCfg()" />
+            </div>
+          </div>
+          <span id="syncCfgStatus" style="font-size:12px;color:#27ae60"></span>
+          <div style="margin-top:10px">
+            <button class="btn btn-sm btn-primary" onclick="sincronizarConWorker()" style="font-size:12px">🚀 Sincronizar datos oficiales</button>
+          </div>
+          <details style="margin-top:12px">
+            <summary style="font-size:12px;color:#777;cursor:pointer">Alternativa: generar CSV para importar a mano</summary>
+            <div style="margin-top:8px">
+              <button class="btn btn-sm btn-info" onclick="generarCSVSupabase()" style="font-size:12px">📥 Generar CSV</button>
+            </div>
+          </details>
           <div id="sbMigrateStatus" style="font-size:12px;margin-top:8px"></div>
         </div>
       </div>
@@ -788,6 +807,54 @@ function loadSbConfig() {
   // Limpieza de seguridad: borra cualquier secret key que haya quedado guardada.
   // Las secret keys NUNCA deben usarse en el navegador (Supabase las rechaza).
   localStorage.removeItem('supabaseSecret');
+  const u = document.getElementById('syncUrl');
+  const t = document.getElementById('syncToken');
+  if (u) u.value = localStorage.getItem('syncUrl') || '';
+  if (t) t.value = localStorage.getItem('syncToken') || '';
+}
+
+function saveSyncCfg() {
+  const url = (document.getElementById('syncUrl')?.value || '').trim().replace(/\/+$/, '');
+  const tok = (document.getElementById('syncToken')?.value || '').trim();
+  if (url) localStorage.setItem('syncUrl', url); else localStorage.removeItem('syncUrl');
+  if (tok) localStorage.setItem('syncToken', tok); else localStorage.removeItem('syncToken');
+  const el = document.getElementById('syncCfgStatus');
+  if (el && url && tok) {
+    el.textContent = '✅ Guardado en este navegador';
+    clearTimeout(saveSyncCfg._t);
+    saveSyncCfg._t = setTimeout(() => el.textContent = '', 3000);
+  }
+}
+
+// Sincroniza las bases oficiales a Supabase a través del Worker (un click)
+async function sincronizarConWorker() {
+  const st = document.getElementById('sbMigrateStatus');
+  const url = localStorage.getItem('syncUrl');
+  const tok = localStorage.getItem('syncToken');
+  if (!url || !tok) { st.innerHTML = '<span style="color:#e74c3c">Configura la URL del Worker y el token primero</span>'; return; }
+  st.innerHTML = '<span style="color:#999">⏳ Leyendo bases oficiales...</span>';
+  try {
+    const archivos = ['BASE_DATOS_KFC.xlsx', 'BASE_DATOS_SUSHICORP.xlsx'];
+    const buffers = [];
+    for (const name of archivos) {
+      const resp = await fetch(`${name}?t=${Date.now()}`);
+      if (!resp.ok) throw new Error(`No se pudo leer ${name} (HTTP ${resp.status})`);
+      buffers.push({ name, buf: await resp.arrayBuffer() });
+    }
+    const { locales, extintores } = parseWorkbooks(buffers);
+    st.innerHTML = `<span style="color:#999">⏳ Subiendo ${locales.length} locales + ${extintores.length} extintores...</span>`;
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Sync-Token': tok },
+      body: JSON.stringify({ locales, extintores }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    st.innerHTML = `<span style="color:#27ae60">✅ Sincronizado: ${data.locales} locales + ${data.extintores} extintores en Supabase</span>`;
+    cargarPlan();
+  } catch (e) {
+    st.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`;
+  }
 }
 
 async function testSbConnection() {
