@@ -602,24 +602,13 @@
         </div>
         <div style="padding:14px;background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px">
           <div style="font-size:12px;font-weight:700;color:#1a5276;margin-bottom:8px">📤 Actualizar datos en Supabase</div>
-          <p style="font-size:12px;color:#555;margin-bottom:10px">Ingresa la Secret Key una sola vez. Luego sincroniza con un click — los datos oficiales se suben desde el servidor a todos los dispositivos.</p>
-          <div class="form-row" style="margin-bottom:8px">
-            <div class="form-group" style="flex:2">
-              <label>Secret Key (solo se ingresa una vez)</label>
-              <input type="password" id="sbSecret" placeholder="sb_secret_..." autocomplete="off" oninput="saveSbSecret()" />
-            </div>
+          <p style="font-size:12px;color:#555;margin-bottom:10px">
+            Genera los archivos CSV de las bases y súbelos en el panel de Supabase
+            (Table Editor → Import data from CSV). Es seguro y solo se hace cuando cambian los datos.
+          </p>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-sm btn-primary" onclick="generarCSVSupabase()" style="font-size:12px">📥 Generar CSV para Supabase</button>
           </div>
-          <span id="sbCfgStatus" style="font-size:12px;color:#27ae60"></span>
-          <div style="margin-top:10px">
-            <button class="btn btn-sm btn-primary" onclick="migrarDesdeServidor()" style="font-size:12px">🚀 Sincronizar datos oficiales</button>
-          </div>
-          <details style="margin-top:12px">
-            <summary style="font-size:12px;color:#777;cursor:pointer">Subir un Excel manualmente</summary>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
-              <input type="file" id="sbExcelFile" accept=".xlsx,.xls" multiple style="font-size:12px;flex:1;min-width:180px" />
-              <button class="btn btn-sm btn-info" onclick="subirExcelASupabase()" style="font-size:12px">📂 Subir archivo</button>
-            </div>
-          </details>
           <div id="sbMigrateStatus" style="font-size:12px;margin-top:8px"></div>
         </div>
       </div>
@@ -796,20 +785,9 @@ const SB_URL = 'https://ewypvxglljanfkwyeank.supabase.co';
 const SB_ANON = 'sb_publishable_kmhHwDBxIbNg6bK-hYV7cQ_tUqpyxNF';
 
 function loadSbConfig() {
-  const s = document.getElementById('sbSecret');
-  if (s) s.value = localStorage.getItem('supabaseSecret') || '';
-}
-
-function saveSbSecret() {
-  const sec = (document.getElementById('sbSecret')?.value || '').trim();
-  if (sec) localStorage.setItem('supabaseSecret', sec);
-  else localStorage.removeItem('supabaseSecret');
-  const el = document.getElementById('sbCfgStatus');
-  if (el && sec) {
-    el.textContent = '✅ Guardado en este navegador';
-    clearTimeout(saveSbSecret._t);
-    saveSbSecret._t = setTimeout(() => el.textContent = '', 3000);
-  }
+  // Limpieza de seguridad: borra cualquier secret key que haya quedado guardada.
+  // Las secret keys NUNCA deben usarse en el navegador (Supabase las rechaza).
+  localStorage.removeItem('supabaseSecret');
 }
 
 async function testSbConnection() {
@@ -825,11 +803,53 @@ async function testSbConnection() {
     const data = await r.json();
     el.innerHTML = data.length
       ? `<span style="color:#27ae60">Conectado — ${data.length} locales en Supabase</span>`
-      : `<span style="color:#e67e22">Conectado — sin datos. Sube el Excel abajo.</span>`;
+      : `<span style="color:#e67e22">Conectado — sin datos. Genera los CSV y súbelos en el panel de Supabase.</span>`;
   } catch (e) {
     if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
       el.innerHTML = '<span style="color:#e74c3c">Sin conexión a internet</span>';
     } else { el.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`; }
+  }
+}
+
+// Convierte un array de objetos a CSV y dispara la descarga
+function descargarCSV(filename, rows) {
+  if (!rows.length) return;
+  const cols = Object.keys(rows[0]);
+  const esc = v => {
+    if (v == null) return '';
+    const s = String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const csv = [cols.join(',')]
+    .concat(rows.map(r => cols.map(c => esc(r[c])).join(',')))
+    .join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Genera locales.csv y extintores.csv (de ambas bases) para importar en Supabase
+async function generarCSVSupabase() {
+  const st = document.getElementById('sbMigrateStatus');
+  st.innerHTML = '<span style="color:#999">⏳ Leyendo bases de datos...</span>';
+  try {
+    const archivos = ['BASE_DATOS_KFC.xlsx', 'BASE_DATOS_SUSHICORP.xlsx'];
+    const buffers = [];
+    for (const name of archivos) {
+      const resp = await fetch(`${name}?t=${Date.now()}`);
+      if (!resp.ok) throw new Error(`No se pudo leer ${name} (HTTP ${resp.status})`);
+      buffers.push({ name, buf: await resp.arrayBuffer() });
+    }
+    const { locales, extintores } = parseWorkbooks(buffers);
+    descargarCSV('locales.csv', locales);
+    setTimeout(() => descargarCSV('extintores.csv', extintores), 400);
+    st.innerHTML = `<span style="color:#27ae60">✅ Generados: locales.csv (${locales.length}) y extintores.csv (${extintores.length}). ` +
+      `Súbelos en Supabase → Table Editor → Import data from CSV.</span>`;
+  } catch (e) {
+    st.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`;
   }
 }
 
@@ -893,68 +913,6 @@ function parseWorkbooks(buffers) {
     });
   }
   return { locales, extintores };
-}
-
-// Sube locales + extintores a Supabase (reemplaza todo)
-async function pushASupabase(locales, extintores, sec, st) {
-  const hdrs = { 'apikey': sec, 'Authorization': `Bearer ${sec}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
-
-  st.innerHTML = `<span style="color:#999">⏳ Subiendo ${locales.length} locales + ${extintores.length} extintores...</span>`;
-
-  await fetch(`${SB_URL}/rest/v1/extintores?id=gt.0`, { method: 'DELETE', headers: hdrs });
-  await fetch(`${SB_URL}/rest/v1/locales?codigo=not.is.null`, { method: 'DELETE', headers: hdrs });
-
-  const rLoc = await fetch(`${SB_URL}/rest/v1/locales`, { method: 'POST', headers: hdrs, body: JSON.stringify(locales) });
-  if (!rLoc.ok) { const t = await rLoc.text(); throw new Error(`Locales: ${rLoc.status} — ${t.substring(0, 200)}`); }
-
-  for (let i = 0; i < extintores.length; i += 200) {
-    const batch = extintores.slice(i, i + 200);
-    const rExt = await fetch(`${SB_URL}/rest/v1/extintores`, { method: 'POST', headers: hdrs, body: JSON.stringify(batch) });
-    if (!rExt.ok) { const t = await rExt.text(); throw new Error(`Extintores batch ${Math.floor(i/200)+1}: ${rExt.status} — ${t.substring(0, 200)}`); }
-  }
-
-  st.innerHTML = `<span style="color:#27ae60">✅ Sincronizado: ${locales.length} locales + ${extintores.length} extintores en Supabase</span>`;
-  cargarPlan();
-}
-
-// Migra los datos oficiales (Excel del servidor) con un solo click
-async function migrarDesdeServidor() {
-  const st = document.getElementById('sbMigrateStatus');
-  const sec = localStorage.getItem('supabaseSecret');
-  if (!sec) { st.innerHTML = '<span style="color:#e74c3c">Ingresa la Secret Key primero</span>'; return; }
-  st.innerHTML = '<span style="color:#999">⏳ Descargando datos oficiales del servidor...</span>';
-  try {
-    const archivos = ['BASE_DATOS_KFC.xlsx', 'BASE_DATOS_SUSHICORP.xlsx'];
-    const buffers = [];
-    for (const name of archivos) {
-      const resp = await fetch(`${name}?t=${Date.now()}`);
-      if (!resp.ok) throw new Error(`No se pudo leer ${name} (HTTP ${resp.status})`);
-      buffers.push({ name, buf: await resp.arrayBuffer() });
-    }
-    const { locales, extintores } = parseWorkbooks(buffers);
-    await pushASupabase(locales, extintores, sec, st);
-  } catch (e) {
-    st.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`;
-  }
-}
-
-// Sube uno o más Excel seleccionados manualmente
-async function subirExcelASupabase() {
-  const st = document.getElementById('sbMigrateStatus');
-  const sec = localStorage.getItem('supabaseSecret');
-  if (!sec) { st.innerHTML = '<span style="color:#e74c3c">Ingresa la Secret Key primero</span>'; return; }
-  const fileInput = document.getElementById('sbExcelFile');
-  if (!fileInput.files.length) { st.innerHTML = '<span style="color:#e74c3c">Selecciona uno o más archivos Excel</span>'; return; }
-
-  st.innerHTML = `<span style="color:#999">⏳ Leyendo ${fileInput.files.length} archivo(s)...</span>`;
-  try {
-    const buffers = [];
-    for (const file of fileInput.files) buffers.push({ name: file.name, buf: await file.arrayBuffer() });
-    const { locales, extintores } = parseWorkbooks(buffers);
-    await pushASupabase(locales, extintores, sec, st);
-  } catch (e) {
-    st.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`;
-  }
 }
 
 async function testGhConnection() {
