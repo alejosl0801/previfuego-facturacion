@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Previfuego – Facturación KFC</title>
+<title>Previfuego – Certificados KFC</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -119,17 +119,6 @@
   th { background: var(--rojo); color: white; padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
   td { padding: 6px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
   tr:hover td { background: #fafafa; }
-  tr.manges td { background: #eafaf1; }
-  tr.mant td { background: #eaf4fb; }
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 700;
-  }
-  .badge-manges { background: #d5f5e3; color: #1e8449; }
-  .badge-mant { background: #d6eaf8; color: #1a5276; }
 
   td input { padding: 4px 6px; font-size: 12px; width: 100%; }
 
@@ -150,26 +139,6 @@
   .step.done { background: var(--verde); color: white; }
   .step .num { font-size: 18px; font-weight: 900; display: block; }
 
-  .empresa-section {
-    border: 1px solid var(--gris-borde);
-    border-radius: 6px;
-    margin-bottom: 16px;
-    overflow: hidden;
-  }
-  .empresa-header {
-    background: #f8f8f8;
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--gris-borde);
-  }
-  .empresa-nombre { font-weight: 700; font-size: 14px; }
-  .empresa-facturas { display: flex; gap: 12px; align-items: center; }
-  .fact-input-group { display: flex; align-items: center; gap: 6px; }
-  .fact-input-group label { font-size: 11px; white-space: nowrap; color: #666; }
-  .fact-input-group input { width: 110px; }
-
   /* ── Panel de Control ── */
   .local-card { border:1px solid #ddd; border-radius:8px; margin-bottom:8px; overflow:hidden; }
   .local-card.visitado { border-left:4px solid #27ae60; }
@@ -187,37 +156,6 @@
   .badge-pendiente { background:#e74c3c; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px; white-space:nowrap; }
   .badge-visitado  { background:#27ae60; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px; white-space:nowrap; }
   .plan-stats { display:flex; gap:16px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
-
-  .outputs { display: flex; gap: 12px; flex-wrap: wrap; }
-  .output-card {
-    flex: 1;
-    min-width: 200px;
-    border: 2px dashed var(--gris-borde);
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    transition: all 0.2s;
-  }
-  .output-card.ready { border-color: var(--verde); background: #f0fff4; }
-  .output-card .icon { font-size: 32px; margin-bottom: 8px; }
-  .output-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-  .output-card p { font-size: 11px; color: #666; margin-bottom: 12px; }
-
-  .log-box {
-    background: #1a1a1a;
-    color: #00ff88;
-    font-family: monospace;
-    font-size: 12px;
-    padding: 12px;
-    border-radius: 4px;
-    max-height: 200px;
-    overflow-y: auto;
-    margin-top: 12px;
-  }
-  .log-line { margin-bottom: 2px; }
-  .log-err { color: #ff6b6b; }
-  .log-warn { color: #ffd93d; }
-  .log-ok { color: #6bcb77; }
 
   /* ── Navegación por secciones ── */
   header {
@@ -284,8 +222,6 @@
   body.dark .search-box { background: #262a30; color: #e6e6e6; }
   body.dark td { border-color: #2d2d2d; }
   body.dark tr:hover td { background: #262a30; }
-  body.dark tr.manges td { background: #1c2e22; }
-  body.dark tr.mant td { background: #1c2733; }
   body.dark .section-title { color: #ff7b6b; }
   body.dark code { background: #2d323a !important; color: #d6d6d6; }
 
@@ -419,7 +355,6 @@
   </div>
   <nav class="nav-tabs">
     <button class="nav-tab active" data-sec="plan" onclick="goToSection('plan')">📅 Plan del Mes</button>
-    <button class="nav-tab admin-only" data-sec="ne" onclick="goToSection('ne')">📄 Notas de Entrega</button>
     <button class="nav-tab" data-sec="certs" onclick="goToSection('certs')">📜 Certificados</button>
     <button class="nav-tab admin-only" data-sec="bd" onclick="goToSection('bd')">🗄️ Base de Datos</button>
     <button class="nav-tab admin-only" data-sec="config" onclick="goToSection('config')">⚙️ Configuración</button>
@@ -463,116 +398,11 @@
     <input type="text" id="planSearch" class="search-box" placeholder="🔍 Buscar local por código o nombre…" oninput="renderPlan()" />
 
     <div class="plan-stats">
-      <div class="admin-only">
-        <label style="font-size:11px;color:#888;display:block;margin-bottom:2px">N° inicial NE</label>
-        <input type="number" id="neInicial" value="6700" min="1" style="width:90px;padding:5px" onchange="renderPlan()" />
-      </div>
       <div id="planStats" style="font-size:13px;color:#555;font-weight:600"></div>
     </div>
     <div id="loadStatus"></div>
     <div id="planContainer">
       <p style="color:#999;font-size:13px">Cargando locales del mes desde la base de datos…</p>
-    </div>
-  </div>
-
-  <!-- ════════════ SECCIÓN: NOTAS DE ENTREGA (admin) ════════════ -->
-  <div class="app-section admin-only" id="sec-ne" style="display:none">
-    <div class="section-title">📄 Notas de Entrega</div>
-    <div class="section-desc">
-      Para servicios <strong>fuera del presupuesto</strong> (mantenimientos extra, ventas, cambios de accesorios):
-      sube la foto de la nota y la IA la registra. Para los locales del presupuesto, genera la NE directamente
-      desde el <strong>Plan del Mes</strong>.
-    </div>
-
-    <!-- Registrar notas con foto -->
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('fotos')">
-        <h2>📸 Registrar notas de entrega (foto + IA)</h2>
-        <span class="toggle" id="fotos-toggle">▼</span>
-      </div>
-      <div class="card-body" id="fotos-body">
-        <p style="font-size:13px;color:#555;margin-bottom:12px">
-          Sube la <strong>foto de cada nota de entrega</strong>. La IA (Gemini) la lee y la registra sola:
-          local, # nota de entrega, extintores/servicio, valores y si es <strong>MANTGES</strong> (presupuestado)
-          o <strong>MANT</strong> (fuera de presupuesto). Puedes corregir cualquier dato en la tabla.
-        </p>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <input type="file" id="fotoNE" accept="image/*" multiple style="font-size:13px" />
-          <button class="btn btn-info" onclick="leerFotosNE()">🤖 Leer con IA</button>
-          <span id="fotoStatus" style="font-size:13px;color:#666"></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Revisar registros -->
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('tabla')">
-        <h2>📋 Revisar registros del mes</h2>
-        <span class="toggle" id="tabla-toggle">▼</span>
-      </div>
-      <div class="card-body" id="tabla-body">
-        <p style="font-size:12px;color:#777;margin-bottom:8px">
-          Revisa lo que leyó la IA. Puedes cambiar empresa, <strong>MANTGES/MANT</strong>,
-          descripción, # nota de entrega y observación directamente en la tabla.
-        </p>
-        <div id="tablaContainer"></div>
-      </div>
-    </div>
-
-    <!-- Facturas por empresa -->
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('fact')">
-        <h2>🧾 Números de factura por empresa</h2>
-        <span class="toggle" id="fact-toggle">▼</span>
-      </div>
-      <div class="card-body" id="fact-body">
-        <p style="font-size:13px;color:#555;margin-bottom:16px">
-          Ingresa el número de factura por empresa (MANGES y MANT) antes de generar los Excels.
-        </p>
-        <div id="empresaFacturasContainer"></div>
-      </div>
-    </div>
-
-    <!-- Generar Excels -->
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('gen')">
-        <h2>⬇️ Generar Excels</h2>
-        <span class="toggle" id="gen-toggle">▼</span>
-      </div>
-      <div class="card-body" id="gen-body">
-        <div class="outputs">
-          <div class="output-card" id="out1">
-            <div class="icon">📊</div>
-            <h3>DETALLE FACT MENSUAL</h3>
-            <p>Hojas: MANGES + MANT<br>Detalle extintores por local</p>
-            <button class="btn btn-success btn-sm" onclick="generarDetalle()" disabled id="btn1">Generar</button>
-          </div>
-          <div class="output-card" id="out2">
-            <div class="icon">📑</div>
-            <h3>DISTRIBUCIÓN</h3>
-            <p>Una hoja por factura<br>C.C. + descripción + valores</p>
-            <button class="btn btn-success btn-sm" onclick="generarDistribucion()" disabled id="btn2">Generar</button>
-          </div>
-          <div class="output-card" id="out3">
-            <div class="icon">🏢</div>
-            <h3>FORMATO FACTURACIÓN</h3>
-            <p>Una hoja por empresa<br>Resumen con # factura</p>
-            <button class="btn btn-success btn-sm" onclick="generarFormatoFact()" disabled id="btn3">Generar</button>
-          </div>
-          <div class="output-card" id="out4">
-            <div class="icon">📜</div>
-            <h3>CERTIFICADOS PDF</h3>
-            <p>Un PDF por local MANGES<br>Formato Previfuego/Pyroshield</p>
-            <button class="btn btn-success btn-sm" onclick="generarCertificados()" disabled id="btn4">Generar</button>
-          </div>
-        </div>
-        <div style="margin-top:16px">
-          <button class="btn btn-primary" onclick="generarTodo()" id="btnGenerarTodo" disabled>
-            ⬇️ Generar y descargar los 3 Excels
-          </button>
-        </div>
-        <div id="genLog" class="log-box" style="display:none"></div>
-      </div>
     </div>
   </div>
 
@@ -627,6 +457,24 @@
         <div id="bdContainer"><p style="color:#999;font-size:13px">Selecciona un mes para ver sus locales.</p></div>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('bdupload')">
+        <h2>⬆️ Actualizar base de datos</h2>
+        <span class="toggle" id="bdupload-toggle">▼</span>
+      </div>
+      <div class="card-body" id="bdupload-body">
+        <p style="font-size:13px;color:#555;margin-bottom:10px">
+          Genera el Excel actualizado con <code>build_database.py</code> (jala los datos desde Dropbox) y súbelo aquí:
+          se guarda directo en el repo de GitHub, sin usar git. El Plan del Mes lo toma apenas recargues la página.
+        </p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="file" id="bdFile" accept=".xlsx" style="font-size:13px" />
+          <button class="btn btn-info" onclick="subirBaseDatos()">⬆️ Subir a GitHub</button>
+          <span id="bdUploadStatus" style="font-size:13px;color:#666"></span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ════════════ SECCIÓN: CONFIGURACIÓN (admin) ════════════ -->
@@ -638,11 +486,7 @@
       <div class="card-body">
         <div class="form-row">
           <div class="form-group" style="flex:2">
-            <label>🟢 API Key Gemini — requerida para leer fotos de notas de entrega</label>
-            <input type="text" id="geminiKey" placeholder="AIza..." autocomplete="off" oninput="saveConfig()" />
-          </div>
-          <div class="form-group" style="flex:2">
-            <label>⚫ GitHub Token — respalda tus datos en la nube (opcional)</label>
+            <label>⚫ GitHub Token — respalda tus certificados y datos en la nube</label>
             <input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off" oninput="saveConfig()" />
           </div>
         </div>
@@ -799,19 +643,14 @@ const EMPRESAS_MAP = {
   'KN':   { empresa:'SUSHICORP SAS',                         marca:'KOBE / NOE',         ruc:'1792256267001', hoja:'SUSHICORP' },
 };
 
-let cotizaciones = []; // array of parsed cotizacion objects
-let facturaMap = {};   // { hojaKey: { factManges: 'XXXX', factMant: 'YYYY' } }
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 function loadConfig() {
-  document.getElementById('geminiKey').value = localStorage.getItem('geminiKey') || '';
   document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
 }
 
 function saveConfig() {
-  const gk = document.getElementById('geminiKey').value.trim();
   const gt = document.getElementById('ghToken').value.trim();
-  if (gk) localStorage.setItem('geminiKey', gk);
   if (gt) localStorage.setItem('ghToken', gt);
   const el = document.getElementById('cfgStatus');
   el.textContent = '✅ Guardado permanentemente en este navegador';
@@ -830,26 +669,6 @@ function toggleCard(id) {
   tog.textContent = hidden ? '▶' : '▼';
 }
 
-// ─── LOCAL CODE NORMALIZATION ─────────────────────────────────────────────────
-function normalizeLocalCode(rawCode) {
-  // KFCK02 → K02, GUSG49 → G49, M58 → M58, T032 → T032
-  let code = rawCode.toUpperCase().trim();
-  if (code.startsWith('KFCK')) code = 'K' + code.slice(4);
-  else if (code.startsWith('GUSG')) code = 'G' + code.slice(4);
-  return code;
-}
-
-function costCenter(localCode) {
-  // K02 → K002EC, M58 → M058EC, K105 → K105EC, CJNC01 → CJNC01EC
-  const m = localCode.match(/^([A-Z]+)(\d+)$/);
-  if (!m) return localCode + 'EC';
-  const prefix = m[1];
-  const num = m[2];
-  // Single-letter prefixes: pad to 3 digits
-  const padded = prefix.length === 1 ? num.padStart(3, '0') : num;
-  return prefix + padded + 'EC';
-}
-
 function getEmpresa(localCode) {
   const code = localCode.toUpperCase();
   // Try multi-char prefixes first (longest match)
@@ -858,143 +677,6 @@ function getEmpresa(localCode) {
     if (code.startsWith(p)) return EMPRESAS_MAP[p] || null;
   }
   return null;
-}
-
-// ─── PARSE COTIZACION EXCEL ───────────────────────────────────────────────────
-function parseCotizacion(arrayBuffer, filename) {
-  const wb = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
-
-  // Extract from filename: "COTIZACION1262 KFCK02 9 DE OCT Y CHIMBORAZO.xlsx"
-  const fnMatch = filename.match(/COTIZACION(\d+)\s+([A-Z0-9]+)/i);
-  const proformaNum = fnMatch ? fnMatch[1] : '?';
-  const rawLocalCode = fnMatch ? fnMatch[2].toUpperCase() : '?';
-  const localCode = normalizeLocalCode(rawLocalCode);
-  const cc = costCenter(localCode);
-  const empresa = getEmpresa(localCode);
-
-  let localName = '';
-  let currentServiceType = 'MANTENIMIENTO';
-  let items = [];
-  let subtotal = 0, iva = 0, total = 0;
-  let ciudad = '';
-
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row) continue;
-
-    // Detect service type header (col D = index 3)
-    const colD = row[3];
-    if (typeof colD === 'string') {
-      const upper = colD.toUpperCase().trim();
-      if (upper === 'MANTENIMIENTO') { currentServiceType = 'MANTENIMIENTO'; continue; }
-      if (upper.includes('RECARGA')) { currentServiceType = 'RECARGA'; continue; }
-      if (upper.includes('VENTA') || upper.includes('INSTALACION')) { currentServiceType = 'VENTA'; continue; }
-      if (upper.includes('VARIOS')) { currentServiceType = 'VARIOS'; continue; }
-
-      // LOCAL line
-      if (upper.startsWith('LOCAL:')) {
-        localName = colD.replace(/LOCAL\s*:/i, '').trim();
-        continue;
-      }
-    }
-
-    // Subtotal (col I = index 8 contains 'SUBTOTAL')
-    if (row[8] === 'SUBTOTAL' || row[7] === 'SUBTOTAL') {
-      subtotal = parseFloat(row[9] || row[10] || 0);
-      continue;
-    }
-    // IVA (col H = index 7)
-    if (typeof row[7] === 'string' && row[7].includes('IVA')) {
-      iva = parseFloat(row[9] || 0);
-      continue;
-    }
-    // TOTAL
-    if (row[8] === 'TOTAL') {
-      total = parseFloat(row[10] || 0);
-      continue;
-    }
-
-    // Item row: col C (index 2) = qty (number), col D (index 3) = description
-    const qty = row[2];
-    const desc = row[3];
-    const unitPrice = row[9];
-    const totalItem = row[12];
-
-    if (typeof qty === 'number' && typeof desc === 'string' && desc.length > 2) {
-      // Classify item
-      const descU = desc.toUpperCase();
-      let tipo = '-', capacidad = '-';
-
-      if (descU.includes('CO2') || descU.includes('GAS CARBONICO')) tipo = 'CO2';
-      else if (descU.includes('PQS') || descU.includes('POLVO QUIMICO')) tipo = 'PQS';
-      else if (descU.includes('TIPO K') || descU.includes('ACETATO')) tipo = 'K';
-      else if (descU.includes('FOAM') || descU.includes('AGUA QUIMICA')) tipo = 'FOAM';
-      else tipo = '-';
-
-      // Extract capacity
-      const capMatch = desc.match(/(\d+[\.,]?\d*)\s*(LIBRAS?|LBS|GLNS|GL)/i);
-      if (capMatch) capacidad = capMatch[1] + (capMatch[2].toUpperCase().includes('G') ? ' GLNS' : ' LBS');
-
-      items.push({
-        qty, desc, tipo, capacidad,
-        unitPrice: parseFloat(unitPrice || 0),
-        total: parseFloat(totalItem || 0),
-        serviceType: currentServiceType,
-        isExtintor: descU.includes('EXTINTOR')
-      });
-    }
-  }
-
-  // Determine overall service category
-  const hasOnlyMaint = items.every(i => i.serviceType === 'MANTENIMIENTO');
-  const category = hasOnlyMaint ? 'MANGES' : 'MANT';
-
-  // Description for FORMATO_FACTURACIÓN
-  let descripcionFact = 'EXTINTORES MANTENIMIENTO ANUAL';
-  if (category === 'MANT') {
-    const types = [...new Set(items.map(i => {
-      const d = i.desc.toUpperCase();
-      if (d.includes('LAMPARA')) return 'LAMPARA EMERGENCIA';
-      if (d.includes('LETRERO') || d.includes('SEÑALET')) return 'SEÑALETICAS';
-      if (d.includes('PEDESTAL')) return 'PEDESTAL';
-      if (d.includes('NUEVO')) return 'EXTINTOR NUEVO';
-      if (d.includes('RECARGA') || d.includes('REC')) return 'RECARGA';
-      if (d.includes('REUBICACION')) return 'REUBICACION';
-      if (d.includes('ACCESORIOS')) return 'ACCESORIOS';
-      if (d.includes('VISITA')) return 'VISITA TECNICA';
-      return 'VARIOS';
-    }))];
-    descripcionFact = types.join(' Y ');
-  }
-
-  // Extract observacion (first non-empty mant description)
-  let observacion = '';
-  if (category === 'MANT') {
-    const mantItems = items.filter(i => !i.isExtintor || i.serviceType !== 'MANTENIMIENTO');
-    if (mantItems.length) observacion = mantItems[0].desc.toUpperCase().includes('DAÑADO')
-      ? 'ACCESORIOS DAÑADOS DURANTE MANTENIMIENTO ANUAL' : 'SOLICITADO POR EL LOCAL';
-  }
-
-  return {
-    filename,
-    proformaNum,
-    rawLocalCode,
-    localCode,
-    cc,
-    empresa,
-    localName: localName || rawLocalCode,
-    ciudad,
-    items,
-    subtotal,
-    iva,
-    total,
-    category,
-    descripcionFact,
-    observacion,
-    notaEntrega: '' // to be filled by user
-  };
 }
 
 // ─── NAVEGACIÓN POR SECCIONES ─────────────────────────────────────────────────
@@ -1035,10 +717,7 @@ function applyPerfil() {
 
 // ─── CAMBIO DE MES ────────────────────────────────────────────────────────────
 function onMonthChange() {
-  if (!cotizaciones.length) localRestore();
   cargarPlan();
-  renderTabla();
-  renderEmpresaFacturas();
   renderBD();
 }
 
@@ -1046,291 +725,6 @@ function onMonthChange() {
 function toggleDark() {
   const dark = document.body.classList.toggle('dark');
   localStorage.setItem('darkMode', dark ? '1' : '0');
-}
-
-// Normaliza la categoría a 'MANGES' (presupuestado) o 'MANT' (extra fuera de presupuesto).
-// Gemini/el usuario lo llaman "MANTGES"; internamente usamos 'MANGES'.
-function normCategoria(v) {
-  const s = String(v || '').toUpperCase();
-  return s.includes('GES') ? 'MANGES' : 'MANT';
-}
-
-// Cambia MANTGES/MANT de un registro desde la tabla y re-renderiza.
-function setCategoria(idx, val) {
-  if (cotizaciones[idx]) {
-    cotizaciones[idx].category = normCategoria(val);
-    renderTabla();
-    renderEmpresaFacturas();
-    autosave();
-  }
-}
-
-// ─── RENDER TABLA ─────────────────────────────────────────────────────────────
-function renderTabla() {
-  const container = document.getElementById('tablaContainer');
-
-  const manges = cotizaciones.filter(c => c.category === 'MANGES');
-  const mant = cotizaciones.filter(c => c.category === 'MANT');
-
-  let html = `
-    <div style="margin-bottom:8px;font-size:13px;color:#666">
-      <span class="badge badge-manges">MANGES: ${manges.length}</span>&nbsp;
-      <span class="badge badge-mant">MANT: ${mant.length}</span>&nbsp;
-      Total: ${cotizaciones.length} cotizaciones
-    </div>
-    <div style="overflow-x:auto">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Archivo</th>
-          <th>Cód. Local</th>
-          <th>C.C.</th>
-          <th>Empresa</th>
-          <th>Tipo</th>
-          <th>Descripción Serv.</th>
-          <th>Subtotal</th>
-          <th>IVA</th>
-          <th>Total</th>
-          <th># N.E.</th>
-          <th>Obs.</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  cotizaciones.forEach((c, idx) => {
-    const empNombre = c.empresa?.empresa || '❓ Sin empresa';
-    const cls = c.category === 'MANGES' ? 'manges' : 'mant';
-    html += `
-      <tr class="${cls}">
-        <td>${idx+1}</td>
-        <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.filename}">${c.filename.replace('.xlsx','')}</td>
-        <td><strong>${c.localCode}</strong></td>
-        <td style="font-family:monospace;font-size:11px">${c.cc}</td>
-        <td style="font-size:11px">
-          <select style="font-size:11px;padding:2px 4px;min-width:140px" onchange="cotizaciones[${idx}].empresa=EMPRESAS_MAP[this.value]||cotizaciones[${idx}].empresa;renderEmpresaFacturas();autosave()">
-            ${Object.entries(EMPRESAS_MAP).map(([k,v]) =>
-              `<option value="${k}" ${c.empresa===v?'selected':''}>${v.empresa}</option>`
-            ).join('')}
-          </select>
-        </td>
-        <td>
-          <select style="font-size:11px;padding:2px 4px" onchange="setCategoria(${idx}, this.value)">
-            <option value="MANGES" ${c.category==='MANGES'?'selected':''}>MANTGES (presup.)</option>
-            <option value="MANT" ${c.category==='MANT'?'selected':''}>MANT (extra)</option>
-          </select>
-        </td>
-        <td style="font-size:11px;max-width:180px" contenteditable="true" onblur="cotizaciones[${idx}].descripcionFact=this.textContent.trim();autosave()">${c.descripcionFact}</td>
-        <td style="text-align:right">$${c.subtotal.toFixed(2)}</td>
-        <td style="text-align:right">$${c.iva.toFixed(2)}</td>
-        <td style="text-align:right;font-weight:700">$${c.total.toFixed(2)}</td>
-        <td><input type="text" value="${c.notaEntrega}" placeholder="ej: 6494" style="width:80px" onchange="cotizaciones[${idx}].notaEntrega=this.value.trim();autosave()" /></td>
-        <td style="font-size:11px" contenteditable="true" onblur="cotizaciones[${idx}].observacion=this.textContent.trim();autosave()">${c.observacion}</td>
-      </tr>
-    `;
-  });
-
-  html += '</tbody></table></div>';
-  container.innerHTML = html;
-}
-
-// ─── RENDER FACTURAS POR EMPRESA ──────────────────────────────────────────────
-function renderEmpresaFacturas() {
-  const container = document.getElementById('empresaFacturasContainer');
-
-  // Group by hoja
-  const byHoja = {};
-  cotizaciones.forEach(c => {
-    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-    if (!byHoja[hoja]) byHoja[hoja] = { empresa: c.empresa, manges: [], mant: [] };
-    if (c.category === 'MANGES') byHoja[hoja].manges.push(c);
-    else byHoja[hoja].mant.push(c);
-  });
-
-  let html = '';
-  for (const [hoja, data] of Object.entries(byHoja)) {
-    if (!facturaMap[hoja]) facturaMap[hoja] = { factManges: '', factMant: '' };
-    const subtManges = data.manges.reduce((s,c) => s + c.subtotal, 0);
-    const subtMant = data.mant.reduce((s,c) => s + c.subtotal, 0);
-
-    html += `
-      <div class="empresa-section">
-        <div class="empresa-header">
-          <div>
-            <div class="empresa-nombre">${data.empresa?.empresa || hoja}</div>
-            <div style="font-size:11px;color:#777">
-              MANGES: ${data.manges.length} locales ($${subtManges.toFixed(2)}) &nbsp;|&nbsp;
-              MANT: ${data.mant.length} locales ($${subtMant.toFixed(2)})
-            </div>
-          </div>
-          <div class="empresa-facturas">
-            ${data.manges.length ? `
-            <div class="fact-input-group">
-              <label>Fact. MANGES:</label>
-              <input type="text" placeholder="ej: 3296 MANTGES" value="${facturaMap[hoja].factManges}"
-                onchange="facturaMap['${hoja}'].factManges=this.value.trim();autosave()" />
-            </div>` : ''}
-            ${data.mant.length ? `
-            <div class="fact-input-group">
-              <label>Fact. MANT:</label>
-              <input type="text" placeholder="ej: 3299 MANTT" value="${facturaMap[hoja].factMant}"
-                onchange="facturaMap['${hoja}'].factMant=this.value.trim();autosave()" />
-            </div>` : ''}
-          </div>
-        </div>
-      </div>
-    `;
-  }
-  container.innerHTML = html || '<p style="color:#999;font-size:13px">Sin datos cargados</p>';
-}
-
-// ─── LEER FOTOS NE ────────────────────────────────────────────────────────────
-async function leerFotosNE() {
-  const geminiKey = localStorage.getItem('geminiKey') || document.getElementById('geminiKey').value.trim();
-  if (!geminiKey) {
-    document.getElementById('fotoStatus').textContent = '⚠️ Necesitas API Key de Gemini en Configuración';
-    return;
-  }
-
-  const files = document.getElementById('fotoNE').files;
-  if (!files.length) {
-    document.getElementById('fotoStatus').textContent = '⚠️ Selecciona al menos una foto';
-    return;
-  }
-
-  document.getElementById('fotoStatus').textContent = '🤖 Procesando fotos con Gemini...';
-  let procesadas = 0, errores = 0;
-
-  for (const file of files) {
-    const base64 = await fileToBase64(file);
-    try {
-      const result = await callGemini(geminiKey, base64, file.type,
-        `Eres un asistente de facturación de extintores de Previfuego (Ecuador).
-Analiza esta nota de entrega/servicio y extrae TODOS los datos posibles.
-
-CAMPOS A EXTRAER:
-1. notaEntrega: número de nota (4-5 dígitos, busca "N°", "No.", "NOTA DE ENTREGA")
-2. localCode: código del local (K02, K105, M35, T032, V091, BS04, etc.)
-3. empresa: nombre de la empresa cliente (ej: "INT FOOD SERVICES CORP")
-4. ciudad: ciudad donde está el local
-5. localNombre: nombre/dirección del local
-6. categoria: "MANTGES" si es mantenimiento anual de extintores, "MANT" si son accesorios/señaléticas/lámparas/recargas extra/instalaciones
-7. descripcion: descripción del servicio (ej: "EXTINTORES MANTENIMIENTO ANUAL", "ACCESORIOS EXTINTORES Y SEÑALETICAS", "LAMPARA EMERGENCIA")
-8. extintores: lista de extintores [{tipo:"CO2", capacidad:"50LBS", cantidad:1, valorUnit:20}]
-9. subtotal: valor sin IVA
-10. iva: valor del IVA
-11. total: valor total con IVA
-12. observacion: observación (ej: "ACCESORIOS DAÑADOS DURANTE MANTENIMIENTO ANUAL", "SOLICITADO POR EL LOCAL")
-
-Responde ÚNICAMENTE con JSON válido:
-{
-  "notaEntrega": "", "localCode": "", "empresa": "", "ciudad": "",
-  "localNombre": "", "categoria": "MANTGES",
-  "descripcion": "EXTINTORES MANTENIMIENTO ANUAL",
-  "extintores": [],
-  "subtotal": 0, "iva": 0, "total": 0,
-  "observacion": ""
-}
-Si no encuentras un campo, usa "" o 0.`
-      );
-
-      let json;
-      try {
-        json = JSON.parse(result.replace(/```json|```/g, '').trim());
-      } catch(pe) {
-        const m = result.match(/\{[\s\S]*\}/);
-        if (m) json = JSON.parse(m[0]);
-        else throw pe;
-      }
-
-      if (json.localCode || json.notaEntrega) {
-        const rawNum = (json.localCode || '').replace(/\D/g, '');
-        const cot = cotizaciones.find(c => {
-          const cNum = c.localCode.replace(/\D/g, '');
-          return cNum === rawNum && rawNum !== '';
-        });
-
-        if (cot) {
-          // Update existing cotizacion
-          if (json.notaEntrega) cot.notaEntrega = String(json.notaEntrega);
-          if (json.categoria) cot.category = normCategoria(json.categoria);
-          if (json.descripcion) cot.descripcionFact = json.descripcion;
-          if (json.observacion) cot.observacion = json.observacion;
-          if (json.ciudad) cot.ciudad = json.ciudad;
-          if (json.subtotal && !cot.subtotal) cot.subtotal = parseFloat(json.subtotal) || 0;
-          if (json.iva && !cot.iva) cot.iva = parseFloat(json.iva) || 0;
-          if (json.total && !cot.total) cot.total = parseFloat(json.total) || 0;
-          procesadas++;
-          document.getElementById('fotoStatus').textContent =
-            `🤖 [${procesadas}/${files.length}] ✅ ${json.localCode || '?'} NE:${json.notaEntrega || '?'}`;
-        } else if (json.subtotal > 0) {
-          // Registro nuevo leído de la foto (no existía previamente)
-          const localCodeClean = (json.localCode || '').toUpperCase().trim();
-          const emp = getEmpresa(localCodeClean);
-          cotizaciones.push({
-            filename: `foto-${file.name}`,
-            proformaNum: '',
-            rawLocalCode: localCodeClean,
-            localCode: localCodeClean,
-            cc: costCenter(localCodeClean),
-            empresa: emp,
-            localName: json.localNombre || localCodeClean,
-            ciudad: json.ciudad || '',
-            items: (json.extintores || []).map(e => ({
-              qty: e.cantidad || 1, desc: `${e.tipo} ${e.capacidad}`,
-              tipo: e.tipo, capacidad: e.capacidad,
-              unitPrice: e.valorUnit || 0, total: (e.cantidad || 1) * (e.valorUnit || 0),
-              serviceType: 'MANTENIMIENTO', isExtintor: true
-            })),
-            subtotal: parseFloat(json.subtotal) || 0,
-            iva: parseFloat(json.iva) || 0,
-            total: parseFloat(json.total) || 0,
-            category: normCategoria(json.categoria),
-            descripcionFact: json.descripcion || 'EXTINTORES MANTENIMIENTO ANUAL',
-            observacion: json.observacion || '',
-            notaEntrega: String(json.notaEntrega || '')
-          });
-          procesadas++;
-          document.getElementById('fotoStatus').textContent =
-            `🤖 [${procesadas}/${files.length}] ➕ ${localCodeClean} NE:${json.notaEntrega || '?'} (nuevo)`;
-        } else {
-          errores++;
-        }
-        renderTabla();
-        renderEmpresaFacturas();
-      }
-    } catch(e) {
-      console.warn('Gemini error:', file.name, e);
-      errores++;
-    }
-  }
-
-  document.getElementById('fotoStatus').textContent =
-    `✅ Listo: ${procesadas} notas procesadas${errores ? `, ${errores} errores` : ''}`;
-
-  if (cotizaciones.length) enableGenerarBtns();
-  autosave();   // guarda las notas recién registradas
-}
-
-async function callGemini(apiKey, base64, mimeType, prompt) {
-  const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: mimeType, data: base64 } }
-          ]
-        }]
-      })
-    }
-  );
-  const data = await r.json();
-  return data.candidates[0].content.parts[0].text;
 }
 
 function fileToBase64(file) {
@@ -1353,23 +747,13 @@ function ghFilePath() {
   return `datos/${mesNombre}-${anio}.json`;
 }
 
-// Construye el objeto de la sesión del mes (registros + facturas)
+// Construye el objeto de la sesión del mes (estado de visitas)
 function buildPayload() {
   return {
     mes: document.getElementById('selMes').value,
     anio: document.getElementById('selAnio').value,
     savedAt: new Date().toISOString(),
-    cotizaciones: cotizaciones.map(c => ({
-      filename: c.filename, proformaNum: c.proformaNum, localCode: c.localCode,
-      cc: c.cc, localName: c.localName, ciudad: c.ciudad,
-      empresaHoja: c.empresa?.hoja || '',
-      items: c.items, subtotal: c.subtotal, iva: c.iva, total: c.total,
-      category: c.category, descripcionFact: c.descripcionFact,
-      observacion: c.observacion, notaEntrega: c.notaEntrega
-    })),
-    facturaMap,
     visitaStatus,
-    neInicial: parseInt(document.getElementById('neInicial')?.value) || 6700
   };
 }
 
@@ -1387,17 +771,7 @@ function localRestore() {
     const raw = localStorage.getItem(lsKey());
     if (!raw) return false;
     const json = JSON.parse(raw);
-    facturaMap = json.facturaMap || {};
     visitaStatus = json.visitaStatus || {};
-    if (json.neInicial) {
-      const inp = document.getElementById('neInicial');
-      if (inp) inp.value = json.neInicial;
-    }
-    cotizaciones = (json.cotizaciones || []).map(c => ({
-      ...c,
-      empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
-      notaEntrega: c.notaEntrega || ''
-    }));
     return true;
   } catch(e) { return false; }
 }
@@ -1415,7 +789,6 @@ async function ghGuardar(silent = false) {
   const token = getGhToken();
   const st = document.getElementById('ghStatus');
   if (!token) return;
-  if (!cotizaciones.length) return;
 
   const path = ghFilePath();
   const payload = buildPayload();
@@ -1434,7 +807,7 @@ async function ghGuardar(silent = false) {
 
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
     const body = {
-      message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio} (${cotizaciones.length} notas)`,
+      message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio}`,
       content,
       branch: GH_BRANCH
     };
@@ -1452,7 +825,7 @@ async function ghGuardar(silent = false) {
 
     if (r.ok) {
       if (st) st.innerHTML =
-        `<span style="color:green">✅ Guardado en la nube (${cotizaciones.length} notas) · ${new Date().toLocaleTimeString()}</span>`;
+        `<span style="color:green">✅ Guardado en la nube · ${new Date().toLocaleTimeString()}</span>`;
     } else {
       const err = await r.json();
       throw new Error(err.message || r.status);
@@ -1468,9 +841,7 @@ async function ghCargar() {
   // No token → try localStorage
   if (!token) {
     const ok = localRestore();
-    if (ok) {
-      renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan();
-    }
+    if (ok) renderPlan();
     return;
   }
 
@@ -1482,53 +853,26 @@ async function ghCargar() {
     if (!r.ok) {
       // Fallback to localStorage
       const ok = localRestore();
-      if (ok) { renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan(); }
+      if (ok) renderPlan();
       return;
     }
     const data = await r.json();
     const json = JSON.parse(decodeURIComponent(escape(atob(data.content))));
 
-    facturaMap = json.facturaMap || {};
     visitaStatus = json.visitaStatus || {};
-    cotizaciones = (json.cotizaciones || []).map(c => ({
-      ...c,
-      empresa: Object.values(EMPRESAS_MAP).find(e => e.hoja === c.empresaHoja) || null,
-      notaEntrega: c.notaEntrega || ''
-    }));
-
-    renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan();
+    renderPlan();
     const gs = document.getElementById('ghStatus');
     if (gs) gs.textContent = `☁️ Sincronizado (${new Date(json.savedAt).toLocaleString()})`;
   } catch (e) {
     const ok = localRestore();
-    if (ok) { renderTabla(); renderEmpresaFacturas(); enableGenerarBtns(); renderPlan(); }
+    if (ok) renderPlan();
   }
 }
 
-// ─── GENERADORES ─────────────────────────────────────────────────────────────
-function log(msg, type='') {
-  const box = document.getElementById('genLog');
-  box.style.display = '';
-  const line = document.createElement('div');
-  line.className = 'log-line' + (type ? ' log-' + type : '');
-  line.textContent = new Date().toLocaleTimeString() + ' › ' + msg;
-  box.appendChild(line);
-  box.scrollTop = box.scrollHeight;
-}
-
-// ─── PLAN DEL MES & NOTAS DE ENTREGA ─────────────────────────────────────────
+// ─── PLAN DEL MES ─────────────────────────────────────────────────────────────
 let planMes = [];
 let visitaStatus = {};
 const RAW_BASE = '';
-
-const NE_TEMPLATE_MAP = {
-  'INT FOOD SERVICES': 'INT',
-  'SHEMLON':           'SHEMLON',
-  'DELI INTERNACIONAL':'DELI',
-  'PROCAFECOL':        'PROCAFECOL',
-  'NOVOEVENTOS':       'NOVO',
-  'SUSHICORP':         'SUSHICORP',
-};
 
 async function cargarPlan() {
   const mesVal  = document.getElementById('selMes').value;
@@ -1609,7 +953,6 @@ function renderPlan() {
   const visitados = planMes.filter(l => visitaStatus[l.codigo] === 'visitado').length;
   const pendientes = total - visitados;
   const mesNom = MESES_NOMBRE[document.getElementById('selMes').value];
-  const isAdmin = currentProfile === 'admin';
 
   const statsEl = document.getElementById('planStats');
   if (statsEl) statsEl.innerHTML =
@@ -1626,11 +969,9 @@ function renderPlan() {
 
   // Filtro de búsqueda
   const q = (document.getElementById('planSearch')?.value || '').toUpperCase().trim();
-  const neBase = parseInt(document.getElementById('neInicial')?.value) || 6700;
 
   const visibles = planMes
-    .map((local, idx) => ({ local, neNum: neBase + idx }))
-    .filter(({ local }) => !q ||
+    .filter(local => !q ||
       local.codigo.toUpperCase().includes(q) ||
       String(local.nombre).toUpperCase().includes(q) ||
       String(local.marca).toUpperCase().includes(q));
@@ -1640,7 +981,7 @@ function renderPlan() {
     return;
   }
 
-  function buildCard({ local, neNum }) {
+  function buildCard(local) {
     const status     = visitaStatus[local.codigo] || 'pendiente';
     const isVisitado = status === 'visitado';
     const iva        = parseFloat((local.cobro * 0.15).toFixed(2));
@@ -1652,12 +993,6 @@ function renderPlan() {
     const tipoServ   = local.esRecarga
       ? `<span style="color:#8e44ad;font-weight:600">⟳ RECARGA ${local.anioRec}</span>`
       : `<span style="color:#2980b9;font-weight:600">🔧 MANTENIMIENTO</span>`;
-
-    const btnNE = isAdmin ? `
-            <button class="btn btn-sm btn-info" style="font-size:11px;padding:3px 8px;white-space:nowrap"
-              onclick="event.stopPropagation();generarNELocal('${local.codigo}',${neNum})">
-              📄 NE #${neNum}
-            </button>` : '';
 
     return `
       <div class="local-card ${status}" id="lcard-${local.codigo}">
@@ -1674,7 +1009,7 @@ function renderPlan() {
             <button class="btn btn-sm ${isVisitado ? 'btn-warning' : 'btn-success'}" style="font-size:11px;padding:3px 8px;white-space:nowrap"
               onclick="event.stopPropagation();toggleVisita('${local.codigo}')">
               ${isVisitado ? '↩ Pendiente' : '✅ Visitado'}
-            </button>${btnNE}
+            </button>
             <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
               onclick="event.stopPropagation();abrirCertModal('${local.codigo}')">
               📜 Generar Certificado
@@ -1688,15 +1023,14 @@ function renderPlan() {
             <span>Subtotal: <strong>$${local.cobro.toFixed(2)}</strong></span>
             <span>IVA 15%: <strong>$${iva.toFixed(2)}</strong></span>
             <span>Total: <strong>$${totalCobro.toFixed(2)}</strong></span>
-            ${isAdmin ? `<span style="color:#888">NE asignado: <strong>#${neNum}</strong></span>` : ''}
           </div>
         </div>
       </div>`;
   }
 
   // Separar pendientes y visitados
-  const grpPendientes = visibles.filter(({ local }) => (visitaStatus[local.codigo] || 'pendiente') !== 'visitado');
-  const grpVisitados  = visibles.filter(({ local }) => (visitaStatus[local.codigo] || 'pendiente') === 'visitado');
+  const grpPendientes = visibles.filter(local => (visitaStatus[local.codigo] || 'pendiente') !== 'visitado');
+  const grpVisitados  = visibles.filter(local => (visitaStatus[local.codigo] || 'pendiente') === 'visitado');
 
   let html = '';
 
@@ -1804,329 +1138,6 @@ function toggleVisita(codigo) {
   visitaStatus[codigo] = cur === 'visitado' ? 'pendiente' : 'visitado';
   renderPlan();
   autosave();
-}
-
-async function generarNELocal(codigo, neNum) {
-  const local = planMes.find(l => l.codigo === codigo);
-  if (!local) { log(`Local ${codigo} no encontrado en el plan`, 'error'); return; }
-
-  const tplKey = NE_TEMPLATE_MAP[local.empresa?.hoja] || 'INT';
-  const tplUrl = `formatos/ne/${tplKey}.xlsx`;
-
-  try {
-    log(`Generando NE #${neNum} para ${codigo}…`);
-    const resp = await fetch(tplUrl);
-    if (!resp.ok) throw new Error(`Template ${tplKey} no encontrado (${resp.status})`);
-    const buf  = await resp.arrayBuffer();
-    const wb   = XLSX.read(buf, { type: 'array', cellStyles: true });
-    const ws   = wb.Sheets[wb.SheetNames[0]];
-
-    // ── Date ────────────────────────────────────────────────────────────────
-    const today = new Date();
-    const MNAMES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
-                    'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-    const fechaStr = `${today.getDate()} DE ${MNAMES[today.getMonth()]} DEL ${today.getFullYear()}`;
-    ws['I10'] = { t:'s', v: fechaStr };
-
-    // ── Company name & RUC: only override when using a dedicated template ──
-    // INT fallback keeps "INT FOOD SERVICES" since KFC/GUS/CN/BS/I all bill via INT
-    const emp = local.empresa || {};
-    const hasOwnTemplate = emp.hoja && NE_TEMPLATE_MAP[emp.hoja] && NE_TEMPLATE_MAP[emp.hoja] !== 'INT';
-    if (hasOwnTemplate) {
-      if (emp.empresa) ws['B10'] = { t:'s', v: emp.empresa };
-      if (emp.ruc)     ws['L11'] = { t:'s', v: emp.ruc };
-    }
-
-    // ── Service type ─────────────────────────────────────────────────────────
-    ws['C13'] = { t:'s', v: local.esRecarga ? 'RECARGA' : 'MANTENIMIENTO' };
-
-    // ── Clear old sample rows 14-24 ──────────────────────────────────────────
-    for (let r = 14; r <= 24; r++) {
-      ['A','B','C','L','M','N'].forEach(col => { delete ws[col + r]; });
-    }
-
-    // ── Build grouped items ──────────────────────────────────────────────────
-    const groups = {};
-    local.extintores.forEach(e => {
-      const k = `${e.tipo}|${e.cap}`;
-      if (!groups[k]) groups[k] = {
-        tipo: e.tipo, cap: e.cap, qty: 0,
-        price: parseFloat(local.esRecarga ? e.precioRec : e.costoMantt) || 0
-      };
-      groups[k].qty++;
-    });
-    const items = Object.values(groups);
-
-    let subtotalCalc = 0;
-    items.forEach((item, i) => {
-      if (i >= 11) return; // max 11 item rows (14-24)
-      const r = 14 + i;
-      const desc  = tipoExtDescripcion(item.tipo, item.cap);
-      const lineT = item.qty * item.price;
-      subtotalCalc += lineT;
-      ws[`A${r}`] = { t:'n', v: item.qty };
-      ws[`B${r}`] = { t:'n', v: item.qty };
-      ws[`C${r}`] = { t:'s', v: desc };
-      ws[`L${r}`] = { t:'s', v: '$' };
-      ws[`M${r}`] = { t:'n', v: item.price };
-      ws[`N${r}`] = { t:'n', v: lineT, f: `M${r}*A${r}` };
-    });
-
-    // ── Local info (row 25) ──────────────────────────────────────────────────
-    const localLabel = local.nombre.replace(local.codigo + ' - ', '');
-    ws['C25'] = { t:'s', v: `LOCAL: ${local.codigo} - ${localLabel}` };
-
-    // ── Totals ───────────────────────────────────────────────────────────────
-    const sub = parseFloat(subtotalCalc.toFixed(2));
-    const iva = parseFloat((sub * 0.15).toFixed(2));
-    const tot = parseFloat((sub + iva).toFixed(2));
-    ws['N27'] = { t:'n', v: sub, f:'SUM(N14:N25)' };
-    ws['N29'] = { t:'n', v: iva, f:'N27*0.15' };
-    ws['N31'] = { t:'n', v: tot, f:'N27+N29' };
-    ws['N32'] = { t:'n', v: tot, f:'SUM(N31)' };
-
-    // ── Amount in words ──────────────────────────────────────────────────────
-    ws['B29'] = { t:'s', v: numeroEnLetras(sub) };
-
-    XLSX.writeFile(wb, `NE-${neNum}-${local.codigo}.xlsx`);
-    log(`✅ NE #${neNum} — ${local.codigo} descargada`, 'ok');
-  } catch(e) {
-    console.error('generarNELocal:', e);
-    log(`❌ Error NE ${codigo}: ${e.message}`, 'error');
-  }
-}
-
-function tipoExtDescripcion(tipo, cap) {
-  const tm = { CO2:'GAS CARBONICO', PQS:'POLVO QUIMICO SECO',
-                K:'TIPO K (ACETATO DE POTASIO)', FOAM:'ESPUMA (AGUA QUIMICA)' };
-  const td = tm[(tipo || '').toUpperCase()] || tipo;
-  const cd = (cap || '').replace(/\bLBS\b/gi,'LIBRAS').replace(/\b(?:GLNS|GLS|GL)\b/gi,'GALONES');
-  return `EXTINTOR ${cd} - ${td}`;
-}
-
-function numeroEnLetras(num) {
-  const un = ['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE',
-              'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS',
-              'DIECISIETE','DIECIOCHO','DIECINUEVE'];
-  const de = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA',
-              'SESENTA','SETENTA','OCHENTA','NOVENTA'];
-  const ce = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS',
-              'QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
-  const b100 = n => {
-    if (n < 20) return un[n];
-    if (n%10 === 0) return de[~~(n/10)];
-    if (n < 30) return (n===21?'VEINTIÚN':n===22?'VEINTIDÓS':n===23?'VEINTITRÉS':n===26?'VEINTISÉIS':'VEINTI'+un[n-20]);
-    return de[~~(n/10)]+' Y '+un[n%10];
-  };
-  const b1000 = n => n===100 ? 'CIEN' : n<100 ? b100(n) : (n%100===0 ? ce[~~(n/100)] : ce[~~(n/100)]+' '+b100(n%100));
-  const int = Math.floor(num), dec = Math.round((num - int) * 100);
-  let txt = int===0 ? 'CERO' : int<1000 ? b1000(int)
-    : (int<1000000 ? (~~(int/1000)===1?'MIL':b1000(~~(int/1000))+' MIL')+(int%1000===0?'':' '+b1000(int%1000)) : 'MONTO');
-  return `                ${txt} CON ${String(dec).padStart(2,'0')}/100 USD`;
-}
-
-function generarTodo() {
-  generarDetalle();
-  generarDistribucion();
-  generarFormatoFact();
-}
-
-function getMesLabel() {
-  const mes = document.getElementById('selMes').value;
-  return MESES_NOMBRE[mes] || mes;
-}
-
-function generarDetalle() {
-  log('Generando DETALLE FACT MENSUAL...');
-  const wb = XLSX.utils.book_new();
-
-  // ── MANGES sheet ──────────────────────────────────────────────────────────
-  const mangesRows = [
-    ['DATOS DE LA EMPRESA', null, null, null, null,
-     'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null, null,
-     'DETALLE DE COSTOS', null, null, null, null],
-    ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENTRO DE COSTO',
-     'EQUIPO/SERVICIO ENTREGADO','No. DE EXTINTORES','TIPO','CAPACIDAD','M/R',
-     'JEFE DE OPERACIONES QUE AUTORIZA',
-     'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA']
-  ];
-
-  const mangesCots = cotizaciones.filter(c => c.category === 'MANGES');
-  mangesCots.forEach(c => {
-    const emp = c.empresa || {};
-    const extItems = c.items.filter(i => i.isExtintor);
-    // First row: with empresa info + totals
-    const first = extItems[0];
-    mangesRows.push([
-      emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
-      c.localCode,
-      null,
-      first ? first.qty : 1,
-      first ? first.tipo : '-',
-      first ? first.capacidad : '-',
-      'M', null,
-      first ? first.unitPrice : 0,
-      c.subtotal, c.iva, c.total,
-      c.notaEntrega || ''
-    ]);
-    // Remaining items
-    for (let i = 1; i < extItems.length; i++) {
-      const item = extItems[i];
-      mangesRows.push([
-        null, null, null, null, null, null,
-        item.qty, item.tipo, item.capacidad, 'M', null,
-        item.unitPrice, null, null, null, null
-      ]);
-    }
-  });
-
-  const wsManges = XLSX.utils.aoa_to_sheet(mangesRows);
-  wsManges['!cols'] = [15,20,20,12,12,25,8,8,10,4,20,8,8,8,8,10].map(w => ({ wpx: w * 6 }));
-  XLSX.utils.book_append_sheet(wb, wsManges, 'MANGES');
-  log(`  MANGES: ${mangesCots.length} locales`, 'ok');
-
-  // ── MANT sheet ───────────────────────────────────────────────────────────
-  const mantRows = [
-    ['DATOS DE LA EMPRESA', null, null, null, null,
-     'DESCRIPCIÓN DE TRABAJOS REALIZADOS', null, null, null, null,
-     'DETALLE DE COSTOS', null, null, null, null, 'OBSERVACION', null],
-    ['EMPRESA','MARCA','DIRECCIÓN','CIUDAD','CENT. DE COSTO',
-     'EQUIPO/SERVICIO ENTREGADO','# EXTINTORES','TIPO','CAPACIDAD',
-     'JEFE DE OPERACIONES QUE AUTORIZA',
-     'VALOR UNIT','SUBTOTAL','IVA','TOTAL','# N. ENTREGA', null, null]
-  ];
-
-  const mantCots = cotizaciones.filter(c => c.category === 'MANT');
-  mantCots.forEach(c => {
-    const emp = c.empresa || {};
-    mantRows.push([
-      emp.empresa || '', emp.marca || '', c.localName, c.ciudad,
-      c.localCode,
-      c.descripcionFact,
-      '-', '-', '-', null,
-      c.subtotal, c.subtotal, c.iva, c.total,
-      c.notaEntrega || '',
-      c.observacion || 'SOLICITADO POR EL LOCAL', null
-    ]);
-  });
-
-  const wsMant = XLSX.utils.aoa_to_sheet(mantRows);
-  XLSX.utils.book_append_sheet(wb, wsMant, 'MANT');
-  log(`  MANT: ${mantCots.length} locales`, 'ok');
-
-  XLSX.writeFile(wb, `DETALLE FACT MENSUAL ${getMesLabel()}.xlsx`);
-  log('✅ DETALLE FACT MENSUAL descargado', 'ok');
-  markOutput('out1');
-}
-
-function generarDistribucion() {
-  log('Generando DISTRIBUCIÓN...');
-  const wb = XLSX.utils.book_new();
-
-  // Group by empresa + category (each becomes an invoice)
-  const byHoja = {};
-  cotizaciones.forEach(c => {
-    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-    const key = hoja + '|' + c.category;
-    if (!byHoja[key]) byHoja[key] = { hoja, category: c.category, empresa: c.empresa, items: [] };
-    byHoja[key].items.push(c);
-  });
-
-  let sheetCount = 0;
-  for (const [key, data] of Object.entries(byHoja)) {
-    const factNum = data.category === 'MANGES'
-      ? (facturaMap[data.hoja]?.factManges || 'XXXX MANTGES')
-      : (facturaMap[data.hoja]?.factMant || 'XXXX MANTT');
-
-    const rows = [
-      ['C.C.', 'DESCRIPCION', 'SUBTOTAL', 'IVA', 'TOTAL']
-    ];
-
-    data.items.forEach(c => {
-      rows.push([
-        c.cc,
-        c.descripcionFact,
-        c.subtotal,
-        c.iva,
-        c.total
-      ]);
-    });
-
-    const totSub = data.items.reduce((s,c) => s + c.subtotal, 0);
-    const totIva = data.items.reduce((s,c) => s + c.iva, 0);
-    const totTot = data.items.reduce((s,c) => s + c.total, 0);
-    rows.push([null, 'TOTAL:', totSub, totIva, totTot]);
-
-    const sheetName = ('FACT ' + factNum).slice(0, 31);
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{ wpx: 80 }, { wpx: 200 }, { wpx: 70 }, { wpx: 60 }, { wpx: 70 }];
-
-    // Style header
-    ['A1','B1','C1','D1','E1'].forEach(ref => {
-      if (ws[ref]) ws[ref].s = { font: { bold: true }, fill: { fgColor: { rgb: 'C0392B' } } };
-    });
-
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    sheetCount++;
-    log(`  Hoja: ${sheetName} (${data.items.length} líneas)`, 'ok');
-  }
-
-  XLSX.writeFile(wb, `DISTRIBUCION ${getMesLabel()}.xlsx`);
-  log(`✅ DISTRIBUCIÓN descargado (${sheetCount} hojas)`, 'ok');
-  markOutput('out2');
-}
-
-function generarFormatoFact() {
-  log('Generando FORMATO_FACTURACIÓN...');
-  const wb = XLSX.utils.book_new();
-
-  // Group by empresa hoja
-  const byHoja = {};
-  cotizaciones.forEach(c => {
-    const hoja = c.empresa?.hoja || 'SIN EMPRESA';
-    if (!byHoja[hoja]) byHoja[hoja] = { empresa: c.empresa, items: [] };
-    byHoja[hoja].items.push(c);
-  });
-
-  for (const [hoja, data] of Object.entries(byHoja)) {
-    const rows = [
-      ['C.COSTO', 'DESCRIPCION FACTURA + # ACTA/ORDEN DE TRABAJO',
-       'N° FACTURA', 'SUBTOTAL', 'IVA', 'TOTAL', 'ACTA']
-    ];
-
-    data.items.forEach(c => {
-      const factNum = c.category === 'MANGES'
-        ? (facturaMap[hoja]?.factManges || '')
-        : (facturaMap[hoja]?.factMant || '');
-
-      rows.push([
-        c.cc,
-        c.descripcionFact,
-        factNum,
-        c.subtotal,
-        c.iva,
-        c.total,
-        c.notaEntrega || null
-      ]);
-    });
-
-    const totSub = data.items.reduce((s,c) => s + c.subtotal, 0);
-    const totIva = data.items.reduce((s,c) => s + c.iva, 0);
-    const totTot = data.items.reduce((s,c) => s + c.total, 0);
-    rows.push([null, 'TOTALES', null, totSub, totIva, totTot, null]);
-
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [
-      { wpx: 70 }, { wpx: 240 }, { wpx: 120 },
-      { wpx: 70 }, { wpx: 60 }, { wpx: 70 }, { wpx: 80 }
-    ];
-    XLSX.utils.book_append_sheet(wb, ws, hoja.slice(0, 31));
-    log(`  Hoja: ${hoja} (${data.items.length} líneas)`, 'ok');
-  }
-
-  XLSX.writeFile(wb, `FORMATO_FACTURACIÓN ${getMesLabel()}.xlsx`);
-  log('✅ FORMATO_FACTURACIÓN descargado', 'ok');
-  markOutput('out3');
 }
 
 // ─── CERTIFICADOS PDF ─────────────────────────────────────────────────────────
@@ -2427,39 +1438,6 @@ async function hacerPDF(opts) {
   return doc;
 }
 
-async function generarCertificados() {
-  log('Generando Certificados PDF...');
-  const mangesCots = cotizaciones.filter(c => c.category === 'MANGES');
-  if (!mangesCots.length) { log('⚠️ No hay registros MANGES para certificar','warn'); return; }
-
-  const mesVal = document.getElementById('selMes').value;
-  const anio   = document.getElementById('selAnio').value;
-  const mesNum = mesVal.substring(0,2);
-
-  let count = 0;
-  for (const cot of mangesCots) {
-    const exts = [];
-    (cot.items||[]).filter(i=>i.isExtintor).forEach(i => {
-      for (let q=0;q<(i.qty||1);q++) exts.push({tipo:i.tipo, cap:i.capacidad||i.cap||'—'});
-    });
-    await hacerPDF({
-      localNom:  cot.localName||cot.localCode,
-      puntNom:   cot.ciudad||cot.localName||'',
-      localCode: cot.localCode,
-      exts, FB64:{}, ACCS:[],
-      certNum:   cot.localCode+'-MANT EXTINTORES-'+anio,
-      MA:  mesNum+'/'+anio,
-      MAS: mesNum+'/'+(parseInt(anio)+1),
-      anio,
-    });
-    count++;
-    log('  📜 '+cot.localCode+' — '+(cot.localName||cot.localCode),'ok');
-    await new Promise(r=>setTimeout(r,300));
-  }
-  log('✅ '+count+' certificado(s) generado(s)','ok');
-  markOutput('out4');
-}
-
 function abrirCertModal(codigo) {
   const local = planMes.find(l=>l.codigo===codigo);
   if (!local) return;
@@ -2711,15 +1689,51 @@ function showStatus(elId, type, msg) {
 
 function setStep(n) { /* obsoleto: la app ya no usa pasos lineales */ }
 
-function enableGenerarBtns() {
-  ['btn1','btn2','btn3','btn4','btnGenerarTodo'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = false;
-  });
+// ─── ACTUALIZAR BASE DE DATOS (subida directa a GitHub) ───────────────────────
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
 }
 
-function markOutput(id) {
-  document.getElementById(id).classList.add('ready');
+async function subirBaseDatos() {
+  const token = getGhToken();
+  const st = document.getElementById('bdUploadStatus');
+  if (!token) { st.textContent = '⚠️ Configura tu GitHub Token en Configuración'; return; }
+  const file = document.getElementById('bdFile').files[0];
+  if (!file) { st.textContent = '⚠️ Selecciona el archivo BASE_DATOS_KFC.xlsx'; return; }
+
+  st.textContent = '⏳ Subiendo...';
+  try {
+    const buf = await file.arrayBuffer();
+    const content = arrayBufferToBase64(buf);
+    const path = 'BASE_DATOS_KFC.xlsx';
+
+    let sha = null;
+    const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    });
+    if (check.ok) { const d = await check.json(); sha = d.sha; }
+
+    const body = { message: `datos: actualizar BASE_DATOS_KFC (${new Date().toLocaleDateString()})`, content, branch: GH_BRANCH };
+    if (sha) body.sha = sha;
+
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+      method: 'PUT',
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (r.ok) {
+      st.innerHTML = '<span style="color:green">✅ Subido — recarga la página para que el Plan del Mes tome los datos nuevos</span>';
+    } else {
+      const err = await r.json();
+      throw new Error(err.message || r.status);
+    }
+  } catch (e) {
+    st.innerHTML = `<span style="color:red">❌ ${e.message}</span>`;
+  }
 }
 
 // ─── SELECTOR DE PERFIL ───────────────────────────────────────────────────────
@@ -2756,9 +1770,6 @@ function init() {
 
   localRestore();
   cargarPlan();
-  renderTabla();
-  renderEmpresaFacturas();
-  enableGenerarBtns();
   if (getGhToken()) ghCargar();
 
   // Preparar vista interna con el perfil guardado sin mostrar aún
