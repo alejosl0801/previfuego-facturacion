@@ -1043,14 +1043,22 @@ function guardarLocalForm() {
 
 // Importa datos/locales_iniciales.json (carga masiva única, ej. primera vez que se usa la app).
 // No borra locales existentes: agrega los nuevos y actualiza los que coincidan por código.
+// Este archivo contiene correos reales de clientes: se lee SIEMPRE vía la API
+// autenticada de GitHub (con el token del admin), nunca por fetch público, para
+// que nunca quede expuesto en el sitio desplegado.
 async function importarLocalesIniciales() {
   const st = document.getElementById('importStatus');
+  const token = getGhToken();
+  if (!token) { st.innerHTML = '<span style="color:#e74c3c">Configura tu GitHub Token primero (contiene datos de clientes).</span>'; return; }
   if (!confirm('Esto agregará/actualizará locales desde datos/locales_iniciales.json. ¿Continuar?')) return;
   st.innerHTML = '<span style="color:#999">⏳ Importando...</span>';
   try {
-    const r = await fetch(`datos/locales_iniciales.json?t=${Date.now()}`);
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/datos/locales_iniciales.json?ref=${GH_BRANCH}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    });
     if (!r.ok) throw new Error(`No se encontró el archivo (HTTP ${r.status})`);
-    const nuevos = await r.json();
+    const d = await r.json();
+    const nuevos = JSON.parse(decodeURIComponent(escape(atob(d.content))));
     if (!Array.isArray(nuevos)) throw new Error('Formato inválido');
     let agregados = 0, actualizados = 0;
     nuevos.forEach(n => {
