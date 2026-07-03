@@ -483,7 +483,7 @@
       <div class="card-body">
         <p style="font-size:13px;color:#555;margin-bottom:12px">
           Crea una cuenta gratuita en <strong>emailjs.com</strong>, añade un servicio de correo y una plantilla,
-          y copia aquí los tres identificadores. El PDF del certificado se enviará como adjunto al correo del local.
+          y copia aquí los tres identificadores. El PDF del certificado se enviará como adjunto.
         </p>
         <div class="form-row">
           <div class="form-group"><label>Service ID</label><input id="emailjsService" placeholder="service_xxx" autocomplete="off" oninput="saveEmailjsCfg()" /></div>
@@ -494,9 +494,64 @@
         </div>
         <span id="emailjsStatus" style="font-size:12px;color:#27ae60"></span>
         <p style="font-size:12px;color:#888;margin-top:10px">
-          En tu plantilla de EmailJS: usa <code>{{to_email}}</code> como destinatario, <code>{{local_nombre}}</code> en el
-          cuerpo, y añade un adjunto cuyo contenido sea la variable <code>{{pdf_base64}}</code> con nombre <code>{{file_name}}</code>.
+          En tu plantilla de EmailJS: usa <code>{{to_email}}</code> como destinatario (puede traer varios correos
+          separados por coma), <code>{{local_nombre}}</code> en el cuerpo, y un adjunto con la variable
+          <code>{{pdf_base64}}</code> y nombre <code>{{file_name}}</code>.
         </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2>📋 Correos de operaciones (siempre incluidos)</h2></div>
+      <div class="card-body">
+        <p style="font-size:13px;color:#555;margin-bottom:12px">
+          Cada certificado se envía al correo del local <strong>y también</strong> a estos dos correos fijos,
+          sin importar qué local sea.
+        </p>
+        <div class="form-row">
+          <div class="form-group"><label>Correo de operaciones 1</label><input id="opsEmail1" type="email" placeholder="operaciones1@correo.com" autocomplete="off" oninput="saveOpsEmails()" /></div>
+          <div class="form-group"><label>Correo de operaciones 2</label><input id="opsEmail2" type="email" placeholder="operaciones2@correo.com" autocomplete="off" oninput="saveOpsEmails()" /></div>
+        </div>
+        <span id="opsEmailsStatus" style="font-size:12px;color:#27ae60"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('certArchivo')">
+        <h2>🗂️ Archivo de certificados (solo admin)</h2>
+        <span class="toggle" id="certArchivo-toggle">▼</span>
+      </div>
+      <div class="card-body" id="certArchivo-body">
+        <p style="font-size:13px;color:#555;margin-bottom:12px">
+          Revisa o descarga los PDF ya generados. Requiere el GitHub Token configurado arriba.
+        </p>
+        <div class="form-row" style="align-items:flex-end">
+          <div class="form-group">
+            <label>Mes</label>
+            <select id="archivoMesSel" onchange="renderArchivoCertificados()">
+              <option value="ENERO">Enero</option>
+              <option value="FEBRERO">Febrero</option>
+              <option value="MARZO">Marzo</option>
+              <option value="ABRIL">Abril</option>
+              <option value="MAYO">Mayo</option>
+              <option value="JUNIO">Junio</option>
+              <option value="JULIO">Julio</option>
+              <option value="AGOSTO">Agosto</option>
+              <option value="SEPTIEMBRE">Septiembre</option>
+              <option value="OCTUBRE">Octubre</option>
+              <option value="NOVIEMBRE">Noviembre</option>
+              <option value="DICIEMBRE">Diciembre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Año</label>
+            <input id="archivoAnio" type="number" style="width:100px" />
+          </div>
+          <div class="form-group" style="flex:0 0 auto">
+            <button class="btn btn-sm btn-info" onclick="renderArchivoCertificados()">🔍 Buscar</button>
+          </div>
+        </div>
+        <div id="archivoCertList"></div>
       </div>
     </div>
   </div>
@@ -660,6 +715,36 @@ function saveEmailjsCfg() {
   }
 }
 
+// ─── CONFIG (correos fijos de operaciones) ────────────────────────────────────
+function loadOpsEmails() {
+  const e1 = document.getElementById('opsEmail1');
+  const e2 = document.getElementById('opsEmail2');
+  if (e1) e1.value = localStorage.getItem('opsEmail1') || '';
+  if (e2) e2.value = localStorage.getItem('opsEmail2') || '';
+}
+
+function saveOpsEmails() {
+  const set = (id, key) => {
+    const v = (document.getElementById(id).value || '').trim();
+    if (v) localStorage.setItem(key, v); else localStorage.removeItem(key);
+  };
+  set('opsEmail1', 'opsEmail1');
+  set('opsEmail2', 'opsEmail2');
+  const el = document.getElementById('opsEmailsStatus');
+  if (el) {
+    el.textContent = '✅ Guardado en este navegador';
+    clearTimeout(saveOpsEmails._t);
+    saveOpsEmails._t = setTimeout(() => el.textContent = '', 3000);
+  }
+}
+
+function getDestinatariosCorreo(emailLocal) {
+  const set = new Set();
+  [emailLocal, localStorage.getItem('opsEmail1'), localStorage.getItem('opsEmail2')]
+    .forEach(e => { const v = (e || '').trim(); if (v) set.add(v); });
+  return [...set];
+}
+
 async function testGhConnection() {
   const el = document.getElementById('ghTestResult');
   const token = getGhToken();
@@ -730,6 +815,15 @@ function updatePerfilIndicator() {
   const el = document.getElementById('perfilIndicator');
   if (!el) return;
   el.textContent = currentProfile === 'admin' ? '👤 Admin' : '👷 Técnico';
+}
+
+// ─── TARJETAS COLAPSABLES ──────────────────────────────────────────────────────
+function toggleCard(id) {
+  const body = document.getElementById(id + '-body');
+  const tog = document.getElementById(id + '-toggle');
+  if (!body) return;
+  const hidden = body.classList.toggle('hidden');
+  if (tog) tog.textContent = hidden ? '▶' : '▼';
 }
 
 // ─── MODO OSCURO ──────────────────────────────────────────────────────────────
@@ -1117,15 +1211,18 @@ function renderCertsEmitidos() {
 
 // ─── ENVÍO POR CORREO (EmailJS) ───────────────────────────────────────────────
 // El template de EmailJS debe configurarse con un adjunto cuyo contenido use la
-// variable {{pdf_base64}} (nombre {{file_name}}), el destinatario {{to_email}} y
-// {{local_nombre}} en el cuerpo. Si no está configurado, no rompe el flujo.
-async function enviarCertCorreo(pdfBase64, nombreArchivo, emailDestino, nombreLocal) {
+// variable {{pdf_base64}} (nombre {{file_name}}), el destinatario {{to_email}}
+// (puede traer varios correos separados por coma) y {{local_nombre}} en el
+// cuerpo. Si no está configurado, no rompe el flujo.
+async function enviarCertCorreo(pdfBase64, nombreArchivo, emailLocal, nombreLocal) {
   const service = localStorage.getItem('emailjsService') || '';
   const template = localStorage.getItem('emailjsTemplate') || '';
   const pk = localStorage.getItem('emailjsPublicKey') || '';
   if (!service || !template || !pk) return { ok: false, msg: 'EmailJS no está configurado (ve a ⚙️ Configuración).' };
-  if (!emailDestino) return { ok: false, msg: 'El local no tiene correo configurado; no se envió por email.' };
+  const destinatarios = getDestinatariosCorreo(emailLocal);
+  if (!destinatarios.length) return { ok: false, msg: 'No hay correos configurados (ni el del local, ni los de operaciones).' };
   if (!window.emailjs) return { ok: false, msg: 'Librería EmailJS no cargada.' };
+  const emailDestino = destinatarios.join(', ');
   try {
     emailjs.init({ publicKey: pk });
     await emailjs.send(service, template, {
@@ -1733,10 +1830,63 @@ async function subirCertGitHub(localCode, anio, doc) {
   await ghPutFile(path, content, `cert: ${localCode} ${mes}-${anio}`);
 }
 
+// ─── ARCHIVO DE CERTIFICADOS (solo admin) ─────────────────────────────────────
+// Los PDF se guardan en el repo pero NUNCA se publican en el sitio (excluidos
+// del despliegue de GitHub Pages). El único acceso es aquí, vía la API de
+// GitHub con el token del admin.
+async function renderArchivoCertificados() {
+  const cont = document.getElementById('archivoCertList');
+  if (!cont) return;
+  const token = getGhToken();
+  if (!token) { cont.innerHTML = '<p style="color:#e67e22;font-size:13px">Configura tu GitHub Token arriba para ver el archivo.</p>'; return; }
+  const mes = document.getElementById('archivoMesSel')?.value;
+  const anio = document.getElementById('archivoAnio')?.value;
+  if (!mes || !anio) { cont.innerHTML = ''; return; }
+  const dir = `certificados/${mes}-${anio}`;
+  cont.innerHTML = '<p style="color:#999;font-size:13px">⏳ Buscando...</p>';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${dir}?ref=${GH_BRANCH}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    });
+    if (!r.ok) { cont.innerHTML = '<p style="color:#999;font-size:13px">Sin certificados guardados para ese mes.</p>'; return; }
+    const files = await r.json();
+    const pdfs = (Array.isArray(files) ? files : []).filter(f => f.name.endsWith('.pdf'));
+    if (!pdfs.length) { cont.innerHTML = '<p style="color:#999;font-size:13px">Sin certificados guardados para ese mes.</p>'; return; }
+    cont.innerHTML = pdfs.map(f => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid #eee;border-radius:6px;margin-top:8px">
+        <span style="font-size:13px">📜 ${esc(f.name)}</span>
+        <a href="#" onclick="descargarCertArchivo('${esc(f.path)}','${esc(f.name)}');return false;" class="btn btn-sm btn-info" style="font-size:12px">⬇️ Descargar</a>
+      </div>`).join('');
+  } catch (e) {
+    cont.innerHTML = `<p style="color:#c0392b;font-size:13px">Error: ${esc(e.message)}</p>`;
+  }
+}
+
+// Descarga un PDF del archivo autenticándose con el token (el blob NUNCA es público)
+async function descargarCertArchivo(path, filename) {
+  const token = getGhToken();
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    const blob = await (await fetch(`data:application/pdf;base64,${d.content.replace(/\n/g, '')}`)).blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  } catch (e) {
+    alert('No se pudo descargar: ' + e.message);
+  }
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init() {
   loadConfig();
   loadEmailjsCfg();
+  loadOpsEmails();
 
   try { if (localStorage.getItem('darkMode') === '1') document.body.classList.add('dark'); } catch(e) {}
 
@@ -1749,6 +1899,11 @@ function init() {
   const selMes = document.getElementById('emitMesSel');
   if (selMes) selMes.value = MESES_ES[new Date().getMonth()];
   renderEmitList();
+
+  const archivoAnioEl = document.getElementById('archivoAnio');
+  if (archivoAnioEl) archivoAnioEl.value = new Date().getFullYear();
+  const archivoMesEl = document.getElementById('archivoMesSel');
+  if (archivoMesEl) archivoMesEl.value = MESES_ES[new Date().getMonth()];
 
   // Preparar vista interna con el perfil guardado sin mostrar aún
   const isAdmin = currentProfile === 'admin';
