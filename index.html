@@ -1436,17 +1436,17 @@ async function hacerPDF(opts) {
 
   const pdfName = 'CERT-'+localCode+'-'+anio+'.pdf';
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  let blobUrl = null;
+  try { blobUrl = doc.output('bloburl'); } catch(e) {}
   if (isIOS) {
-    try {
-      const blobUrl = doc.output('bloburl');
-      window.open(blobUrl, '_blank');
-    } catch(e) {
-      const dataUri = doc.output('dataurlstring');
-      window.open(dataUri, '_blank');
-    }
+    // El navegador puede bloquear esta pestaña silenciosamente (async = pierde el
+    // gesto del usuario). Por eso SIEMPRE se guarda un enlace manual abajo también.
+    try { window.open(blobUrl || doc.output('dataurlstring'), '_blank'); } catch(e) {}
   } else {
     doc.save(pdfName);
   }
+  doc._certBlobUrl = blobUrl;
+  doc._certFileName = pdfName;
   return doc;
 }
 
@@ -1701,6 +1701,13 @@ async function generarCertLocal() {
   if (st) {
     st.innerHTML = `<div class="status-bar status-ok">✅ Certificado de <strong>${esc(local.codigo)}</strong> generado` +
       (getGhToken() ? ' y respaldado en la nube' : '') + '.</div>';
+    // Enlace manual siempre visible: en iOS el navegador puede bloquear la pestaña
+    // automática, así que este es el modo garantizado de abrir/guardar el PDF.
+    if (doc && doc._certBlobUrl) {
+      st.innerHTML += `<div class="status-bar status-info">` +
+        `<a href="${esc(doc._certBlobUrl)}" target="_blank" download="${esc(doc._certFileName || 'certificado.pdf')}" ` +
+        `style="color:#1a5276;font-weight:700;text-decoration:underline">📄 Ver / descargar el certificado (toca aquí)</a></div>`;
+    }
   }
 
   // Envío por correo (no rompe el flujo si falla o no está configurado)
