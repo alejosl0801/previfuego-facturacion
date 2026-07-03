@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Previfuego – Facturación KFC</title>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<title>Previfuego – Certificados de Extintores</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root {
     --rojo: #c0392b;
@@ -27,6 +27,8 @@
     align-items: center;
     gap: 16px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    flex-wrap: wrap;
+    justify-content: space-between;
   }
   header .logo { font-size: 28px; font-weight: 900; letter-spacing: -1px; }
   header .subtitle { font-size: 13px; opacity: 0.85; }
@@ -47,7 +49,6 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    cursor: pointer;
     -webkit-user-select: none; user-select: none;
   }
   .card-header h2 { font-size: 14px; font-weight: 700; color: var(--rojo); }
@@ -129,69 +130,18 @@
 
   td input { padding: 4px 6px; font-size: 12px; width: 100%; }
 
-  .progress-steps { display: flex; gap: 0; margin-bottom: 24px; }
-  .step {
-    flex: 1;
-    text-align: center;
-    padding: 10px;
-    font-size: 12px;
-    font-weight: 600;
-    background: #eee;
-    border-right: 2px solid white;
-    color: #999;
-    transition: all 0.2s;
-  }
-  .step:last-child { border-right: none; }
-  .step.active { background: var(--rojo); color: white; }
-  .step.done { background: var(--verde); color: white; }
-  .step .num { font-size: 18px; font-weight: 900; display: block; }
-
-  .empresa-section {
-    border: 1px solid var(--gris-borde);
-    border-radius: 6px;
-    margin-bottom: 16px;
-    overflow: hidden;
-  }
-  .empresa-header {
-    background: #f8f8f8;
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--gris-borde);
-  }
-  .empresa-nombre { font-weight: 700; font-size: 14px; }
-  .empresa-facturas { display: flex; gap: 12px; align-items: center; }
-  .fact-input-group { display: flex; align-items: center; gap: 6px; }
-  .fact-input-group label { font-size: 11px; white-space: nowrap; color: #666; }
-  .fact-input-group input { width: 110px; }
-
-  /* ── Panel de Control ── */
+  /* ── Tarjetas de local (libreta) ── */
   .local-card { border:1px solid #ddd; border-radius:8px; margin-bottom:8px; overflow:hidden; }
-  .local-card.visitado { border-left:4px solid #27ae60; }
-  .local-card.pendiente { border-left:4px solid #e74c3c; }
   .local-card-header {
     display:flex; justify-content:space-between; align-items:center;
-    padding:9px 14px; background:#f9f9f9; cursor:pointer; gap:8px;
+    padding:9px 14px; background:#f9f9f9; gap:8px;
   }
-  .local-card-header:hover { background:#f0f0f0; }
   .local-card-body {
     padding:8px 14px 10px; background:#fff;
-    font-size:12px; color:#555; display:none; border-top:1px solid #eee;
+    font-size:12px; color:#555; border-top:1px solid #eee;
   }
-  .local-card.open .local-card-body { display:block; }
-  .badge-pendiente { background:#e74c3c; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px; white-space:nowrap; }
-  .badge-visitado  { background:#27ae60; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px; white-space:nowrap; }
-  .plan-stats { display:flex; gap:16px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
-
-
 
   /* ── Navegación por secciones ── */
-  header {
-    flex-wrap: wrap;
-    gap: 12px 20px;
-    justify-content: space-between;
-  }
   .hdr-left { display: flex; flex-direction: column; }
   .nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; justify-content: center; }
   .nav-tab {
@@ -209,18 +159,6 @@
   .nav-tab:hover { background: rgba(255,255,255,0.25); }
   .nav-tab.active { background: white; color: var(--rojo); }
   .hdr-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .month-sel { display: flex; gap: 6px; }
-  .month-sel select {
-    padding: 6px 8px; border-radius: 5px; border: none;
-    font-size: 13px; font-weight: 600; width: auto; min-width: 90px;
-  }
-  .profile-toggle { display: flex; background: rgba(0,0,0,0.18); border-radius: 6px; padding: 3px; }
-  .prof-btn {
-    background: transparent; color: white; border: none;
-    padding: 6px 12px; border-radius: 4px; font-size: 12px;
-    font-weight: 600; cursor: pointer; white-space: nowrap;
-  }
-  .prof-btn.active { background: white; color: var(--rojo); }
   .icon-btn {
     background: rgba(255,255,255,0.15); color: white; border: none;
     width: 34px; height: 34px; border-radius: 6px; cursor: pointer; font-size: 16px;
@@ -242,7 +180,6 @@
   body.dark { background: #15171a; color: #e6e6e6; }
   body.dark .card, body.dark .local-card { background: #1f2227; border-color: #333; }
   body.dark .card-header, body.dark .local-card-header { background: #262a30; border-color: #333; }
-  body.dark .local-card-header:hover { background: #2d323a; }
   body.dark .card-header h2 { color: #ff7b6b; }
   body.dark .local-card-body { background: #1f2227; color: #bbb; border-color: #333; }
   body.dark input, body.dark select, body.dark textarea {
@@ -253,51 +190,6 @@
   body.dark tr:hover td { background: #262a30; }
   body.dark .section-title { color: #ff7b6b; }
   body.dark code { background: #2d323a !important; color: #d6d6d6; }
-
-  /* ── Selector de Perfil ── */
-  #profileSelector {
-    position: fixed; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(160deg, #fff 0%, #f4f4f4 100%);
-    z-index: 9999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 28px; padding: 32px;
-  }
-  .psel-header { text-align: center; }
-  .psel-logo-img { width: 90px; height: 90px; object-fit: contain; margin-bottom: 8px; }
-  .psel-logo-text { font-size: 56px; margin-bottom: 8px; display: block; }
-  .psel-app-name { font-size: 26px; font-weight: 900; color: #1a1a1a; letter-spacing: -0.5px; }
-  .psel-quien { font-size: 15px; color: #c0392b; font-weight: 700; margin-top: 8px; }
-  .psel-cards { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 340px; }
-  .psel-card {
-    display: flex; align-items: center; gap: 14px;
-    background: white; border: 1.5px solid #e5e5e5; border-radius: 12px;
-    padding: 16px 18px; cursor: pointer; transition: all 0.18s;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
-  }
-  .psel-card:hover { border-color: #c0392b; box-shadow: 0 4px 16px rgba(192,57,43,0.18); transform: translateX(4px); }
-  .psel-card:active { transform: translateX(6px) scale(0.99); }
-  .psel-icon { font-size: 36px; flex-shrink: 0; }
-  .psel-info { flex: 1; }
-  .psel-name { font-size: 15px; font-weight: 700; color: #1a1a1a; }
-  .psel-role { font-size: 12px; color: #999; margin-top: 2px; }
-  .psel-arrow { font-size: 28px; color: #c0392b; font-weight: 900; flex-shrink: 0; line-height: 1; }
-  body.dark #profileSelector { background: linear-gradient(160deg, #15171a 0%, #1a1d22 100%); }
-  body.dark .psel-card { background: #1f2227; border-color: #333; }
-  body.dark .psel-card:hover { border-color: #c0392b; }
-  body.dark .psel-name { color: #e6e6e6; }
-  body.dark .psel-role { color: #777; }
-  body.dark .psel-app-name { color: #e6e6e6; }
-
-  /* ── Indicador de perfil en header ── */
-  .perfil-indicator {
-    display: flex; align-items: center; gap: 6px;
-    background: rgba(0,0,0,0.18); border-radius: 6px;
-    padding: 6px 12px; font-size: 12px; font-weight: 600;
-    color: white; white-space: nowrap; cursor: pointer;
-    transition: background 0.15s;
-  }
-  .perfil-indicator:hover { background: rgba(0,0,0,0.32); }
-  .perfil-chip { font-size: 10px; opacity: 0.7; }
 
   /* ── Cert modal pasos ── */
   .cert-steps { display: flex; gap: 0; margin-bottom: 18px; border-radius: 6px; overflow: hidden; }
@@ -345,11 +237,6 @@
   body.dark .acc-row.sel { background: #2d1f1e; }
   body.dark .acc-row-desc { color: #ccc; }
   body.dark .nov-btn { background: #1f2227; border-color: #3a3f47; color: #bbb; }
-  body.dark .output-card.ready { background: #1a2e22; border-color: #27ae60; }
-  body.dark .empresa-section { background: #1f2227; border-color: #333; }
-  body.dark .empresa-header { background: #262a30; border-color: #333; }
-  body.dark .empresa-nombre { color: #e6e6e6; }
-  body.dark .fact-input-group label { color: #888; }
   body.dark #certModal > div { background: #1f2227 !important; color: #e6e6e6; }
   body.dark .status-ok { background: #1a2e22; color: #6bcb77; border-color: #27ae60; }
   body.dark .status-error { background: #2e1a1a; color: #ff6b6b; border-color: #c0392b; }
@@ -361,30 +248,22 @@
     .local-card-header > div:first-child { flex: 1 1 100% !important; min-width: 0; }
     .local-card-header > div:last-child { flex: 1 1 100% !important; flex-wrap: wrap; justify-content: flex-start; }
     .local-card-header button { min-height: 36px; font-size: 12px !important; padding: 6px 10px !important; }
-    .badge-pendiente, .badge-visitado { font-size: 10px; padding: 2px 6px; }
     .nav-tab { padding: 8px 10px; font-size: 12px; }
     .section-title { font-size: 16px; }
     .section-desc { font-size: 12px; }
     .search-box { font-size: 13px; padding: 8px 10px; }
     header { padding: 12px 10px !important; gap: 8px 12px; }
     .hdr-right { gap: 8px; }
-    .month-sel select { min-width: 70px; font-size: 12px; }
     main { padding: 12px 10px !important; }
     .cert-steps { font-size: 12px; }
     .cert-step-ind { padding: 7px 8px !important; font-size: 11px; }
     .cert-foto-btns { flex-wrap: wrap; }
-    .plan-stats { font-size: 12px; gap: 8px; }
-  }
-  @media (max-width: 900px) {
-    .local-card-header button { min-height: 32px; }
   }
   @supports not (gap: 1px) {
     header > * + *, .nav-tabs > * + *, .hdr-right > * + * { margin-left: 8px; }
     .local-card-header > div + div { margin-left: 8px; }
-    .plan-stats > * + * { margin-left: 12px; }
     .cert-steps > * + * { margin-left: 0; }
     .cert-foto-btns > * + * { margin-left: 6px; }
-    .psel-cards > * + * { margin-top: 10px; }
     .form-row > * + * { margin-left: 16px; }
     .acc-row > * + * { margin-left: 10px; }
     .cert-novedades-toggle > * + * { margin-left: 6px; }
@@ -393,174 +272,94 @@
 </head>
 <body>
 
-<!-- ════════════ SELECTOR DE PERFIL ════════════ -->
-<div id="profileSelector">
-  <div class="psel-header">
-    <img id="pselLogo" class="psel-logo-img" style="display:none" alt="Logo" />
-    <span id="pselLogoFallback" class="psel-logo-text">🔥</span>
-    <div class="psel-app-name">Previfuego</div>
-    <div class="psel-quien">¿Quién eres?</div>
-  </div>
-  <div class="psel-cards">
-    <div class="psel-card" onclick="elegirPerfil('admin')">
-      <div class="psel-icon">👤</div>
-      <div class="psel-info">
-        <div class="psel-name">Alejandro</div>
-        <div class="psel-role">Administración</div>
-      </div>
-      <div class="psel-arrow">›</div>
-    </div>
-    <div class="psel-card" onclick="elegirPerfil('empleado')">
-      <div class="psel-icon">👷</div>
-      <div class="psel-info">
-        <div class="psel-name">Técnico en Campo</div>
-        <div class="psel-role">Técnico Operativo y Logístico</div>
-      </div>
-      <div class="psel-arrow">›</div>
-    </div>
-  </div>
-</div>
-
 <header>
   <div class="hdr-left">
     <div class="logo">🔴 PREVIFUEGO</div>
-    <div class="subtitle">Gestión de Extintores</div>
+    <div class="subtitle">Certificados de Extintores</div>
   </div>
   <nav class="nav-tabs">
-    <button class="nav-tab active" data-sec="plan" onclick="goToSection('plan')">📅 Plan del Mes</button>
-    <button class="nav-tab" data-sec="certs" onclick="goToSection('certs')">📜 Certificados</button>
-    <button class="nav-tab admin-only" data-sec="bd" onclick="goToSection('bd')">🗄️ Base de Datos</button>
-    <button class="nav-tab admin-only" data-sec="config" onclick="goToSection('config')">⚙️ Configuración</button>
+    <button class="nav-tab active" data-sec="emitir" onclick="goToSection('emitir')">📜 Emitir Certificado</button>
+    <button class="nav-tab" data-sec="locales" onclick="goToSection('locales')">🏢 Locales</button>
+    <button class="nav-tab" data-sec="config" onclick="goToSection('config')">⚙️ Configuración</button>
   </nav>
   <div class="hdr-right">
-    <div id="monthSelector" class="month-sel">
-      <select id="selMes" onchange="onMonthChange()">
-        <option value="">— Todos los meses —</option>
-        <option value="01 ENERO">Enero</option>
-        <option value="02 FEBRERO">Febrero</option>
-        <option value="03 MARZO">Marzo</option>
-        <option value="04 ABRIL">Abril</option>
-        <option value="05 MAYO">Mayo</option>
-        <option value="06 JUNIO">Junio</option>
-        <option value="07 JULIO">Julio</option>
-        <option value="08 AGOSTO">Agosto</option>
-        <option value="09 SEPTIEMBRE">Septiembre</option>
-        <option value="10 OCTUBRE">Octubre</option>
-        <option value="11 NOVIEMBRE">Noviembre</option>
-        <option value="12 DICIEMBRE">Diciembre</option>
-      </select>
-      <select id="selAnio" onchange="onMonthChange()">
-        <option value="2027">2027</option>
-        <option value="2026">2026</option>
-        <option value="2025">2025</option>
-        <option value="2024">2024</option>
-      </select>
-    </div>
-    <div id="perfilIndicator" class="perfil-indicator" onclick="mostrarSelectorPerfil()" title="Cambiar perfil">
-      👤 Admin <span class="perfil-chip">· cambiar</span>
-    </div>
     <button class="icon-btn" onclick="toggleDark()" title="Modo oscuro">🌙</button>
   </div>
 </header>
 
 <div class="container">
 
-  <!-- ════════════ SECCIÓN: PLAN DEL MES ════════════ -->
-  <div class="app-section" id="sec-plan">
-    <div class="section-title">📅 Plan del Mes</div>
-    <div class="section-desc">Locales a visitar este mes. Selecciona un local, realiza el trabajo y genera su certificado.</div>
-
-    <input type="text" id="planSearch" class="search-box" placeholder="🔍 Buscar local por código o nombre…" oninput="renderPlan()" />
-
-    <div class="plan-stats">
-      <div class="admin-only">
-      </div>
-      <div id="planStats" style="font-size:13px;color:#555;font-weight:600"></div>
-    </div>
-    <div id="loadStatus"></div>
-    <div id="planContainer">
-      <p style="color:#999;font-size:13px">Cargando locales del mes desde la base de datos…</p>
-    </div>
-  </div>
-
-  <!-- ════════════ SECCIÓN: CERTIFICADOS ════════════ -->
-  <div class="app-section" id="sec-certs" style="display:none">
-    <div class="section-title">📜 Certificados</div>
-    <div class="section-desc" id="certsDesc">
-      Los certificados se generan desde el <strong>Plan del Mes</strong>: abre un local, adjunta las fotos del
-      trabajo realizado y pulsa <strong>Generar Certificado</strong>.
-    </div>
-    <div id="certsContainer">
-      <p style="color:#999;font-size:13px">Aún no hay certificados guardados para este mes.</p>
-    </div>
-  </div>
-
-  <!-- ════════════ SECCIÓN: BASE DE DATOS (admin) ════════════ -->
-  <div class="app-section admin-only" id="sec-bd" style="display:none">
-    <div class="section-title">🗄️ Base de Datos</div>
-    <div class="section-desc">Consulta y descarga las bases de datos de extintores.</div>
+  <!-- ════════════ SECCIÓN: EMITIR CERTIFICADO ════════════ -->
+  <div class="app-section" id="sec-emitir">
+    <div class="section-title">📜 Emitir Certificado</div>
+    <div class="section-desc">Elige un local de tu libreta para generar su certificado, respaldarlo y enviarlo por correo.</div>
 
     <div class="card">
       <div class="card-body">
-        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-          <div style="background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px;padding:20px;flex:1;min-width:240px;text-align:center;">
-            <div style="font-size:36px;margin-bottom:8px;">📊</div>
-            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS KFC</div>
-            <div style="font-size:12px;color:#666;margin-bottom:14px;">
-              197 locales · 903 extintores<br>
-              Grupo KFC (sin SUSHICORP)<br>
-              Precios MANTT y RECARGA por extintor
-            </div>
-            <a href="BASE_DATOS_KFC.xlsx" download="BASE_DATOS_KFC.xlsx"
-               onclick="iosDownloadFallback(event)"
-               style="display:inline-block;background:#1F4E79;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
-              ⬇️ Descargar Excel
-            </a>
+        <div class="form-row" style="align-items:flex-end">
+          <div class="form-group" style="flex:2">
+            <label>Local</label>
+            <select id="emitSelect" onchange="emitSelectChange()"></select>
           </div>
-          <div style="background:#f0fff4;border:1px solid #a8e6c0;border-radius:8px;padding:20px;flex:1;min-width:240px;text-align:center;">
-            <div style="font-size:36px;margin-bottom:8px;">🍣</div>
-            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">BASE DE DATOS SUSHICORP</div>
-            <div style="font-size:12px;color:#666;margin-bottom:14px;">
-              13 locales · 62 extintores<br>
-              NOE · KOBE (empresa aparte)<br>
-              RUC 1792256267001
-            </div>
-            <a href="BASE_DATOS_SUSHICORP.xlsx" download="BASE_DATOS_SUSHICORP.xlsx"
-               onclick="iosDownloadFallback(event)"
-               style="display:inline-block;background:#1a7a3c;color:white;padding:9px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">
-              ⬇️ Descargar Excel
-            </a>
+          <div class="form-group" style="flex:0 0 auto;min-width:0">
+            <button class="btn btn-info" onclick="goToSection('locales')">＋ Nuevo local</button>
           </div>
         </div>
-        <div style="margin-top:16px;padding:12px 16px;background:#fffbe6;border:1px solid #f0d060;border-radius:6px;font-size:12px;color:#7a5c00;">
-          <strong>ℹ️ Nota:</strong> La base de datos usa el ciclo <strong>OCT 2026 → SEP 2027</strong> (recarga para todos los locales).
-          El <strong>COBRO_ANUAL</strong> es el precio de <em>RECARGA</em> (que ya incluye el mantenimiento), nunca aditivo.
-          Locales servidos OCT–DIC tienen recarga en 2026; ENE–SEP en 2027. <em>AÑO_ULT_RECARGA</em> = AÑO_RECARGA − 3.
-        </div>
+        <div id="emitStatus"></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-header" onclick="toggleCard('bdtable')">
-        <h2>📋 Locales del mes seleccionado</h2>
-        <span class="toggle" id="bdtable-toggle">▼</span>
-      </div>
-      <div class="card-body" id="bdtable-body">
-        <div id="bdContainer"><p style="color:#999;font-size:13px">Selecciona un mes para ver sus locales.</p></div>
-      </div>
+      <div class="card-header"><h2>🗂️ Certificados emitidos</h2></div>
+      <div class="card-body"><div id="certsEmitidosLista"></div></div>
     </div>
   </div>
 
-  <!-- ════════════ SECCIÓN: CONFIGURACIÓN (admin) ════════════ -->
-  <div class="app-section admin-only" id="sec-config" style="display:none">
+  <!-- ════════════ SECCIÓN: LOCALES (libreta) ════════════ -->
+  <div class="app-section" id="sec-locales" style="display:none">
+    <div class="section-title">🏢 Locales</div>
+    <div class="section-desc">Libreta de locales. Guarda su información y lista de extintores para emitir certificados en segundos.</div>
+
+    <div style="margin-bottom:14px">
+      <button class="btn btn-primary" onclick="libretaNuevo()">＋ Nuevo local</button>
+    </div>
+
+    <div class="card" id="libFormCard" style="display:none">
+      <div class="card-header"><h2 id="libFormTitle">Nuevo local</h2></div>
+      <div class="card-body">
+        <input type="hidden" id="libEditCodigo" />
+        <div class="form-row">
+          <div class="form-group"><label>Código</label><input id="libCodigo" placeholder="K002" autocomplete="off" /></div>
+          <div class="form-group" style="flex:2"><label>Nombre del local</label><input id="libNombre" placeholder="KFC Portete" autocomplete="off" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:2"><label>Dirección</label><input id="libDireccion" placeholder="Av. Portete y Gallegos Lara" autocomplete="off" /></div>
+          <div class="form-group"><label>Correo del cliente</label><input id="libEmail" type="email" placeholder="cliente@correo.com" autocomplete="off" /></div>
+        </div>
+        <label style="margin-bottom:6px;display:block">Extintores</label>
+        <div id="libExtList"></div>
+        <button class="btn btn-sm btn-info" type="button" onclick="libAddExtintor()">＋ Agregar extintor</button>
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-success" onclick="guardarLocalForm()">💾 Guardar local</button>
+          <button class="btn" style="background:#bbb;color:white" onclick="libCancelForm()">Cancelar</button>
+        </div>
+        <div id="libFormStatus" style="font-size:12px;margin-top:8px"></div>
+      </div>
+    </div>
+
+    <div id="libretaLista"></div>
+  </div>
+
+  <!-- ════════════ SECCIÓN: CONFIGURACIÓN ════════════ -->
+  <div class="app-section" id="sec-config" style="display:none">
     <div class="section-title">⚙️ Configuración</div>
-    <div class="section-desc">Tus claves se guardan automáticamente y de forma permanente en este navegador.</div>
+    <div class="section-desc">Tus claves se guardan de forma permanente en este navegador.</div>
 
     <div class="card">
       <div class="card-body">
         <div class="form-row">
           <div class="form-group" style="flex:2">
-            <label>⚫ GitHub Token — respalda tus datos en la nube (opcional)</label>
+            <label>⚫ GitHub Token — respalda certificados y libreta en la nube (opcional)</label>
             <input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off" oninput="saveConfig()" />
           </div>
         </div>
@@ -573,63 +372,24 @@
     </div>
 
     <div class="card">
-      <div class="card-header" onclick="toggleCard('gh')">
-        <h2>☁️ Respaldo en la nube</h2>
-        <span class="toggle" id="gh-toggle">▼</span>
-      </div>
-      <div class="card-body" id="gh-body">
-        <p style="font-size:13px;color:#555;margin-bottom:10px">
-          Todo se guarda automáticamente — al instante en este navegador, y si hay GitHub Token también en la nube.
-          Nunca necesitas guardar a mano.
+      <div class="card-header"><h2>✉️ Envío por correo (EmailJS)</h2></div>
+      <div class="card-body">
+        <p style="font-size:13px;color:#555;margin-bottom:12px">
+          Crea una cuenta gratuita en <strong>emailjs.com</strong>, añade un servicio de correo y una plantilla,
+          y copia aquí los tres identificadores. El PDF del certificado se enviará como adjunto al correo del local.
         </p>
-        <span id="ghStatus" style="font-size:12px;color:#27ae60"></span>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('supabase')">
-        <h2>🗄️ Base de Datos en la Nube (Supabase)</h2>
-        <span class="toggle" id="supabase-toggle">▼</span>
-      </div>
-      <div class="card-body" id="supabase-body">
-        <p style="font-size:13px;color:#555;margin-bottom:10px">
-          La base de datos de extintores se carga automáticamente desde Supabase en todos los dispositivos.
-          Si no hay conexión, se usa el Excel local como respaldo.
+        <div class="form-row">
+          <div class="form-group"><label>Service ID</label><input id="emailjsService" placeholder="service_xxx" autocomplete="off" oninput="saveEmailjsCfg()" /></div>
+          <div class="form-group"><label>Template ID</label><input id="emailjsTemplate" placeholder="template_xxx" autocomplete="off" oninput="saveEmailjsCfg()" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:2"><label>Public Key</label><input id="emailjsPublicKey" placeholder="XXXXXXXXXXXXXX" autocomplete="off" oninput="saveEmailjsCfg()" /></div>
+        </div>
+        <span id="emailjsStatus" style="font-size:12px;color:#27ae60"></span>
+        <p style="font-size:12px;color:#888;margin-top:10px">
+          En tu plantilla de EmailJS: usa <code>{{to_email}}</code> como destinatario, <code>{{local_nombre}}</code> en el
+          cuerpo, y añade un adjunto cuyo contenido sea la variable <code>{{pdf_base64}}</code> con nombre <code>{{file_name}}</code>.
         </p>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
-          <button class="btn btn-sm btn-info" onclick="testSbConnection()" style="font-size:12px">🔌 Probar conexión</button>
-          <span id="sbTestResult" style="font-size:12px"></span>
-        </div>
-        <div style="padding:14px;background:#f0f7ff;border:1px solid #b8d4f0;border-radius:8px">
-          <div style="font-size:12px;font-weight:700;color:#1a5276;margin-bottom:8px">📤 Actualizar datos en Supabase (un click)</div>
-          <p style="font-size:12px;color:#555;margin-bottom:10px">
-            Configura una sola vez el Worker (URL + token). Luego sincroniza con un click — los datos
-            oficiales se suben de forma segura a todos los dispositivos. La clave secreta vive en el Worker, nunca aquí.
-          </p>
-          <div class="form-row" style="margin-bottom:8px">
-            <div class="form-group" style="flex:2">
-              <label>URL del Worker</label>
-              <input type="text" id="syncUrl" placeholder="https://previfuego-sync.xxxx.workers.dev" oninput="saveSyncCfg()" />
-            </div>
-          </div>
-          <div class="form-row" style="margin-bottom:8px">
-            <div class="form-group" style="flex:2">
-              <label>Token de sincronización</label>
-              <input type="password" id="syncToken" placeholder="el SYNC_TOKEN del Worker" autocomplete="off" oninput="saveSyncCfg()" />
-            </div>
-          </div>
-          <span id="syncCfgStatus" style="font-size:12px;color:#27ae60"></span>
-          <div style="margin-top:10px">
-            <button class="btn btn-sm btn-primary" onclick="sincronizarConWorker()" style="font-size:12px">🚀 Sincronizar datos oficiales</button>
-          </div>
-          <details style="margin-top:12px">
-            <summary style="font-size:12px;color:#777;cursor:pointer">Alternativa: generar CSV para importar a mano</summary>
-            <div style="margin-top:8px">
-              <button class="btn btn-sm btn-info" onclick="generarCSVSupabase()" style="font-size:12px">📥 Generar CSV</button>
-            </div>
-          </details>
-          <div id="sbMigrateStatus" style="font-size:12px;margin-top:8px"></div>
-        </div>
       </div>
     </div>
   </div>
@@ -733,51 +493,19 @@
 </div>
 
 <script>
-// ─── DATOS GLOBALES ───────────────────────────────────────────────────────────
-const MESES_NOMBRE = {
-  '01 ENERO':'ENERO','02 FEBRERO':'FEBRERO','03 MARZO':'MARZO',
-  '04 ABRIL':'ABRIL','05 MAYO':'MAYO','06 JUNIO':'JUNIO',
-  '07 JULIO':'JULIO','08 AGOSTO':'AGOSTO','09 SEPTIEMBRE':'SEPTIEMBRE',
-  '10 OCTUBRE':'OCTUBRE','11 NOVIEMBRE':'NOVIEMBRE','12 DICIEMBRE':'DICIEMBRE'
-};
-
+// ─── UTILIDADES ────────────────────────────────────────────────────────────────
 function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// Mapa de prefijos de código local → empresa
-const EMPRESAS_MAP = {
-  'K':    { empresa:'INT FOOD SERVICES CORP SA',              marca:'KFC',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'G':    { empresa:'INT FOOD SERVICES CORP SA',              marca:'GUS',                ruc:'1791415132001', hoja:'INT FOOD SERVICES' },
-  'M':    { empresa:'SHEMLON SA',                             marca:'MENESTRAS DEL NEGRO',ruc:'1792049504001', hoja:'SHEMLON' },
-  'J':    { empresa:'SHEMLON SA',                             marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
-  'CJNC': { empresa:'SHEMLON SA',                             marca:'CAJUN',              ruc:'1792049504001', hoja:'SHEMLON' },
-  'CN':   { empresa:'CINNABON SA',                            marca:'CINNABON',           ruc:'',              hoja:'CINNABON' },
-  'BS':   { empresa:'BASKIN ROBBINS SA',                      marca:'BASKIN ROBBINS',     ruc:'',              hoja:'BASKIN ROBBINS' },
-  'T':    { empresa:'DELI-INTERNACIONAL SA',                  marca:'TROPIBURGER',        ruc:'1792072018001', hoja:'DELI INTERNACIONAL' },
-  'I':    { empresa:'IL CAPPO SA',                            marca:'IL CAPPO',           ruc:'',              hoja:'IL CAPPO' },
-  'ILCI': { empresa:'PRODUCCIONES Y EVENTOS NOVOEVENTOS SA',  marca:'IVORY',              ruc:'1792025435001', hoja:'NOVOEVENTOS' },
-  'V':    { empresa:'PROMOTORA ECUATORIANA DE CAFÉ DE COLOMBIA SA', marca:'JUAN VALDEZ',  ruc:'1792141486001', hoja:'PROCAFECOL' },
-  'JV':   { empresa:'PROMOTORA ECUATORIANA DE CAFÉ DE COLOMBIA SA', marca:'JUAN VALDEZ',  ruc:'1792141486001', hoja:'PROCAFECOL' },
-  'AMCA': { empresa:'AMCA SA',                                marca:'AMCA',               ruc:'',              hoja:'AMCA' },
-  'ESPE': { empresa:'ESPRESSO AMERICANO SA',                  marca:'ESPRESSO AMERICANO', ruc:'',              hoja:'ESPRESSO AMERICANO' },
-  'DI':   { empresa:'DOLCE INCONTRO SA',                      marca:'DOLCE INCONTRO',     ruc:'',              hoja:'DOLCE INCONTRO' },
-  'CA':   { empresa:'CAFA SA',                                marca:'CAFA',               ruc:'',              hoja:'CAFA' },
-  'A':    { empresa:'AMERICAN DELI SA',                       marca:'AMERICAN DELI',      ruc:'',              hoja:'AMERICAN DELI' },
-  'B':    { empresa:'AMERICAN DELI SA',                       marca:'AMERICAN DELI',      ruc:'',              hoja:'AMERICAN DELI' },
-  'F':    { empresa:'AMERICAN DELI SA',                       marca:'AMERICAN DELI',      ruc:'',              hoja:'AMERICAN DELI' },
-  'E':    { empresa:'ESPAÑOL SA',                             marca:'ESPAÑOL',            ruc:'',              hoja:'ESPAÑOL' },
-  'R':    { empresa:'CASA RES SA',                            marca:'CASA RES',           ruc:'',              hoja:'CASA RES' },
-  'H':    { empresa:'HELADERIAS SA',                          marca:'HELADERIAS',         ruc:'',              hoja:'HELADERIAS' },
-  'KN':   { empresa:'SUSHICORP SAS',                         marca:'KOBE / NOE',         ruc:'1792256267001', hoja:'SUSHICORP' },
-};
+const MESES_ES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-
+// ─── CONFIG (GitHub Token) ─────────────────────────────────────────────────────
 function loadConfig() {
-  document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
+  const el = document.getElementById('ghToken');
+  if (el) el.value = localStorage.getItem('ghToken') || '';
 }
 
 function saveConfig() {
@@ -789,197 +517,40 @@ function saveConfig() {
     saveConfig._t = setTimeout(() => el.textContent = '', 5000);
     return;
   }
-  if (gt) localStorage.setItem('ghToken', gt);
+  if (gt) localStorage.setItem('ghToken', gt); else localStorage.removeItem('ghToken');
   el.textContent = '✅ Guardado permanentemente en este navegador';
   clearTimeout(saveConfig._t);
   saveConfig._t = setTimeout(() => el.textContent = '', 3000);
 }
 
 function getGhToken() {
-  return localStorage.getItem('ghToken') || document.getElementById('ghToken').value.trim();
+  return localStorage.getItem('ghToken') || (document.getElementById('ghToken') ? document.getElementById('ghToken').value.trim() : '');
 }
 
-// ─── SUPABASE ────────────────────────────────────────────────────────────────
-const SB_URL = 'https://ewypvxglljanfkwyeank.supabase.co';
-const SB_ANON = 'sb_publishable_kmhHwDBxIbNg6bK-hYV7cQ_tUqpyxNF';
-
-function loadSbConfig() {
-  // Limpieza de seguridad: borra cualquier secret key que haya quedado guardada.
-  // Las secret keys NUNCA deben usarse en el navegador (Supabase las rechaza).
-  localStorage.removeItem('supabaseSecret');
-  const u = document.getElementById('syncUrl');
-  const t = document.getElementById('syncToken');
-  if (u) u.value = localStorage.getItem('syncUrl') || '';
-  if (t) t.value = localStorage.getItem('syncToken') || '';
+// ─── CONFIG (EmailJS) ──────────────────────────────────────────────────────────
+function loadEmailjsCfg() {
+  const s = document.getElementById('emailjsService');
+  const t = document.getElementById('emailjsTemplate');
+  const p = document.getElementById('emailjsPublicKey');
+  if (s) s.value = localStorage.getItem('emailjsService') || '';
+  if (t) t.value = localStorage.getItem('emailjsTemplate') || '';
+  if (p) p.value = localStorage.getItem('emailjsPublicKey') || '';
 }
 
-function saveSyncCfg() {
-  const url = (document.getElementById('syncUrl')?.value || '').trim().replace(/\/+$/, '');
-  const tok = (document.getElementById('syncToken')?.value || '').trim();
-  if (url) localStorage.setItem('syncUrl', url); else localStorage.removeItem('syncUrl');
-  if (tok) localStorage.setItem('syncToken', tok); else localStorage.removeItem('syncToken');
-  const el = document.getElementById('syncCfgStatus');
-  if (el && url && tok) {
-    el.textContent = '✅ Guardado en este navegador';
-    clearTimeout(saveSyncCfg._t);
-    saveSyncCfg._t = setTimeout(() => el.textContent = '', 3000);
-  }
-}
-
-// Sincroniza las bases oficiales a Supabase a través del Worker (un click)
-async function sincronizarConWorker() {
-  const st = document.getElementById('sbMigrateStatus');
-  const url = localStorage.getItem('syncUrl');
-  const tok = localStorage.getItem('syncToken');
-  if (!url || !tok) { st.innerHTML = '<span style="color:#e74c3c">Configura la URL del Worker y el token primero</span>'; return; }
-  st.innerHTML = '<span style="color:#999">⏳ Leyendo bases oficiales...</span>';
-  try {
-    const archivos = ['BASE_DATOS_KFC.xlsx', 'BASE_DATOS_SUSHICORP.xlsx'];
-    const buffers = [];
-    for (const name of archivos) {
-      const resp = await fetch(`${name}?t=${Date.now()}`);
-      if (!resp.ok) throw new Error(`No se pudo leer ${name} (HTTP ${resp.status})`);
-      buffers.push({ name, buf: await resp.arrayBuffer() });
-    }
-    const { locales, extintores } = parseWorkbooks(buffers);
-    st.innerHTML = `<span style="color:#999">⏳ Subiendo ${locales.length} locales + ${extintores.length} extintores...</span>`;
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Sync-Token': tok },
-      body: JSON.stringify({ locales, extintores }),
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
-    st.innerHTML = `<span style="color:#27ae60">✅ Sincronizado: ${data.locales} locales + ${data.extintores} extintores en Supabase</span>`;
-    cargarPlan();
-  } catch (e) {
-    st.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`;
-  }
-}
-
-async function testSbConnection() {
-  const el = document.getElementById('sbTestResult');
-  el.innerHTML = '<span style="color:#999">Probando...</span>';
-  try {
-    const r = await fetch(`${SB_URL}/rest/v1/locales?select=codigo`, {
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` }
-    });
-    if (r.status === 401) { el.innerHTML = '<span style="color:#e74c3c">API Key inválida</span>'; return; }
-    if (r.status === 404) { el.innerHTML = '<span style="color:#e74c3c">Tabla "locales" no existe</span>'; return; }
-    if (!r.ok) { el.innerHTML = `<span style="color:#e74c3c">Error HTTP ${r.status}</span>`; return; }
-    const data = await r.json();
-    el.innerHTML = data.length
-      ? `<span style="color:#27ae60">Conectado — ${data.length} locales en Supabase</span>`
-      : `<span style="color:#e67e22">Conectado — sin datos. Genera los CSV y súbelos en el panel de Supabase.</span>`;
-  } catch (e) {
-    if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
-      el.innerHTML = '<span style="color:#e74c3c">Sin conexión a internet</span>';
-    } else { el.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`; }
-  }
-}
-
-// Convierte un array de objetos a CSV y dispara la descarga
-function descargarCSV(filename, rows) {
-  if (!rows.length) return;
-  const cols = Object.keys(rows[0]);
-  const esc = v => {
-    if (v == null) return '';
-    const s = String(v);
-    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+function saveEmailjsCfg() {
+  const set = (id, key) => {
+    const v = (document.getElementById(id).value || '').trim();
+    if (v) localStorage.setItem(key, v); else localStorage.removeItem(key);
   };
-  const csv = [cols.join(',')]
-    .concat(rows.map(r => cols.map(c => esc(r[c])).join(',')))
-    .join('\n');
-  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-// Genera locales.csv y extintores.csv (de ambas bases) para importar en Supabase
-async function generarCSVSupabase() {
-  const st = document.getElementById('sbMigrateStatus');
-  st.innerHTML = '<span style="color:#999">⏳ Leyendo bases de datos...</span>';
-  try {
-    const archivos = ['BASE_DATOS_KFC.xlsx', 'BASE_DATOS_SUSHICORP.xlsx'];
-    const buffers = [];
-    for (const name of archivos) {
-      const resp = await fetch(`${name}?t=${Date.now()}`);
-      if (!resp.ok) throw new Error(`No se pudo leer ${name} (HTTP ${resp.status})`);
-      buffers.push({ name, buf: await resp.arrayBuffer() });
-    }
-    const { locales, extintores } = parseWorkbooks(buffers);
-    descargarCSV('locales.csv', locales);
-    setTimeout(() => descargarCSV('extintores.csv', extintores), 400);
-    st.innerHTML = `<span style="color:#27ae60">✅ Generados: locales.csv (${locales.length}) y extintores.csv (${extintores.length}). ` +
-      `Súbelos en Supabase → Table Editor → Import data from CSV.</span>`;
-  } catch (e) {
-    st.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`;
+  set('emailjsService', 'emailjsService');
+  set('emailjsTemplate', 'emailjsTemplate');
+  set('emailjsPublicKey', 'emailjsPublicKey');
+  const el = document.getElementById('emailjsStatus');
+  if (el) {
+    el.textContent = '✅ Guardado en este navegador';
+    clearTimeout(saveEmailjsCfg._t);
+    saveEmailjsCfg._t = setTimeout(() => el.textContent = '', 3000);
   }
-}
-
-// Parsea uno o más workbooks XLSX y devuelve { locales, extintores }
-// Usa el forward-fill de parseDetalleAgrupado y adjunta los viáticos al local.
-function parseWorkbooks(buffers) {
-  const seenCodes = new Set();
-  const locales = [];
-  const extintores = [];
-  const viaticosTodos = {};
-
-  for (const { name, buf } of buffers) {
-    const wb = XLSX.read(buf, { type: 'array' });
-    const wsRes = wb.Sheets['RESUMEN_LOCALES'];
-    const wsDet = wb.Sheets['DETALLE'];
-    if (!wsRes || !wsDet) throw new Error(`${name}: debe tener hojas RESUMEN_LOCALES y DETALLE`);
-
-    const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
-    const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
-
-    const { extintores: exts, viaticos } = parseDetalleAgrupado(detalle);
-    Object.assign(viaticosTodos, viaticos);
-
-    resumen.slice(1).forEach(r => {
-      if (!r[0]) return;
-      const codigo = normCode(String(r[0]));
-      if (seenCodes.has(codigo)) return;
-      seenCodes.add(codigo);
-      const v = viaticos[codigo];
-      locales.push({
-        codigo,
-        marca: String(r[1] || '').trim(),
-        nombre_local: String(r[2] || codigo).trim(),
-        mes_servicio: String(r[3] || '').trim().toUpperCase(),
-        n_extintores: parseInt(r[4]) || 0,
-        total_mantt: parseFloat(r[5]) || 0,
-        total_recarga: parseFloat(r[6]) || 0,
-        cobro_anual: parseFloat(r[7]) || 0,
-        anio_ult_recarga: r[8] != null ? parseInt(r[8]) || null : null,
-        anio_recarga: r[9] != null ? parseInt(r[9]) || null : null,
-        viatico_ruta: v ? v.ruta : null,
-        viatico_costo: v ? v.costo : null,
-      });
-    });
-
-    exts.forEach(e => {
-      if (!seenCodes.has(e.codigo)) return;
-      extintores.push({
-        codigo_local: e.codigo,
-        marca: String(e.marca || '').trim(),
-        nombre_local: String(e.nombre || '').trim(),
-        mes_servicio: String(e.mes || '').trim().toUpperCase(),
-        ubicacion: String(e.ubicacion || '').trim(),
-        tipo: String(e.tipo || '').trim().toUpperCase(),
-        capacidad: String(e.cap || '').trim(),
-        costo_mantt: e.costoMantt,
-        precio_recarga: e.precioRec,
-        anio_ult_recarga: e.anioUlt != null ? parseInt(e.anioUlt) || null : null,
-        anio_recarga: e.anioRec != null ? parseInt(e.anioRec) || null : null,
-      });
-    });
-  }
-  return { locales, extintores };
 }
 
 async function testGhConnection() {
@@ -1005,49 +576,6 @@ async function testGhConnection() {
   }
 }
 
-function iosDownloadFallback(e) {
-  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-    e.preventDefault();
-    window.open(e.currentTarget.href, '_blank');
-  }
-}
-
-function toggleCard(id) {
-  const body = document.getElementById(id + '-body');
-  const tog = document.getElementById(id + '-toggle');
-  const hidden = body.classList.toggle('hidden');
-  tog.textContent = hidden ? '▶' : '▼';
-}
-
-// ─── LOCAL CODE NORMALIZATION ─────────────────────────────────────────────────
-function normalizeLocalCode(rawCode) {
-  // KFCK02 → K02, GUSG49 → G49, M58 → M58, T032 → T032
-  let code = rawCode.toUpperCase().trim();
-  if (code.startsWith('KFCK')) code = 'K' + code.slice(4);
-  else if (code.startsWith('GUSG')) code = 'G' + code.slice(4);
-  return code;
-}
-
-function costCenter(localCode) {
-  // K02 → K002EC, M58 → M058EC, K105 → K105EC, CJNC01 → CJNC01EC
-  const m = localCode.match(/^([A-Z]+)(\d+)$/);
-  if (!m) return localCode + 'EC';
-  const prefix = m[1];
-  const num = m[2];
-  const padded = prefix.length <= 2 ? num.padStart(3, '0') : num;
-  return prefix + padded + 'EC';
-}
-
-function getEmpresa(localCode) {
-  const code = localCode.toUpperCase();
-  // Try multi-char prefixes first (longest match)
-  const prefixes = ['CJNC','GUSG','ILCI','AMCA','ESPE','JV','BS','DI','CA','KN','K','M','T','V','I','G','J','A','B','E','F','H','R','CN'];
-  for (const p of prefixes) {
-    if (code.startsWith(p)) return EMPRESAS_MAP[p] || null;
-  }
-  return null;
-}
-
 // ─── NAVEGACIÓN POR SECCIONES ─────────────────────────────────────────────────
 function goToSection(name) {
   document.querySelectorAll('.app-section').forEach(s => s.style.display = 'none');
@@ -1057,41 +585,8 @@ function goToSection(name) {
   const tab = document.querySelector(`.nav-tab[data-sec="${name}"]`);
   if (tab) tab.classList.add('active');
   localStorage.setItem('lastSection', name);
-  if (name === 'bd') renderBD();
-  if (name === 'certs') renderCertsList();
-}
-
-// ─── PERFILES (admin / empleado) ──────────────────────────────────────────────
-let currentProfile = localStorage.getItem('perfil') || 'admin';
-
-function setPerfil(p) {
-  currentProfile = p;
-  localStorage.setItem('perfil', p);
-  applyPerfil();
-}
-
-function applyPerfil() {
-  const isAdmin = currentProfile === 'admin';
-  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
-  document.getElementById('monthSelector').style.display = isAdmin ? '' : 'none';
-  if (!isAdmin) {
-    goToSection('plan');
-  } else {
-    const last = localStorage.getItem('lastSection') || 'plan';
-    goToSection(last);
-  }
-  updatePerfilIndicator();
-  renderPlan();
-}
-
-// ─── CAMBIO DE MES ────────────────────────────────────────────────────────────
-async function onMonthChange() {
-  if (onMonthChange._loopGuard) return;
-  onMonthChange._loopGuard = true;
-  try {
-    await cargarPlan();
-    renderBD();
-  } finally { onMonthChange._loopGuard = false; }
+  if (name === 'emitir') { renderEmitSelect(); renderCertsEmitidos(); }
+  if (name === 'locales') renderLibreta();
 }
 
 // ─── MODO OSCURO ──────────────────────────────────────────────────────────────
@@ -1113,536 +608,276 @@ function fileToBase64(file) {
 const GH_REPO = 'alejosl0801/previfuego-facturacion';
 const GH_BRANCH = 'main';
 
-function ghFilePath() {
-  const mes = document.getElementById('selMes').value;
-  const anio = document.getElementById('selAnio').value;
-  const mesNombre = MESES_NOMBRE[mes] || 'TODOS';
-  return `datos/${mesNombre}-${anio}.json`;
+// Sube (crea o actualiza) un archivo al repo. content = base64 sin prefijo data:.
+async function ghPutFile(path, base64Content, message) {
+  const token = getGhToken();
+  if (!token) return false;
+  let sha = null;
+  const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+  });
+  if (check.ok) { const d = await check.json(); sha = d.sha; }
+  const body = { message, content: base64Content, branch: GH_BRANCH };
+  if (sha) body.sha = sha;
+  const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return r.ok;
 }
 
-function buildPayload() {
-  return {
-    mes: document.getElementById('selMes').value,
-    anio: document.getElementById('selAnio').value,
-    savedAt: new Date().toISOString(),
-    visitaStatus
-  };
+// ─── LIBRETA DE LOCALES ───────────────────────────────────────────────────────
+let libretaLocales = [];
+
+function loadLibreta() {
+  try { libretaLocales = JSON.parse(localStorage.getItem('libretaLocales') || '[]'); }
+  catch(e) { libretaLocales = []; }
+  if (!Array.isArray(libretaLocales)) libretaLocales = [];
 }
 
-// ─── AUTO-GUARDADO ────────────────────────────────────────────────────────────
-// Cada cambio se guarda SOLO: al instante en el navegador (localStorage) y, si hay
-// token de GitHub, también en la nube (con un pequeño retraso para no saturar).
-function lsKey() { return 'sesion_' + ghFilePath(); }
-
-function localSave() {
-  try { localStorage.setItem(lsKey(), JSON.stringify(buildPayload())); } catch(e) {}
-}
-
-function localRestore() {
-  try {
-    const raw = localStorage.getItem(lsKey());
-    if (!raw) return false;
-    const json = JSON.parse(raw);
-    visitaStatus = json.visitaStatus || {};
-    return true;
-  } catch(e) { return false; }
-}
-
-let _autosaveTimer = null;
-function autosave() {
-  localSave();                       // inmediato y local — nunca se pierde
-  if (getGhToken()) {                // y a la nube, con debounce de 2.5s
-    clearTimeout(_autosaveTimer);
-    _autosaveTimer = setTimeout(() => ghGuardar(true), 2500);
+function saveLibreta() {
+  try { localStorage.setItem('libretaLocales', JSON.stringify(libretaLocales)); } catch(e) {}
+  if (getGhToken()) {
+    clearTimeout(saveLibreta._t);
+    saveLibreta._t = setTimeout(backupLibretaGitHub, 2000);
   }
 }
 
-async function ghGuardar(silent = false) {
+async function backupLibretaGitHub() {
+  try {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(libretaLocales, null, 2))));
+    await ghPutFile('datos/libreta_locales.json', content, 'libreta: actualización ' + new Date().toISOString());
+  } catch(e) { console.warn('backup libreta:', e); }
+}
+
+// Restaura la libreta desde GitHub si el navegador aún no tiene datos.
+async function restoreLibretaGitHub() {
   const token = getGhToken();
-  const st = document.getElementById('ghStatus');
   if (!token) return;
-
-  const path = ghFilePath();
-  const payload = buildPayload();
-
-  if (!silent && st) st.textContent = '⏳ Guardando...';
   try {
-    let sha = null;
-    const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/datos/libreta_locales.json?ref=${GH_BRANCH}`, {
       headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
     });
-    if (check.ok) {
-      const existing = await check.json();
-      sha = existing.sha;
+    if (!r.ok) return;
+    const d = await r.json();
+    const json = JSON.parse(decodeURIComponent(escape(atob(d.content))));
+    if (Array.isArray(json) && json.length) {
+      libretaLocales = json;
+      try { localStorage.setItem('libretaLocales', JSON.stringify(json)); } catch(e) {}
+      renderLibreta();
+      renderEmitSelect();
     }
-
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
-    const body = {
-      message: `datos: ${MESES_NOMBRE[payload.mes]}-${payload.anio}`,
-      content,
-      branch: GH_BRANCH
-    };
-    if (sha) body.sha = sha;
-
-    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/vnd.github+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
-
-    if (r.ok) {
-      if (st) st.innerHTML =
-        `<span style="color:green">✅ Guardado en la nube · ${new Date().toLocaleTimeString()}</span>`;
-    } else {
-      const err = await r.json();
-      throw new Error(err.message || r.status);
-    }
-  } catch (e) {
-    if (st) st.innerHTML = `<span style="color:red">❌ ${e.message}</span>`;
-  }
+  } catch(e) { console.warn('restore libreta:', e); }
 }
 
-async function ghCargar() {
-  const token = getGhToken();
-
-  if (!token) {
-    const ok = localRestore();
-    if (ok) renderPlan();
-    return;
-  }
-
-  const path = ghFilePath();
-  try {
-    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
-      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
-    });
-    if (!r.ok) {
-      const ok = localRestore();
-      if (ok) renderPlan();
-      return;
-    }
-    const data = await r.json();
-    const json = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-
-    visitaStatus = json.visitaStatus || {};
-
-    renderPlan();
-    const gs = document.getElementById('ghStatus');
-    if (gs) gs.textContent = `☁️ Sincronizado (${new Date(json.savedAt).toLocaleString()})`;
-  } catch (e) {
-    const ok = localRestore();
-    if (ok) renderPlan();
-    const gs = document.getElementById('ghStatus');
-    if (gs) gs.textContent = '⚠️ Sin conexión — datos locales';
-  }
+function getLocalLibreta(codigo) {
+  return libretaLocales.find(l => l.codigo === codigo);
 }
 
-// ─── PLAN DEL MES ─────────────────────────────────────────────────────────────
-let planMes = [];
-let visitaStatus = {};
-const RAW_BASE = '';
-
-// Normaliza código corto → 3 dígitos y mapea CN compartidos → BS
-const CN_TO_BS_MAP = {'CN004':'BS004','CN016':'BS016','CN031':'BS031','CN037':'BS037'};
-function normCode(raw) {
-  const m = String(raw).match(/^([A-Z]+)(\d+)/);
-  if (!m) return raw;
-  const n = m[1] + String(parseInt(m[2])).padStart(3, '0');
-  return CN_TO_BS_MAP[n] || n;
-}
-
-// El DETALLE usa formato agrupado: el código/mes del local aparece solo en la
-// primera fila de cada grupo de extintores. Esta función propaga (forward-fill)
-// el código y el mes a cada extintor, separa las filas de MOVILIZACIÓN (viáticos)
-// y descarta subtotales ("N ext.") y filas vacías.
-// rows = matriz del DETALLE incluyendo la fila de encabezado.
-// Devuelve { extintores: [...], viaticos: { CODIGO: { ruta, costo } } }
-function parseDetalleAgrupado(rows) {
-  const extintores = [];
-  const viaticos = {};
-  let cod = null, nombre = null, mes = null, marca = null;
-
-  rows.slice(1).forEach(r => {
-    const cap = String(r[5] || '').toLowerCase();
-    if (cap.includes('ext')) { cod = null; nombre = null; mes = null; marca = null; return; } // subtotal
-    if (r[1] && /^[A-Z]+\d+/.test(String(r[1]).trim().toUpperCase())) {
-      nombre = String(r[1]).trim();
-      cod = normCode(nombre.match(/^([A-Z]+\d+)/)[1]);
-      if (r[2]) mes = r[2];
-      if (r[0]) marca = r[0];
-    }
-    if (r[4]) { // tiene TIPO → extintor o movilización
-      if (!cod) return;
-      const tipo = String(r[4]).trim().toUpperCase();
-      if (tipo.includes('MOVIL')) {
-        viaticos[cod] = { ruta: String(r[3] || '').trim(), costo: parseFloat(r[6]) || 0 };
-      } else {
-        extintores.push({
-          codigo: cod, nombre, mes, marca,
-          ubicacion: String(r[3] || '').trim(),
-          tipo: r[4], cap: r[5],
-          costoMantt: parseFloat(r[6]) || 0,
-          precioRec: parseFloat(r[7]) || 0,
-          anioUlt: r[8], anioRec: r[9],
-        });
-      }
-    } else if (!r.some(c => c != null)) {
-      cod = null; nombre = null; mes = null; marca = null; // fila vacía → reset
-    }
-  });
-
-  return { extintores, viaticos };
-}
-
-async function cargarPlanDesdeSupabase(mesNom, anio, todosLosMeses) {
-  const hdrs = { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` };
-
-  let urlLoc = `${SB_URL}/rest/v1/locales?select=*&order=codigo`;
-  let urlExt = `${SB_URL}/rest/v1/extintores?select=*`;
-  if (!todosLosMeses && mesNom) {
-    urlLoc += `&mes_servicio=eq.${encodeURIComponent(mesNom)}`;
-    urlExt += `&mes_servicio=eq.${encodeURIComponent(mesNom)}`;
-  }
-
-  const [rLoc, rExt] = await Promise.all([
-    fetch(urlLoc, { headers: hdrs }),
-    fetch(urlExt, { headers: hdrs })
-  ]);
-  if (!rLoc.ok) throw new Error(`Locales: HTTP ${rLoc.status}`);
-  if (!rExt.ok) throw new Error(`Extintores: HTTP ${rExt.status}`);
-
-  const locales    = await rLoc.json();
-  const extintores = await rExt.json();
-
-  const extMap = {};
-  extintores.forEach(r => {
-    const cod = r.codigo_local;
-    if (!cod) return;
-    if (!extMap[cod]) extMap[cod] = [];
-    extMap[cod].push({ tipo: r.tipo, cap: r.capacidad, costoMantt: parseFloat(r.costo_mantt) || 0, precioRec: parseFloat(r.precio_recarga) || 0, anioRec: r.anio_recarga });
-  });
-
-  planMes = locales.map(r => {
-    const cod = r.codigo;
-    const anioRec = r.anio_recarga || 9999;
-    const esRecarga = parseInt(anio) === anioRec;
-    return {
-      codigo: cod,
-      marca: r.marca,
-      nombre: String(r.nombre_local || cod),
-      mes: r.mes_servicio,
-      nExt: r.n_extintores || 0,
-      totalMantt: parseFloat(r.total_mantt) || 0,
-      totalRecarga: parseFloat(r.total_recarga) || 0,
-      cobro: parseFloat(r.cobro_anual) || 0,
-      anioRec,
-      esRecarga,
-      empresa: getEmpresa(cod),
-      extintores: extMap[cod] || [],
-      viatico: (r.viatico_costo != null) ? { ruta: r.viatico_ruta || '', costo: parseFloat(r.viatico_costo) || 0 } : null,
-    };
-  });
-
-  const _ls = document.getElementById('loadStatus');
-  if (_ls) {
-    _ls.innerHTML = `<div class="status-bar" style="background:#e8f5e9;border:1px solid #81c784;color:#2e7d32">☁️ Datos cargados desde Supabase (${locales.length} locales)</div>`;
-    setTimeout(() => { if (_ls) _ls.innerHTML = ''; }, 4000);
-  }
-  renderPlan();
-  renderBD();
-}
-
-async function cargarPlan() {
-  const mesVal  = document.getElementById('selMes').value;
-  const mesNom  = MESES_NOMBRE[mesVal] || '';
-  const anio    = document.getElementById('selAnio').value;
-  const todosLosMeses = mesVal === '';
-
-  document.getElementById('planContainer').innerHTML =
-    '<p style="color:#999;font-size:13px">Cargando base de datos…</p>';
-  const _ls = document.getElementById('loadStatus');
-  if (_ls) _ls.innerHTML = '<div class="status-bar status-info">⏳ Cargando base de datos de extintores…</div>';
-
-  // Intenta Supabase primero (siempre disponible, sin configuración)
-  try {
-    await cargarPlanDesdeSupabase(mesNom, anio, todosLosMeses);
-    return;
-  } catch (e) {
-    console.warn('Supabase no disponible, usando Excel:', e.message);
-  }
-
-  // Fallback: cargar desde los Excel locales (KFC + SUSHICORP, bases separadas)
-  try {
-    const archivos = ['BASE_DATOS_KFC.xlsx', 'BASE_DATOS_SUSHICORP.xlsx'];
-    let acumulado = [];
-    for (const archivo of archivos) {
-      try {
-        const resp = await fetch(`${archivo}?t=${Date.now()}`);
-        if (!resp.ok) continue;
-        const buf = await resp.arrayBuffer();
-        const wb  = XLSX.read(buf, { type: 'array' });
-        acumulado = acumulado.concat(buildLocalesFromWorkbook(wb, mesNom, anio, todosLosMeses));
-      } catch (e) { console.warn(`No se pudo cargar ${archivo}:`, e.message); }
-    }
-    planMes = acumulado;
-
-    const _ls2 = document.getElementById('loadStatus');
-    if (_ls2) _ls2.innerHTML = '';
-    renderPlan();
-    renderBD();
-  } catch(e) {
-    console.error('cargarPlan:', e);
-    document.getElementById('planContainer').innerHTML =
-      `<p style="color:#c0392b;font-size:13px">Error cargando base de datos: ${e.message}</p>`;
-  }
-}
-
-// Construye los locales (formato planMes) de un workbook XLSX con hojas
-// RESUMEN_LOCALES + DETALLE. Aplica forward-fill y filtro por mes.
-function buildLocalesFromWorkbook(wb, mesNom, anio, todosLosMeses) {
-  const wsRes = wb.Sheets['RESUMEN_LOCALES'];
-  const wsDet = wb.Sheets['DETALLE'];
-  if (!wsRes || !wsDet) return [];
-  const resumen = XLSX.utils.sheet_to_json(wsRes, { header: 1, defval: null });
-  const detalle = XLSX.utils.sheet_to_json(wsDet, { header: 1, defval: null });
-
-  const normMes = s => String(s || '').trim().toUpperCase();
-  const { extintores, viaticos } = parseDetalleAgrupado(detalle);
-  const extMap = {};
-  extintores.forEach(e => {
-    if (!todosLosMeses && normMes(e.mes) !== normMes(mesNom)) return;
-    if (!extMap[e.codigo]) extMap[e.codigo] = [];
-    extMap[e.codigo].push({ tipo: e.tipo, cap: e.cap, costoMantt: e.costoMantt, precioRec: e.precioRec, anioRec: e.anioRec });
-  });
-
-  return resumen.slice(1)
-    .filter(r => r[0] && (todosLosMeses || normMes(r[3]) === normMes(mesNom)))
-    .map(r => {
-      const cod = normCode(String(r[0]));
-      const _rawAnio = r[9] != null && String(r[9]).trim() !== '' ? parseInt(r[9]) : null;
-      const anioRec = (_rawAnio != null && !isNaN(_rawAnio)) ? _rawAnio : 9999;
-      const esRecarga = parseInt(anio) === anioRec;
-      return {
-        codigo: cod,
-        marca: r[1],
-        nombre: String(r[2] || cod),
-        mes: r[3],
-        nExt: r[4] || 0,
-        totalMantt: parseFloat(r[5]) || 0,
-        totalRecarga: parseFloat(r[6]) || 0,
-        cobro: parseFloat(r[7]) || 0,
-        anioRec,
-        esRecarga,
-        empresa: getEmpresa(cod),
-        extintores: extMap[cod] || [],
-        viatico: viaticos[cod] || null,
-      };
-    });
-}
-
-function renderPlan() {
-  const total     = planMes.length;
-  const visitados = planMes.filter(l => visitaStatus[l.codigo] === 'visitado').length;
-  const pendientes = total - visitados;
-  const mesVal = document.getElementById('selMes').value;
-  const mesNom = MESES_NOMBRE[mesVal] || (mesVal ? mesVal : 'TODOS LOS MESES');
-  const isAdmin = currentProfile === 'admin';
-
-  const statsEl = document.getElementById('planStats');
-  if (statsEl) statsEl.innerHTML =
-    `${mesNom}: <span style="color:#27ae60">✅ ${visitados} visitados</span> &nbsp;·&nbsp; ` +
-    `<span style="color:#e74c3c">🔴 ${pendientes} pendientes</span> &nbsp;·&nbsp; ${total} total`;
-
-  const cont = document.getElementById('planContainer');
+function renderLibreta() {
+  const cont = document.getElementById('libretaLista');
   if (!cont) return;
-
-  if (!total) {
-    cont.innerHTML = '<p style="color:#999;font-size:13px">Sin locales programados para este mes.</p>';
+  if (!libretaLocales.length) {
+    cont.innerHTML = '<p style="color:#999;font-size:13px">No hay locales guardados. Pulsa “Nuevo local” para agregar el primero.</p>';
     return;
   }
-
-  // Filtro de búsqueda
-  const q = (document.getElementById('planSearch')?.value || '').toUpperCase().trim();
-
-  const visibles = planMes
-    .map(local => ({ local }))
-    .filter(({ local }) => !q ||
-      local.codigo.toUpperCase().includes(q) ||
-      String(local.nombre).toUpperCase().includes(q) ||
-      String(local.marca).toUpperCase().includes(q));
-
-  if (!visibles.length) {
-    cont.innerHTML = `<p style="color:#999;font-size:13px">Ningún local coincide con "${q}".</p>`;
-    return;
-  }
-
-  function buildCard({ local }) {
-    const status     = visitaStatus[local.codigo] || 'pendiente';
-    const isVisitado = status === 'visitado';
-    const iva        = parseFloat((local.cobro * 0.15).toFixed(2));
-    const totalCobro = parseFloat((local.cobro + iva).toFixed(2));
-    const localLabel = local.nombre.replace(local.codigo + ' - ', '');
-    const extList    = local.extintores
-      .map(e => `<code style="font-size:11px;background:#f5f5f5;padding:1px 4px;border-radius:3px">${e.tipo} ${e.cap}</code>`)
-      .join(' ');
-    const tipoServ   = local.esRecarga
-      ? `<span style="color:#8e44ad;font-weight:600">⟳ RECARGA ${local.anioRec}</span>`
-      : `<span style="color:#2980b9;font-weight:600">🔧 MANTENIMIENTO</span>`;
-
+  cont.innerHTML = libretaLocales.slice().sort((a, b) => String(a.codigo).localeCompare(String(b.codigo))).map(l => {
+    const dir = l.direccion ? ` · ${esc(l.direccion)}` : '';
+    const mail = l.email ? ` · ✉️ ${esc(l.email)}` : '';
     return `
-      <div class="local-card ${status}" id="lcard-${local.codigo}">
-        <div class="local-card-header" onclick="toggleLocalCard('${local.codigo}')">
+      <div class="local-card">
+        <div class="local-card-header">
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
-            <span class="badge-${status}">${isVisitado ? '✅' : '🔴'}</span>
-            <strong style="white-space:nowrap">${local.codigo}</strong>
-            <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${localLabel}</span>
-            <span style="font-size:11px;color:#999;white-space:nowrap">${local.marca}</span>
-            ${mesVal === '' ? `<span style="font-size:11px;color:#8e44ad;font-weight:600;white-space:nowrap">${local.mes||''}</span>` : ''}
+            <strong style="white-space:nowrap">${esc(l.codigo)}</strong>
+            <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.nombre)}</span>
+            <span style="font-size:11px;color:#999;white-space:nowrap">${(l.extintores || []).length} ext</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-            <span class="badge-${status}">${isVisitado ? 'VISITADO' : 'PENDIENTE'}</span>
-            <span style="font-size:12px;font-weight:600;color:#333;white-space:nowrap">${local.nExt} ext · $${local.cobro.toFixed(2)}</span>
-            <button class="btn btn-sm ${isVisitado ? 'btn-warning' : 'btn-success'}" style="font-size:11px;padding:3px 8px;white-space:nowrap"
-              onclick="event.stopPropagation();toggleVisita('${local.codigo}')">
-              ${isVisitado ? '↩ Pendiente' : '✅ Visitado'}
-            </button>
-            <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;background:#8e44ad;color:white"
-              onclick="event.stopPropagation();abrirCertModal('${local.codigo}')">
-              📜 Generar Certificado
-            </button>
+            <button class="btn btn-sm btn-info" style="font-size:11px;padding:3px 8px" onclick="libretaEditar('${esc(l.codigo)}')">✏️ Editar</button>
+            <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#e74c3c;color:white" onclick="libretaEliminarLocal('${esc(l.codigo)}')">🗑️</button>
           </div>
         </div>
-        <div class="local-card-body" id="lbody-${local.codigo}">
-          <div style="margin-bottom:6px">${extList || '<em style="color:#e74c3c">⚠️ Sin extintores en la base de datos</em>'}</div>
-          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;align-items:center">
-            ${tipoServ}
-            <span>Subtotal: <strong>$${local.cobro.toFixed(2)}</strong></span>
-            <span>IVA 15%: <strong>$${iva.toFixed(2)}</strong></span>
-            <span>Total: <strong>$${totalCobro.toFixed(2)}</strong></span>
-          </div>
+        <div class="local-card-body">
+          <div style="margin-bottom:4px">${(l.extintores || []).map(e => `<code style="font-size:11px;background:#f5f5f5;padding:1px 4px;border-radius:3px">${esc((e.tipo || '') + ' ' + (e.cap || ''))}</code>`).join(' ') || '<em>Sin extintores</em>'}</div>
+          <div style="font-size:11px;color:#888">${esc((l.direccion || 'Sin dirección'))}${mail}</div>
         </div>
       </div>`;
-  }
-
-  // Separar pendientes y visitados
-  const grpPendientes = visibles.filter(({ local }) => (visitaStatus[local.codigo] || 'pendiente') !== 'visitado');
-  const grpVisitados  = visibles.filter(({ local }) => (visitaStatus[local.codigo] || 'pendiente') === 'visitado');
-
-  let html = '';
-
-  if (grpPendientes.length) {
-    html += `<div style="font-size:12px;font-weight:700;color:#e74c3c;text-transform:uppercase;letter-spacing:0.5px;padding:6px 4px;margin-bottom:4px;border-bottom:2px solid #e74c3c">
-      🔴 PENDIENTES (${grpPendientes.length})
-    </div>`;
-    html += grpPendientes.map(buildCard).join('');
-  }
-
-  if (grpVisitados.length) {
-    html += `<div style="font-size:12px;font-weight:700;color:#27ae60;text-transform:uppercase;letter-spacing:0.5px;padding:6px 4px;margin:12px 0 4px;border-bottom:2px solid #27ae60">
-      ✅ VISITADOS (${grpVisitados.length})
-    </div>`;
-    html += grpVisitados.map(buildCard).join('');
-  }
-
-  cont.innerHTML = html;
-}
-
-// ─── BASE DE DATOS: tabla del mes ─────────────────────────────────────────────
-function renderBD() {
-  const cont = document.getElementById('bdContainer');
-  if (!cont) return;
-  if (!planMes.length) {
-    cont.innerHTML = '<p style="color:#999;font-size:13px">Sin locales para este mes.</p>';
-    return;
-  }
-  let html = `<table><thead><tr>
-    <th>Código</th><th>Local</th><th>Marca</th><th>Extintores</th>
-    <th>Servicio</th><th>Cobro</th></tr></thead><tbody>`;
-  html += planMes.map(l => {
-    const ext = l.extintores.map(e => `${e.tipo} ${e.cap}`).join(', ');
-    const serv = l.esRecarga ? `RECARGA ${l.anioRec}` : 'MANTENIMIENTO';
-    return `<tr>
-      <td><strong>${l.codigo}</strong></td>
-      <td>${l.nombre.replace(l.codigo+' - ','')}</td>
-      <td>${l.marca}</td>
-      <td style="font-size:11px">${ext || '—'}</td>
-      <td>${serv}</td>
-      <td style="text-align:right">$${l.cobro.toFixed(2)}</td>
-    </tr>`;
   }).join('');
-  html += '</tbody></table>';
-  cont.innerHTML = html;
 }
 
-// ─── CERTIFICADOS: lista guardada (admin) ─────────────────────────────────────
-async function renderCertsList() {
-  const cont = document.getElementById('certsContainer');
-  const desc = document.getElementById('certsDesc');
+function libAddExtintor(tipo, cap) {
+  const list = document.getElementById('libExtList');
+  if (!list) return;
+  const div = document.createElement('div');
+  div.className = 'lib-ext-row';
+  div.style.cssText = 'display:flex;gap:8px;margin-bottom:6px;align-items:center';
+  div.innerHTML = `
+    <select class="lib-ext-tipo" style="flex:1">
+      <option value="PQS">PQS</option>
+      <option value="CO2">CO2</option>
+      <option value="TIPO K">TIPO K</option>
+    </select>
+    <input class="lib-ext-cap" style="flex:1" placeholder="10 LBS" autocomplete="off" />
+    <button type="button" class="btn btn-sm" style="background:#e74c3c;color:white;flex-shrink:0" onclick="this.parentNode.remove()">✕</button>`;
+  list.appendChild(div);
+  if (tipo && typeof tipo === 'string') {
+    const s = div.querySelector('.lib-ext-tipo');
+    if ([...s.options].some(o => o.value === tipo)) s.value = tipo;
+  }
+  if (cap != null && typeof cap === 'string') div.querySelector('.lib-ext-cap').value = cap;
+}
+
+function libretaNuevo() {
+  document.getElementById('libFormTitle').textContent = 'Nuevo local';
+  document.getElementById('libEditCodigo').value = '';
+  document.getElementById('libCodigo').value = '';
+  document.getElementById('libNombre').value = '';
+  document.getElementById('libDireccion').value = '';
+  document.getElementById('libEmail').value = '';
+  document.getElementById('libExtList').innerHTML = '';
+  libAddExtintor();
+  document.getElementById('libFormStatus').innerHTML = '';
+  const card = document.getElementById('libFormCard');
+  card.style.display = '';
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function libretaEditar(codigo) {
+  const l = getLocalLibreta(codigo);
+  if (!l) return;
+  document.getElementById('libFormTitle').textContent = 'Editar ' + l.codigo;
+  document.getElementById('libEditCodigo').value = l.codigo;
+  document.getElementById('libCodigo').value = l.codigo;
+  document.getElementById('libNombre').value = l.nombre || '';
+  document.getElementById('libDireccion').value = l.direccion || '';
+  document.getElementById('libEmail').value = l.email || '';
+  document.getElementById('libExtList').innerHTML = '';
+  (l.extintores || []).forEach(e => libAddExtintor(e.tipo, e.cap));
+  if (!(l.extintores || []).length) libAddExtintor();
+  document.getElementById('libFormStatus').innerHTML = '';
+  const card = document.getElementById('libFormCard');
+  card.style.display = '';
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function libretaEliminarLocal(codigo) {
+  if (!confirm('¿Eliminar el local ' + codigo + '?')) return;
+  libretaLocales = libretaLocales.filter(l => l.codigo !== codigo);
+  saveLibreta();
+  renderLibreta();
+  renderEmitSelect();
+}
+
+function libCancelForm() {
+  document.getElementById('libFormCard').style.display = 'none';
+}
+
+function guardarLocalForm() {
+  const codigo = (document.getElementById('libCodigo').value || '').trim().toUpperCase();
+  const nombre = (document.getElementById('libNombre').value || '').trim();
+  const direccion = (document.getElementById('libDireccion').value || '').trim();
+  const email = (document.getElementById('libEmail').value || '').trim();
+  const editCodigo = document.getElementById('libEditCodigo').value || '';
+  const st = document.getElementById('libFormStatus');
+  if (!codigo) { st.innerHTML = '<span style="color:#e74c3c">El código es obligatorio.</span>'; return; }
+  if (!nombre) { st.innerHTML = '<span style="color:#e74c3c">El nombre es obligatorio.</span>'; return; }
+  const dupe = libretaLocales.find(l => l.codigo === codigo && l.codigo !== editCodigo);
+  if (dupe) { st.innerHTML = '<span style="color:#e74c3c">Ya existe un local con el código ' + esc(codigo) + '.</span>'; return; }
+  const extintores = [...document.querySelectorAll('#libExtList .lib-ext-row')].map(r => ({
+    tipo: r.querySelector('.lib-ext-tipo').value,
+    cap: (r.querySelector('.lib-ext-cap').value || '').trim()
+  })).filter(e => e.cap);
+  const local = { codigo, nombre, direccion, email, extintores };
+  if (editCodigo) {
+    const idx = libretaLocales.findIndex(l => l.codigo === editCodigo);
+    if (idx >= 0) libretaLocales[idx] = local; else libretaLocales.push(local);
+  } else {
+    libretaLocales.push(local);
+  }
+  saveLibreta();
+  renderLibreta();
+  renderEmitSelect();
+  libCancelForm();
+}
+
+// ─── EMISIÓN ──────────────────────────────────────────────────────────────────
+function renderEmitSelect() {
+  const sel = document.getElementById('emitSelect');
+  if (!sel) return;
+  const opts = libretaLocales.slice()
+    .sort((a, b) => String(a.codigo).localeCompare(String(b.codigo)))
+    .map(l => `<option value="${esc(l.codigo)}">${esc(l.codigo)} — ${esc(l.nombre)}</option>`).join('');
+  sel.innerHTML = '<option value="">— Selecciona un local —</option>' + opts;
+}
+
+function emitSelectChange() {
+  const sel = document.getElementById('emitSelect');
+  const codigo = sel.value;
+  sel.value = '';
+  if (codigo) abrirCertModal(codigo);
+}
+
+// ─── HISTÓRICO DE CERTIFICADOS EMITIDOS ───────────────────────────────────────
+let certsEmitidos = [];
+
+function loadCertsEmitidos() {
+  try { certsEmitidos = JSON.parse(localStorage.getItem('certsEmitidos') || '[]'); }
+  catch(e) { certsEmitidos = []; }
+  if (!Array.isArray(certsEmitidos)) certsEmitidos = [];
+}
+
+function registrarCertEmitido(local) {
+  certsEmitidos.unshift({
+    codigo: local.codigo,
+    nombre: local.nombre,
+    fecha: new Date().toISOString(),
+    anio: new Date().getFullYear()
+  });
+  certsEmitidos = certsEmitidos.slice(0, 200);
+  try { localStorage.setItem('certsEmitidos', JSON.stringify(certsEmitidos)); } catch(e) {}
+  renderCertsEmitidos();
+}
+
+function renderCertsEmitidos() {
+  const cont = document.getElementById('certsEmitidosLista');
   if (!cont) return;
-  const isAdmin = currentProfile === 'admin';
-
-  if (!isAdmin) {
-    if (desc) desc.innerHTML =
-      `Abre un local en el <strong>Plan del Mes</strong>, adjunta las fotos del trabajo y pulsa ` +
-      `<strong>Generar Certificado</strong>. El PDF se descarga y se respalda en la nube.`;
-    cont.innerHTML = '<p style="color:#999;font-size:13px">Ve a 📅 Plan del Mes para generar certificados por local.</p>';
+  if (!certsEmitidos.length) {
+    cont.innerHTML = '<p style="color:#999;font-size:13px">Aún no has emitido certificados.</p>';
     return;
   }
+  cont.innerHTML = certsEmitidos.slice(0, 50).map(c => {
+    const f = new Date(c.fecha);
+    const fs = isNaN(f.getTime()) ? '' : f.toLocaleString('es-EC');
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid #eee;border-radius:6px;margin-bottom:6px">
+      <span style="font-size:13px">📜 <strong>${esc(c.codigo)}</strong> — ${esc(c.nombre)}</span>
+      <span style="font-size:12px;color:#999;white-space:nowrap">${esc(fs)}</span></div>`;
+  }).join('');
+}
 
-  if (desc) desc.innerHTML = `Certificados generados por el personal este mes. Descárgalos para enviarlos por correo.`;
-
-  const token = getGhToken();
-  if (!token) {
-    cont.innerHTML = '<p style="color:#999;font-size:13px">Configura un GitHub Token para ver los certificados guardados en la nube.</p>';
-    return;
-  }
-  const mesVal2 = document.getElementById('selMes').value;
-  const mes = MESES_NOMBRE[mesVal2];
-  const anio = document.getElementById('selAnio').value;
-  if (!mes) {
-    cont.innerHTML = '<p style="color:#e67e22;font-size:13px">⚠️ Selecciona un mes específico para ver los certificados.</p>';
-    return;
-  }
-  const dir = `certificados/${mes}-${anio}`;
-  cont.innerHTML = '<p style="color:#999;font-size:13px">⏳ Cargando certificados…</p>';
+// ─── ENVÍO POR CORREO (EmailJS) ───────────────────────────────────────────────
+// El template de EmailJS debe configurarse con un adjunto cuyo contenido use la
+// variable {{pdf_base64}} (nombre {{file_name}}), el destinatario {{to_email}} y
+// {{local_nombre}} en el cuerpo. Si no está configurado, no rompe el flujo.
+async function enviarCertCorreo(pdfBase64, nombreArchivo, emailDestino, nombreLocal) {
+  const service = localStorage.getItem('emailjsService') || '';
+  const template = localStorage.getItem('emailjsTemplate') || '';
+  const pk = localStorage.getItem('emailjsPublicKey') || '';
+  if (!service || !template || !pk) return { ok: false, msg: 'EmailJS no está configurado (ve a ⚙️ Configuración).' };
+  if (!emailDestino) return { ok: false, msg: 'El local no tiene correo configurado; no se envió por email.' };
+  if (!window.emailjs) return { ok: false, msg: 'Librería EmailJS no cargada.' };
   try {
-    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${dir}?ref=${GH_BRANCH}`, {
-      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    emailjs.init({ publicKey: pk });
+    await emailjs.send(service, template, {
+      to_email: emailDestino,
+      local_nombre: nombreLocal,
+      file_name: nombreArchivo,
+      pdf_base64: pdfBase64
     });
-    if (!r.ok) {
-      cont.innerHTML = '<p style="color:#999;font-size:13px">Aún no hay certificados guardados para este mes.</p>';
-      return;
-    }
-    const files = await r.json();
-    const pdfs = (Array.isArray(files) ? files : []).filter(f => f.name.endsWith('.pdf'));
-    if (!pdfs.length) {
-      cont.innerHTML = '<p style="color:#999;font-size:13px">Aún no hay certificados guardados para este mes.</p>';
-      return;
-    }
-    cont.innerHTML = pdfs.map(f => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid #eee;border-radius:6px;margin-bottom:6px">
-        <span style="font-size:13px">📜 ${esc(f.name)}</span>
-        <a href="${esc(f.download_url)}" download="${esc(f.name)}" class="btn btn-sm btn-info" style="font-size:12px">⬇️ Descargar</a>
-      </div>`).join('');
+    return { ok: true, msg: 'Correo enviado a ' + emailDestino };
   } catch (e) {
-    cont.innerHTML = `<p style="color:#c0392b;font-size:13px">Error cargando certificados: ${e.message}</p>`;
+    return { ok: false, msg: 'Error al enviar el correo: ' + ((e && (e.text || e.message)) || e) };
   }
-}
-
-function toggleLocalCard(codigo) {
-  const card = document.getElementById(`lcard-${codigo}`);
-  if (card) card.classList.toggle('open');
-}
-
-function toggleVisita(codigo) {
-  const cur = visitaStatus[codigo] || 'pendiente';
-  visitaStatus[codigo] = cur === 'visitado' ? 'pendiente' : 'visitado';
-  renderPlan();
-  autosave();
 }
 
 // ─── CERTIFICADOS PDF ─────────────────────────────────────────────────────────
@@ -1956,12 +1191,11 @@ async function hacerPDF(opts) {
 }
 
 function abrirCertModal(codigo) {
-  const local = planMes.find(l=>l.codigo===codigo);
-  if (!local) return;
+  const local = getLocalLibreta(codigo);
+  if (!local) { alert('Local no encontrado en la libreta.'); return; }
   certModalCodigo = codigo;
   certFotos = {}; certHayNovedades = false; certAccsSelected = new Set();
-  document.getElementById('certModalTitle').textContent =
-    codigo+' — '+local.nombre.replace(codigo+' - ','');
+  document.getElementById('certModalTitle').textContent = codigo + ' — ' + (local.nombre || '');
   // Reset foto previews
   ['antes','despues','cilindro'].forEach(k => {
     const prev = document.getElementById('certFotoPreview_'+k);
@@ -1970,12 +1204,11 @@ function abrirCertModal(codigo) {
     if (card) card.classList.remove('has-foto');
   });
   // Ocultar foto de cilindro CO₂ si el local no tiene CO2
-  const tieneCO2 = local.extintores.some(e => (e.tipo||'').toUpperCase() === 'CO2');
+  const tieneCO2 = (local.extintores || []).some(e => (e.tipo||'').toUpperCase() === 'CO2');
   const cilCard = document.getElementById('certFotoCard_cilindro');
   if (cilCard) cilCard.style.display = tieneCO2 ? '' : 'none';
-  // Preseleccionar tipo de servicio
-  const tipoVal = local.esRecarga ? 'recarga' : 'mantenimiento';
-  document.querySelectorAll('input[name="certTipoServ"]').forEach(r => { r.checked = (r.value === tipoVal); });
+  // Tipo de servicio por defecto: mantenimiento
+  document.querySelectorAll('input[name="certTipoServ"]').forEach(r => { r.checked = (r.value === 'mantenimiento'); });
   certTipoChange();
   // Reset novedades
   document.getElementById('novBtnBad').className = 'nov-btn';
@@ -2115,7 +1348,7 @@ function renderAccCatalog() {
   if (!cat) return;
 
   // Determinar tipos de extintores que tiene el local actual
-  const local = planMes.find(l => l.codigo === certModalCodigo);
+  const local = getLocalLibreta(certModalCodigo);
   const tipos = new Set((local?.extintores || []).map(e => (e.tipo||'').toUpperCase()));
   const tienePQS   = tipos.has('PQS') || tipos.size === 0;   // si no hay datos, mostrar todo
   const tieneCO2   = tipos.has('CO2') || tipos.size === 0;
@@ -2151,7 +1384,7 @@ function updateAccTotal() {
 
 async function generarCertLocal() {
   if (!certModalCodigo) return;
-  const local = planMes.find(l=>l.codigo===certModalCodigo);
+  const local = getLocalLibreta(certModalCodigo);
   if (!local) return;
 
   // Fotos del nuevo estado
@@ -2163,9 +1396,9 @@ async function generarCertLocal() {
   const firmaB64 = getSignatureB64();
   if (firmaB64) FB64.firma = firmaB64;
 
-  const mesVal = document.getElementById('selMes').value;
-  const anio   = document.getElementById('selAnio').value;
-  const mesNum = mesVal ? mesVal.substring(0,2) : (new Date().getMonth()+1).toString().padStart(2,'0');
+  const now    = new Date();
+  const anio   = String(now.getFullYear());
+  const mesNum = String(now.getMonth() + 1).padStart(2, '0');
 
   const tipoServSel = document.querySelector('input[name="certTipoServ"]:checked')?.value || 'mantenimiento';
   const tipoLabel   = tipoServSel === 'recarga' ? 'RECARGA' : 'MANT';
@@ -2176,10 +1409,10 @@ async function generarCertLocal() {
     : [];
 
   const doc = await hacerPDF({
-    localNom:  local.nombre.replace(local.codigo+' - ',''),
-    puntNom:   local.nombre,
+    localNom:  local.nombre,
+    puntNom:   local.direccion || local.nombre,
     localCode: local.codigo,
-    exts: local.extintores.map(e=>({tipo:e.tipo,cap:e.cap})),
+    exts: (local.extintores || []).map(e=>({tipo:e.tipo,cap:e.cap})),
     FB64,
     ACCS: ACCS_SEL,
     certNum: local.codigo+'-'+tipoLabel+' EXTINTORES-'+anio,
@@ -2189,102 +1422,66 @@ async function generarCertLocal() {
     tipoServ: tipoServSel,
   });
 
-  try { if (doc) await subirCertGitHub(local.codigo, anio, mesVal, doc); } catch(e) { console.warn('subirCert:', e); }
+  // Histórico local
+  registrarCertEmitido(local);
 
-  if (certModalCodigo && visitaStatus[certModalCodigo] !== 'visitado') {
-    visitaStatus[certModalCodigo] = 'visitado';
-    renderPlan();
-  }
+  // Base64 del PDF (para respaldo y correo)
+  let pdfB64 = null;
+  try { if (doc) pdfB64 = doc.output('datauristring').split(',')[1]; } catch(e) {}
+
+  // Respaldo en GitHub
+  try { if (doc) await subirCertGitHub(local.codigo, anio, doc); } catch(e) { console.warn('subirCert:', e); }
+
   cerrarCertModal();
+  goToSection('emitir');
+
+  const st = document.getElementById('emitStatus');
+  if (st) {
+    st.innerHTML = `<div class="status-bar status-ok">✅ Certificado de <strong>${esc(local.codigo)}</strong> generado` +
+      (getGhToken() ? ' y respaldado en la nube' : '') + '.</div>';
+  }
+
+  // Envío por correo (no rompe el flujo si falla o no está configurado)
+  if (pdfB64) {
+    const nombreArchivo = 'CERT-' + local.codigo + '-' + anio + '.pdf';
+    const res = await enviarCertCorreo(pdfB64, nombreArchivo, local.email, local.nombre);
+    if (st) {
+      const cls = res.ok ? 'status-ok' : 'status-warn';
+      st.innerHTML += `<div class="status-bar ${cls}">${res.ok ? '✉️ ' : '⚠️ '}${esc(res.msg)}</div>`;
+    }
+  }
 }
 
 // Sube el PDF del certificado a GitHub: certificados/[MES]-[ANIO]/CERT-[CODIGO]-[ANIO].pdf
-async function subirCertGitHub(localCode, anio, mesVal, doc) {
+async function subirCertGitHub(localCode, anio, doc) {
   const token = getGhToken();
   if (!token) return;
-  const mes = MESES_NOMBRE[mesVal] || new Date().toLocaleString('es-ES', {month:'long'}).toUpperCase();
+  const now = new Date();
+  const mes = MESES_ES[now.getMonth()];
   const path = `certificados/${mes}-${anio}/CERT-${localCode}-${anio}.pdf`;
   // jsPDF → base64 (sin el prefijo data:)
   const content = doc.output('datauristring').split(',')[1];
-  let sha = null;
-  const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
-    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
-  });
-  if (check.ok) { const d = await check.json(); sha = d.sha; }
-  const body = { message: `cert: ${localCode} ${mes}-${anio}`, content, branch: GH_BRANCH };
-  if (sha) body.sha = sha;
-  await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
-    method: 'PUT',
-    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-}
-
-// ─── UI HELPERS ───────────────────────────────────────────────────────────────
-function showStatus(elId, type, msg) {
-  const el = document.getElementById(elId);
-  el.className = 'status-bar status-' + type;
-  el.innerHTML = msg;
-  el.style.display = 'flex';
-}
-
-
-// ─── SELECTOR DE PERFIL ───────────────────────────────────────────────────────
-function elegirPerfil(p) {
-  document.getElementById('profileSelector').style.display = 'none';
-  setPerfil(p);
-}
-
-function mostrarSelectorPerfil() {
-  document.getElementById('profileSelector').style.display = 'flex';
-}
-
-function updatePerfilIndicator() {
-  const el = document.getElementById('perfilIndicator');
-  if (!el) return;
-  const label = currentProfile === 'admin' ? '👤 Admin' : '👷 Técnico';
-  el.innerHTML = label + ' <span class="perfil-chip">· cambiar</span>';
+  await ghPutFile(path, content, `cert: ${localCode} ${mes}-${anio}`);
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init() {
   loadConfig();
-  loadSbConfig();
+  loadEmailjsCfg();
 
   try { if (localStorage.getItem('darkMode') === '1') document.body.classList.add('dark'); } catch(e) {}
 
-  const hoy = new Date();
-  const mesActual = String(hoy.getMonth() + 1).padStart(2, '0');
-  const selMes = document.getElementById('selMes');
-  const opt = Array.from(selMes.options).find(o => o.value.startsWith(mesActual));
-  if (opt) selMes.value = opt.value;
-  const anioActual = String(hoy.getFullYear());
-  const selAnio = document.getElementById('selAnio');
-  if (Array.from(selAnio.options).some(o => o.value === anioActual)) selAnio.value = anioActual;
+  loadLibreta();
+  loadCertsEmitidos();
+  renderLibreta();
+  renderEmitSelect();
+  renderCertsEmitidos();
 
-  localRestore();
-  cargarPlan();
-  if (getGhToken()) ghCargar();
+  const last = localStorage.getItem('lastSection');
+  goToSection((last === 'locales' || last === 'config') ? last : 'emitir');
 
-  // Preparar vista interna con el perfil guardado sin mostrar aún
-  const isAdmin = currentProfile === 'admin';
-  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
-  document.getElementById('monthSelector').style.display = isAdmin ? '' : 'none';
-  const lastSec = localStorage.getItem('lastSection') || 'plan';
-  goToSection(isAdmin ? lastSec : 'plan');
-  updatePerfilIndicator();
-
-  // Cargar logo en selector de perfil
-  fetchLogo().then(b64 => {
-    if (!b64) return;
-    const img = document.getElementById('pselLogo');
-    const fb  = document.getElementById('pselLogoFallback');
-    if (img) { img.src = 'data:image/png;base64,'+b64; img.style.display = 'block'; }
-    if (fb)  fb.style.display = 'none';
-  });
-
-  // Mostrar selector de perfil al inicio (como previfuego-backend)
-  mostrarSelectorPerfil();
+  // Si el navegador no tiene libreta y hay token, intenta restaurarla de la nube
+  if (!libretaLocales.length && getGhToken()) restoreLibretaGitHub();
 }
 
 document.addEventListener('keydown', e => {
