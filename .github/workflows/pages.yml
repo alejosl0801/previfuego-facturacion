@@ -23,5 +23,6 @@ jobs:
           exclude: |
             certificados/**
             datos/libreta_locales.json
+            datos/locales_iniciales.json
           git-config-name: github-actions[bot]
           git-config-email: github-actions[bot]@users.noreply.github.com
