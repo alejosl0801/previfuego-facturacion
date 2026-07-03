@@ -1,0 +1,5788 @@
+[
+  {
+    "codigo": "I003",
+    "nombre": "IL CAPPO - MALL DEL SOL",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "J001",
+    "nombre": "CAJUN - MALL DEL SOL",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K002",
+    "nombre": "KFC - 9 DE OCTUBRE",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K025",
+    "nombre": "KFC - MOBIL DURAN",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K029",
+    "nombre": "KFC - MALECON 2000",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K034",
+    "nombre": "KFC - VIA DAULE",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K037",
+    "nombre": "KFC - DOMINGO COMIN",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K055",
+    "nombre": "KFC - MOBIL CORDOVA",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K063",
+    "nombre": "KFC - RIO CENTRO SUR",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K074",
+    "nombre": "KFC - CALIFORNIA",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K076",
+    "nombre": "KFC - PARQUE CENTENARIO",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K077",
+    "nombre": "KFC - RIO CENTRO LOS CEIBOS",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K085",
+    "nombre": "KFC - MOBIL CEIBOS",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K087",
+    "nombre": "KFC - TERMINAL TERRESTRE GYQ",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K095",
+    "nombre": "KFC - PASEO SHOP KM 9 VIA DAULE",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "K105",
+    "nombre": "KFC - HIPER MARKET",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K153",
+    "nombre": "KFC - LIGA CANTONAL DURAN",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K154",
+    "nombre": "KFC - PASCUALES",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "M031",
+    "nombre": "MENESTRAS DEL NEGRO - RIO CENTRO NORTE",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "M035",
+    "nombre": "MENESTRAS DEL NEGRO - GARZOTA",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "M058",
+    "nombre": "MENESTRAS DEL NEGRO - LAS PENAS",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "T032",
+    "nombre": "TROPIBURGER - TERMINAL",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V055",
+    "nombre": "JUAN VALDEZ - MALL DEL SOL ZONA GASTRO",
+    "direccion": "",
+    "email": "",
+    "mes": "ENERO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "A037",
+    "nombre": "AMERICAN DELI - RIOCENTRO EL DORADO",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "BS004",
+    "nombre": "BASKIN ROBBINS / CINNABON - MALL DEL SOL",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "BS009",
+    "nombre": "BASKIN ROBBINS - RIO CENTRO SUR",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "CN031",
+    "nombre": "BASKIN ROBBINS / CINNABON - RIOCENTRO CEIBOS",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "BS038",
+    "nombre": "BASKIN ROBBINS - CEIBOS BASKIN",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "E006",
+    "nombre": "ESPAÑOL - MALL EL SOL",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "E010",
+    "nombre": "ESPAÑOL - SAN MARINO PB",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "E026",
+    "nombre": "ESPAÑOL - PUNTILLA",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "I002",
+    "nombre": "IL CAPPO - RIOCENTRO CEIBOS",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "J002",
+    "nombre": "CAJUN - SAN MARINO",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K007",
+    "nombre": "KFC - ALBORADA",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K045",
+    "nombre": "KFC - BOYACA",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K065",
+    "nombre": "KFC - MILAGRO",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K090",
+    "nombre": "KFC - MACHALA CENTRO",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K091",
+    "nombre": "KFC - MACHALA RIO CENTRO",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K148",
+    "nombre": "KFC - TERMINAL TERRESTRE MACHALA",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "V015",
+    "nombre": "JUAN VALDEZ - CEIBOS",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V021",
+    "nombre": "JUAN VALDEZ - MALL DEL SOL",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V075",
+    "nombre": "JUAN VALDEZ - PASEO SHOPPING MACHALA",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "V079",
+    "nombre": "JUAN VALDEZ - MILAGRO",
+    "direccion": "",
+    "email": "",
+    "mes": "FEBRERO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "BS037",
+    "nombre": "BASKIN ROBBINS / CINNABON - DORADO",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "G049",
+    "nombre": "GUS - OUTLET DURAN",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "I005",
+    "nombre": "IL CAPPO - SAN MARINO",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "K075",
+    "nombre": "KFC - MOBIL KENNEDY",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K094",
+    "nombre": "KFC - OUTLET DURAN",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K145",
+    "nombre": "KFC - SUPER AKI SAN EDUARDO",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "K169",
+    "nombre": "KFC - PLAZA PACIFICO DAULE",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "K176",
+    "nombre": "KFC - SUPERCINES",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "M011",
+    "nombre": "MENESTRAS DEL NEGRO - MALL SUR",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "M037",
+    "nombre": "MENESTRAS DEL NEGRO - 9 DE OCTUBRE",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "M046",
+    "nombre": "MENESTRAS DEL NEGRO - SAN MARINO",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "M047",
+    "nombre": "MENESTRAS DEL NEGRO - PASEO SHOPPING DURAN",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "M057",
+    "nombre": "MENESTRAS DEL NEGRO - ALBORADA",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "V066",
+    "nombre": "JUAN VALDEZ - PLAZA PACIFICO DAULE",
+    "direccion": "",
+    "email": "",
+    "mes": "MARZO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "G045",
+    "nombre": "GUS - TUNGURAHUA",
+    "direccion": "",
+    "email": "",
+    "mes": "ABRIL",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "I012",
+    "nombre": "IL CAPPO - TERMINAL TERRESTRE",
+    "direccion": "",
+    "email": "",
+    "mes": "ABRIL",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "K082",
+    "nombre": "KFC - SHOPPING PLAYAS",
+    "direccion": "",
+    "email": "",
+    "mes": "ABRIL",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K161",
+    "nombre": "KFC - MALL DEL RIO GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "ABRIL",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "V057",
+    "nombre": "JUAN VALDEZ - CORAL SAMBORONDON",
+    "direccion": "",
+    "email": "",
+    "mes": "ABRIL",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V087",
+    "nombre": "JUAN VALDEZ - PASEO SHOPPING DAULE",
+    "direccion": "",
+    "email": "",
+    "mes": "ABRIL",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "A006",
+    "nombre": "AMERICAN DELI - TERMINAL GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "A024",
+    "nombre": "AMERICAN DELI - MALL DEL SUR",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "BS016",
+    "nombre": "BASKIN ROBBINS / CINNABON - PUNTILLA",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "BS020",
+    "nombre": "BASKIN ROBBINS - RIO CENTRO NORTE",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "E023",
+    "nombre": "ESPAÑOL - PREEMB NAC GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "G050",
+    "nombre": "GUS - MALL DEL SUR",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K003",
+    "nombre": "KFC - PLAZA QUIL",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K059",
+    "nombre": "KFC - MALL DEL SUR P/B",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K096",
+    "nombre": "KFC - PORTETE",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "M056",
+    "nombre": "MENESTRAS DEL NEGRO - AEROPUERTO GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "R003",
+    "nombre": "CASA RES - 9 DE OCTUBRE",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "R004",
+    "nombre": "CASA RES - SAN MARINO",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "R008",
+    "nombre": "CASA RES - MALL DEL SOL",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "R010",
+    "nombre": "CASA RES - FRANCISCO DE ORELLANA",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "V004",
+    "nombre": "JUAN VALDEZ - AEROPUERTO",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V024",
+    "nombre": "JUAN VALDEZ - PREEMBARQUE NACIONAL",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V048",
+    "nombre": "JUAN VALDEZ - MALL DEL RIO GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "MAYO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "CN034",
+    "nombre": "CINNABON - RIO CENTRO SUR CINNABON TO GO",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "CN035",
+    "nombre": "CINNABON - RIO CENTRO NORTE",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "F003",
+    "nombre": "AMERICAN DELI - DOLCE INCONTRO AERGYE",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "G048",
+    "nombre": "GUS - TERMINAL TERRESTRE",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "G052",
+    "nombre": "GUS - CITY MALL",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "I004",
+    "nombre": "IL CAPPO - MALL DEL SUR",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "J008",
+    "nombre": "CAJUN - TERMINAL",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K079",
+    "nombre": "KFC - BABAHOYO",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K083",
+    "nombre": "KFC - MUCHO LOTE",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K115",
+    "nombre": "KFC - ENTRADA DE LA 8",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K186",
+    "nombre": "KFC - PINTULAC MILAGRO",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "M014",
+    "nombre": "MENESTRAS DEL NEGRO - RIOCENTRO SUR",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "M028",
+    "nombre": "MENESTRAS DEL NEGRO - VILLAGE",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "T043",
+    "nombre": "TROPIBURGER - MALL EL FORTIN",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V089",
+    "nombre": "JUAN VALDEZ - PINTULAC MILAGRO",
+    "direccion": "",
+    "email": "",
+    "mes": "JUNIO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "A007",
+    "nombre": "AMERICAN DELI - SAN MARINO",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "A020",
+    "nombre": "AMERICAN DELI - VILLAGE PLAZA",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "DI001",
+    "nombre": "DOLCE INCONTRO - DOLCE INCONTRO MALL DEL SOL",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "DI002",
+    "nombre": "DOLCE INCONTRO - DOLCE INCONTRO CEIBOS",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "DI003",
+    "nombre": "DOLCE INCONTRO - DOLCE INCONTRO SAMBORONDON",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "G047",
+    "nombre": "GUS - ALBORADA",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "G051",
+    "nombre": "GUS - SHOPPING QUEVEDO",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "J006",
+    "nombre": "CAJUN - CAJUN PUNTILLA",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "J020",
+    "nombre": "CAJUN - CAJUN PENINSULA",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "J021",
+    "nombre": "CAJUN - MALL DEL SUR",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "J029",
+    "nombre": "CAJUN - CAJUN MALL DEL NORTE",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "K058",
+    "nombre": "KFC - MALL DEL SUR PLANTA ALTA",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K078",
+    "nombre": "KFC - SHOPPING DAULE",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K092",
+    "nombre": "KFC - EL FORTIN",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K093",
+    "nombre": "KFC - QUEVEDO",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K106",
+    "nombre": "KFC - SHOPPING QUEVEDO",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K149",
+    "nombre": "KFC - PETROCOMERIAL VENTANAS",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K162",
+    "nombre": "KFC - DAULE ESTACION",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "K165",
+    "nombre": "KFC - PLAZA TIA DURAN",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "K171",
+    "nombre": "KFC - SHELL ABU DABI",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "K172",
+    "nombre": "KFC - MALL DEL NORTE",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "H062",
+    "nombre": "HELADERIAS - MALL DEL NORTE HELADERIA",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "H068",
+    "nombre": "HELADERIAS - MALL DEL NORTE PATIO DE COMIDAS",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "M032",
+    "nombre": "MENESTRAS DEL NEGRO - SHOPPING QUEVEDO",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "M062",
+    "nombre": "MENESTRAS DEL NEGRO - MN MALL DEL NORTE GY",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "V003",
+    "nombre": "JUAN VALDEZ - SAN MARINO",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V005",
+    "nombre": "JUAN VALDEZ - URDESA",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V016",
+    "nombre": "JUAN VALDEZ - POLICENTRO",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V069",
+    "nombre": "JUAN VALDEZ - QUEVEDO PASEO SHOPPING",
+    "direccion": "",
+    "email": "",
+    "mes": "JULIO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "A019",
+    "nombre": "AMERICAN DELI - MALL DEL SOL PATIO COMIDAS",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "CA001",
+    "nombre": "CAFA - CAFE ASTORIA SALIDA INTERNACIONAL",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "CA002",
+    "nombre": "CAFA - CAFE ASTORIA PREEMBARQUE INTERNACIONAL",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "CA003",
+    "nombre": "CAFA - CAFE DUPORT HALL PRINCIPAL",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "CN026",
+    "nombre": "CINNABON - PREEMB INTER GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "DI004",
+    "nombre": "DOLCE INCONTRO - DOLCE INCONTRO URDESA",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "E007",
+    "nombre": "ESPAÑOL - URDESA",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "E022",
+    "nombre": "ESPAÑOL - ISLA EXP GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "G044",
+    "nombre": "GUS - BOYACA",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "J005",
+    "nombre": "CAJUN - CAJUN CEIBOS",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K012",
+    "nombre": "KFC - RIO CENTRO",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K021",
+    "nombre": "KFC - MALL EL SOL",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K052",
+    "nombre": "KFC - LAS PEÃ????AS",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K053",
+    "nombre": "KFC - PASEO SHOPPING BABAHOYO",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K187",
+    "nombre": "KFC - DOMINGO COMIN Y ERNESTO ALBAN",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "M010",
+    "nombre": "MENESTRAS DEL NEGRO - MALECON",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "M021",
+    "nombre": "MENESTRAS DEL NEGRO - TERMINAL TER GYQ.",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "M039",
+    "nombre": "MENESTRAS DEL NEGRO - PASEO SHOPPING BABAHOYO",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "M043",
+    "nombre": "MENESTRAS DEL NEGRO - EL FORTIN",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V090",
+    "nombre": "JUAN VALDEZ - SUPER AKI LA JOYA GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "AGOSTO",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "A033",
+    "nombre": "AMERICAN DELI - CITY MALL",
+    "direccion": "",
+    "email": "",
+    "mes": "SEPTIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "BS022",
+    "nombre": "BASKIN ROBBINS - POLICENTRO",
+    "direccion": "",
+    "email": "",
+    "mes": "SEPTIEMBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "E031",
+    "nombre": "ESPAÑOL - POLICENTRO",
+    "direccion": "",
+    "email": "",
+    "mes": "SEPTIEMBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K129",
+    "nombre": "KFC - LLEVAR 5 ESQUINAS",
+    "direccion": "",
+    "email": "",
+    "mes": "SEPTIEMBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V080",
+    "nombre": "JUAN VALDEZ - AGORA GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "SEPTIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "B001",
+    "nombre": "AMERICAN DELI - STATION SPORTS BAR",
+    "direccion": "",
+    "email": "",
+    "mes": "OCTUBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "E009",
+    "nombre": "ESPAÑOL - CEIBOS",
+    "direccion": "",
+    "email": "",
+    "mes": "OCTUBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "E030",
+    "nombre": "ESPAÑOL - CITY MALL",
+    "direccion": "",
+    "email": "",
+    "mes": "OCTUBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "J011",
+    "nombre": "CAJUN - CITY MALL",
+    "direccion": "",
+    "email": "",
+    "mes": "OCTUBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K088",
+    "nombre": "KFC - HIPERMARKET VIA DAULE",
+    "direccion": "",
+    "email": "",
+    "mes": "OCTUBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K109",
+    "nombre": "KFC - CITY MALL PA",
+    "direccion": "",
+    "email": "",
+    "mes": "OCTUBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K110",
+    "nombre": "KFC - CITY MALL PB",
+    "direccion": "",
+    "email": "",
+    "mes": "OCTUBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "75 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K117",
+    "nombre": "KFC - 29 Y SEDALANA",
+    "direccion": "",
+    "email": "",
+    "mes": "OCTUBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K192",
+    "nombre": "KFC - HYPERMARKET BUIJO CIUDAD CELESTE",
+    "direccion": "",
+    "email": "",
+    "mes": "OCTUBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "M033",
+    "nombre": "MENESTRAS DEL NEGRO - CITY MALL",
+    "direccion": "",
+    "email": "",
+    "mes": "OCTUBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "M061",
+    "nombre": "MENESTRAS DEL NEGRO - PORTETE",
+    "direccion": "",
+    "email": "",
+    "mes": "OCTUBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V091",
+    "nombre": "JUAN VALDEZ - HYPERMARKET BUIJO CIUDAD CELESTE",
+    "direccion": "",
+    "email": "",
+    "mes": "OCTUBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "A047",
+    "nombre": "AMERICAN DELI - RIO CENTRO NORTE GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "E044",
+    "nombre": "ESPAÑOL - EL DORADO",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "G054",
+    "nombre": "GUS - RIOCENTRO EL DORADO",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "I017",
+    "nombre": "IL CAPPO - RIO CENTRO NORTE GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "I018",
+    "nombre": "IL CAPPO - DORADO GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "J030",
+    "nombre": "CAJUN - RIO CENTRO SUR GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "J031",
+    "nombre": "CAJUN - GRAN PIAZZA MACHA",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K048",
+    "nombre": "KFC - PENINSULA SALINAS",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K051",
+    "nombre": "KFC - SAN MARINO PLANTA ALTA",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K067",
+    "nombre": "KFC - MOBIL BENEFICENCIA",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K123",
+    "nombre": "KFC - RIOCENTRO EL DORADO",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K173",
+    "nombre": "KFC - OASIS",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "K178",
+    "nombre": "KFC - MALECON SALINAS",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K179",
+    "nombre": "KFC - ESTACION SANTA ELENA",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K180",
+    "nombre": "KFC - GRAN PIAZZA MACHALA",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K184",
+    "nombre": "KFC - SUPERMAXI MACHALA",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "M050",
+    "nombre": "MENESTRAS DEL NEGRO - RIOCENTRO EL DORADO",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "M065",
+    "nombre": "MENESTRAS DEL NEGRO - GRAN PIAZZA MACH",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "T054",
+    "nombre": "TROPIBURGER - GRAN PIAZZA MACHALA",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "V053",
+    "nombre": "JUAN VALDEZ - PUERTO SANTA ANA",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V073",
+    "nombre": "JUAN VALDEZ - CORAL LOS CEIBOS",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V076",
+    "nombre": "JUAN VALDEZ - TERMINAL TERRESTE GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V077",
+    "nombre": "JUAN VALDEZ - FERRISARIATO KENNEDY",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V078",
+    "nombre": "JUAN VALDEZ - RIOCENTRO SUR GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V082",
+    "nombre": "JUAN VALDEZ - GRAN PIAZZA MACHA",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "V085",
+    "nombre": "JUAN VALDEZ - PASEO SHOPPING PENINSULA",
+    "direccion": "",
+    "email": "",
+    "mes": "NOVIEMBRE",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "J010",
+    "nombre": "CAJUN - RIO CENTRO NORTE",
+    "direccion": "",
+    "email": "",
+    "mes": "DICIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "J019",
+    "nombre": "CAJUN - RIOCENTRO EL DORADO",
+    "direccion": "",
+    "email": "",
+    "mes": "DICIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K039",
+    "nombre": "KFC - AEROPUERTO GY",
+    "direccion": "",
+    "email": "",
+    "mes": "DICIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "5 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K142",
+    "nombre": "KFC - SUPER AKI VINCES",
+    "direccion": "",
+    "email": "",
+    "mes": "DICIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K175",
+    "nombre": "KFC - VIA A LA COSTA",
+    "direccion": "",
+    "email": "",
+    "mes": "DICIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "K182",
+    "nombre": "KFC - JUAN TANCA MARENGO",
+    "direccion": "",
+    "email": "",
+    "mes": "DICIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "K183",
+    "nombre": "KFC - LA QUADRA QUEVEDO",
+    "direccion": "",
+    "email": "",
+    "mes": "DICIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "K194",
+    "nombre": "KFC - ISIDRO AYORA",
+    "direccion": "",
+    "email": "",
+    "mes": "DICIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "20 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  },
+  {
+    "codigo": "T051",
+    "nombre": "TROPIBURGER - MALECON GYE",
+    "direccion": "",
+    "email": "",
+    "mes": "DICIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "50 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
+      }
+    ]
+  },
+  {
+    "codigo": "V084",
+    "nombre": "JUAN VALDEZ - TORRE MILLENIUM",
+    "direccion": "",
+    "email": "",
+    "mes": "DICIEMBRE",
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      }
+    ]
+  },
+  {
+    "codigo": "V086",
+    "nombre": "JUAN VALDEZ - PASEO SHOPPING PLAYAS",
+    "direccion": "",
+    "email": "",
+    "mes": "ABRIL",
+    "extintores": [
+      {
+        "tipo": "PQS",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      },
+      {
+        "tipo": "MOVILIZACIÓN",
+        "cap": ""
+      }
+    ]
+  }
+]

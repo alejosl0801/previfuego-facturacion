@@ -165,6 +165,26 @@
   }
   .icon-btn:hover { background: rgba(255,255,255,0.3); }
 
+  .perfil-indicator {
+    background: rgba(255,255,255,0.15); color: white; border: none;
+    padding: 7px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .perfil-indicator:hover { background: rgba(255,255,255,0.3); }
+
+  #profileSelector {
+    position: fixed; inset: 0; width: 100%; height: 100%; background: rgba(20,20,20,0.85);
+    z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px;
+  }
+  .psel-title { color: white; font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+  .psel-cards { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; padding: 0 16px; }
+  .psel-card {
+    background: white; border-radius: 12px; padding: 24px 30px; width: 200px; text-align: center;
+    cursor: pointer; box-shadow: 0 6px 24px rgba(0,0,0,0.3); transition: transform 0.15s;
+  }
+  .psel-card:hover { transform: translateY(-4px); }
+  .psel-icon { font-size: 40px; margin-bottom: 10px; }
+  .psel-role { font-size: 14px; font-weight: 700; color: var(--rojo); }
+
   .app-section { animation: fadeIn 0.2s; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   .section-title { font-size: 18px; font-weight: 800; color: var(--rojo); margin-bottom: 4px; }
@@ -272,6 +292,21 @@
 </head>
 <body>
 
+<!-- SELECTOR DE PERFIL -->
+<div id="profileSelector" style="display:none">
+  <div class="psel-title">🔴 PREVIFUEGO — ¿Quién eres?</div>
+  <div class="psel-cards">
+    <div class="psel-card" onclick="elegirPerfil('admin')">
+      <div class="psel-icon">👤</div>
+      <div class="psel-role">Administración</div>
+    </div>
+    <div class="psel-card" onclick="elegirPerfil('tecnico')">
+      <div class="psel-icon">👷</div>
+      <div class="psel-role">Técnico de Campo</div>
+    </div>
+  </div>
+</div>
+
 <header>
   <div class="hdr-left">
     <div class="logo">🔴 PREVIFUEGO</div>
@@ -279,10 +314,11 @@
   </div>
   <nav class="nav-tabs">
     <button class="nav-tab active" data-sec="emitir" onclick="goToSection('emitir')">📜 Emitir Certificado</button>
-    <button class="nav-tab" data-sec="locales" onclick="goToSection('locales')">🏢 Locales</button>
-    <button class="nav-tab" data-sec="config" onclick="goToSection('config')">⚙️ Configuración</button>
+    <button class="nav-tab admin-only" data-sec="locales" onclick="goToSection('locales')">🏢 Locales</button>
+    <button class="nav-tab admin-only" data-sec="config" onclick="goToSection('config')">⚙️ Configuración</button>
   </nav>
   <div class="hdr-right">
+    <div id="perfilIndicator" class="perfil-indicator" onclick="mostrarSelectorPerfil()" title="Cambiar perfil">👤 Admin</div>
     <button class="icon-btn" onclick="toggleDark()" title="Modo oscuro">🌙</button>
   </div>
 </header>
@@ -292,20 +328,37 @@
   <!-- ════════════ SECCIÓN: EMITIR CERTIFICADO ════════════ -->
   <div class="app-section" id="sec-emitir">
     <div class="section-title">📜 Emitir Certificado</div>
-    <div class="section-desc">Elige un local de tu libreta para generar su certificado, respaldarlo y enviarlo por correo.</div>
+    <div class="section-desc">Locales programados por mes de servicio. Selecciona uno para generar su certificado, respaldarlo y enviarlo por correo.</div>
 
     <div class="card">
       <div class="card-body">
-        <div class="form-row" style="align-items:flex-end">
-          <div class="form-group" style="flex:2">
-            <label>Local</label>
-            <select id="emitSelect" onchange="emitSelectChange()"></select>
+        <div class="form-row" style="align-items:flex-end;margin-bottom:6px">
+          <div class="form-group">
+            <label>Mes de servicio</label>
+            <select id="emitMesSel" onchange="renderEmitList()">
+              <option value="">— Todos los meses —</option>
+              <option value="ENERO">Enero</option>
+              <option value="FEBRERO">Febrero</option>
+              <option value="MARZO">Marzo</option>
+              <option value="ABRIL">Abril</option>
+              <option value="MAYO">Mayo</option>
+              <option value="JUNIO">Junio</option>
+              <option value="JULIO">Julio</option>
+              <option value="AGOSTO">Agosto</option>
+              <option value="SEPTIEMBRE">Septiembre</option>
+              <option value="OCTUBRE">Octubre</option>
+              <option value="NOVIEMBRE">Noviembre</option>
+              <option value="DICIEMBRE">Diciembre</option>
+            </select>
           </div>
-          <div class="form-group" style="flex:0 0 auto;min-width:0">
+          <div class="form-group admin-only" style="flex:0 0 auto;min-width:0">
             <button class="btn btn-info" onclick="goToSection('locales')">＋ Nuevo local</button>
           </div>
         </div>
+        <input type="text" id="emitSearch" class="search-box" placeholder="🔍 Buscar por código o nombre…" oninput="renderEmitList()" style="margin-bottom:6px" />
+        <div id="emitStats" style="font-size:12px;color:#666;font-weight:600;margin-bottom:10px"></div>
         <div id="emitStatus"></div>
+        <div id="emitListContainer"></div>
       </div>
     </div>
 
@@ -320,8 +373,10 @@
     <div class="section-title">🏢 Locales</div>
     <div class="section-desc">Libreta de locales. Guarda su información y lista de extintores para emitir certificados en segundos.</div>
 
-    <div style="margin-bottom:14px">
+    <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <button class="btn btn-primary" onclick="libretaNuevo()">＋ Nuevo local</button>
+      <button class="btn btn-info" onclick="importarLocalesIniciales()">📥 Importar datos iniciales</button>
+      <span id="importStatus" style="font-size:12px"></span>
     </div>
 
     <div class="card" id="libFormCard" style="display:none">
@@ -335,6 +390,26 @@
         <div class="form-row">
           <div class="form-group" style="flex:2"><label>Dirección</label><input id="libDireccion" placeholder="Av. Portete y Gallegos Lara" autocomplete="off" /></div>
           <div class="form-group"><label>Correo del cliente</label><input id="libEmail" type="email" placeholder="cliente@correo.com" autocomplete="off" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Mes de servicio</label>
+            <select id="libMes">
+              <option value="">— Sin asignar —</option>
+              <option value="ENERO">Enero</option>
+              <option value="FEBRERO">Febrero</option>
+              <option value="MARZO">Marzo</option>
+              <option value="ABRIL">Abril</option>
+              <option value="MAYO">Mayo</option>
+              <option value="JUNIO">Junio</option>
+              <option value="JULIO">Julio</option>
+              <option value="AGOSTO">Agosto</option>
+              <option value="SEPTIEMBRE">Septiembre</option>
+              <option value="OCTUBRE">Octubre</option>
+              <option value="NOVIEMBRE">Noviembre</option>
+              <option value="DICIEMBRE">Diciembre</option>
+            </select>
+          </div>
         </div>
         <label style="margin-bottom:6px;display:block">Extintores</label>
         <div id="libExtList"></div>
@@ -584,9 +659,45 @@ function goToSection(name) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   const tab = document.querySelector(`.nav-tab[data-sec="${name}"]`);
   if (tab) tab.classList.add('active');
-  localStorage.setItem('lastSection', name);
-  if (name === 'emitir') { renderEmitSelect(); renderCertsEmitidos(); }
+  if (currentProfile === 'admin') localStorage.setItem('lastSection', name);
+  if (name === 'emitir') { renderEmitList(); renderCertsEmitidos(); }
   if (name === 'locales') renderLibreta();
+}
+
+// ─── PERFILES (admin / técnico) ────────────────────────────────────────────────
+let currentProfile = localStorage.getItem('perfil') || 'admin';
+
+function elegirPerfil(p) {
+  document.getElementById('profileSelector').style.display = 'none';
+  setPerfil(p);
+}
+
+function mostrarSelectorPerfil() {
+  document.getElementById('profileSelector').style.display = 'flex';
+}
+
+function setPerfil(p) {
+  currentProfile = p;
+  localStorage.setItem('perfil', p);
+  applyPerfil();
+}
+
+function applyPerfil() {
+  const isAdmin = currentProfile === 'admin';
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+  if (!isAdmin) {
+    goToSection('emitir');
+  } else {
+    const last = localStorage.getItem('lastSection') || 'emitir';
+    goToSection(last);
+  }
+  updatePerfilIndicator();
+}
+
+function updatePerfilIndicator() {
+  const el = document.getElementById('perfilIndicator');
+  if (!el) return;
+  el.textContent = currentProfile === 'admin' ? '👤 Admin' : '👷 Técnico';
 }
 
 // ─── MODO OSCURO ──────────────────────────────────────────────────────────────
@@ -666,7 +777,7 @@ async function restoreLibretaGitHub() {
       libretaLocales = json;
       try { localStorage.setItem('libretaLocales', JSON.stringify(json)); } catch(e) {}
       renderLibreta();
-      renderEmitSelect();
+      renderEmitList();
     }
   } catch(e) { console.warn('restore libreta:', e); }
 }
@@ -685,12 +796,16 @@ function renderLibreta() {
   cont.innerHTML = libretaLocales.slice().sort((a, b) => String(a.codigo).localeCompare(String(b.codigo))).map(l => {
     const dir = l.direccion ? ` · ${esc(l.direccion)}` : '';
     const mail = l.email ? ` · ✉️ ${esc(l.email)}` : '';
+    const mesLbl = l.mes
+      ? `<span style="font-size:11px;color:#8e44ad;font-weight:600;white-space:nowrap">${esc(l.mes)}</span>`
+      : `<span style="font-size:11px;color:#bbb;white-space:nowrap">SIN MES</span>`;
     return `
       <div class="local-card">
         <div class="local-card-header">
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
             <strong style="white-space:nowrap">${esc(l.codigo)}</strong>
             <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.nombre)}</span>
+            ${mesLbl}
             <span style="font-size:11px;color:#999;white-space:nowrap">${(l.extintores || []).length} ext</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
@@ -735,6 +850,7 @@ function libretaNuevo() {
   document.getElementById('libNombre').value = '';
   document.getElementById('libDireccion').value = '';
   document.getElementById('libEmail').value = '';
+  document.getElementById('libMes').value = '';
   document.getElementById('libExtList').innerHTML = '';
   libAddExtintor();
   document.getElementById('libFormStatus').innerHTML = '';
@@ -752,6 +868,7 @@ function libretaEditar(codigo) {
   document.getElementById('libNombre').value = l.nombre || '';
   document.getElementById('libDireccion').value = l.direccion || '';
   document.getElementById('libEmail').value = l.email || '';
+  document.getElementById('libMes').value = l.mes || '';
   document.getElementById('libExtList').innerHTML = '';
   (l.extintores || []).forEach(e => libAddExtintor(e.tipo, e.cap));
   if (!(l.extintores || []).length) libAddExtintor();
@@ -766,7 +883,7 @@ function libretaEliminarLocal(codigo) {
   libretaLocales = libretaLocales.filter(l => l.codigo !== codigo);
   saveLibreta();
   renderLibreta();
-  renderEmitSelect();
+  renderEmitList();
 }
 
 function libCancelForm() {
@@ -778,6 +895,7 @@ function guardarLocalForm() {
   const nombre = (document.getElementById('libNombre').value || '').trim();
   const direccion = (document.getElementById('libDireccion').value || '').trim();
   const email = (document.getElementById('libEmail').value || '').trim();
+  const mes = document.getElementById('libMes').value || '';
   const editCodigo = document.getElementById('libEditCodigo').value || '';
   const st = document.getElementById('libFormStatus');
   if (!codigo) { st.innerHTML = '<span style="color:#e74c3c">El código es obligatorio.</span>'; return; }
@@ -788,7 +906,7 @@ function guardarLocalForm() {
     tipo: r.querySelector('.lib-ext-tipo').value,
     cap: (r.querySelector('.lib-ext-cap').value || '').trim()
   })).filter(e => e.cap);
-  const local = { codigo, nombre, direccion, email, extintores };
+  const local = { codigo, nombre, direccion, email, mes, extintores };
   if (editCodigo) {
     const idx = libretaLocales.findIndex(l => l.codigo === editCodigo);
     if (idx >= 0) libretaLocales[idx] = local; else libretaLocales.push(local);
@@ -797,25 +915,135 @@ function guardarLocalForm() {
   }
   saveLibreta();
   renderLibreta();
-  renderEmitSelect();
+  renderEmitList();
   libCancelForm();
 }
 
-// ─── EMISIÓN ──────────────────────────────────────────────────────────────────
-function renderEmitSelect() {
-  const sel = document.getElementById('emitSelect');
-  if (!sel) return;
-  const opts = libretaLocales.slice()
-    .sort((a, b) => String(a.codigo).localeCompare(String(b.codigo)))
-    .map(l => `<option value="${esc(l.codigo)}">${esc(l.codigo)} — ${esc(l.nombre)}</option>`).join('');
-  sel.innerHTML = '<option value="">— Selecciona un local —</option>' + opts;
+// Importa datos/locales_iniciales.json (carga masiva única, ej. primera vez que se usa la app).
+// No borra locales existentes: agrega los nuevos y actualiza los que coincidan por código.
+async function importarLocalesIniciales() {
+  const st = document.getElementById('importStatus');
+  if (!confirm('Esto agregará/actualizará locales desde datos/locales_iniciales.json. ¿Continuar?')) return;
+  st.innerHTML = '<span style="color:#999">⏳ Importando...</span>';
+  try {
+    const r = await fetch(`datos/locales_iniciales.json?t=${Date.now()}`);
+    if (!r.ok) throw new Error(`No se encontró el archivo (HTTP ${r.status})`);
+    const nuevos = await r.json();
+    if (!Array.isArray(nuevos)) throw new Error('Formato inválido');
+    let agregados = 0, actualizados = 0;
+    nuevos.forEach(n => {
+      const idx = libretaLocales.findIndex(l => l.codigo === n.codigo);
+      if (idx >= 0) { libretaLocales[idx] = { ...libretaLocales[idx], ...n }; actualizados++; }
+      else { libretaLocales.push(n); agregados++; }
+    });
+    saveLibreta();
+    renderLibreta();
+    renderEmitList();
+    st.innerHTML = `<span style="color:#27ae60">✅ ${agregados} agregados, ${actualizados} actualizados (${libretaLocales.length} en total)</span>`;
+  } catch (e) {
+    st.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`;
+  }
 }
 
-function emitSelectChange() {
-  const sel = document.getElementById('emitSelect');
-  const codigo = sel.value;
-  sel.value = '';
-  if (codigo) abrirCertModal(codigo);
+// ─── VISITAS (pendiente / visitado, por año) ──────────────────────────────────
+let visitaStatus = {};
+
+function loadVisitaStatus() {
+  try { visitaStatus = JSON.parse(localStorage.getItem('visitaStatus') || '{}'); }
+  catch(e) { visitaStatus = {}; }
+  if (typeof visitaStatus !== 'object' || !visitaStatus) visitaStatus = {};
+}
+
+function saveVisitaStatus() {
+  try { localStorage.setItem('visitaStatus', JSON.stringify(visitaStatus)); } catch(e) {}
+}
+
+function anioActualKey() { return String(new Date().getFullYear()); }
+
+function isVisitado(codigo) {
+  const y = anioActualKey();
+  return !!(visitaStatus[y] && visitaStatus[y][codigo] === 'visitado');
+}
+
+function toggleVisita(codigo) {
+  const y = anioActualKey();
+  if (!visitaStatus[y]) visitaStatus[y] = {};
+  visitaStatus[y][codigo] = isVisitado(codigo) ? 'pendiente' : 'visitado';
+  saveVisitaStatus();
+  renderEmitList();
+}
+
+function marcarVisitado(codigo) {
+  const y = anioActualKey();
+  if (!visitaStatus[y]) visitaStatus[y] = {};
+  visitaStatus[y][codigo] = 'visitado';
+  saveVisitaStatus();
+}
+
+// ─── EMISIÓN (lista organizada por mes de servicio) ───────────────────────────
+function renderEmitList() {
+  const cont = document.getElementById('emitListContainer');
+  const statsEl = document.getElementById('emitStats');
+  if (!cont) return;
+
+  if (!libretaLocales.length) {
+    cont.innerHTML = '<p style="color:#999;font-size:13px">No hay locales guardados. Ve a 🏢 Locales y agrega el primero (con su mes de servicio).</p>';
+    if (statsEl) statsEl.textContent = '';
+    return;
+  }
+
+  const mesSel = document.getElementById('emitMesSel')?.value || '';
+  const q = (document.getElementById('emitSearch')?.value || '').toUpperCase().trim();
+
+  let locales = libretaLocales.slice();
+  if (mesSel) locales = locales.filter(l => (l.mes || '') === mesSel);
+  if (q) locales = locales.filter(l =>
+    l.codigo.toUpperCase().includes(q) || String(l.nombre || '').toUpperCase().includes(q));
+  locales.sort((a, b) => String(a.codigo).localeCompare(String(b.codigo)));
+
+  if (!locales.length) {
+    cont.innerHTML = '<p style="color:#999;font-size:13px">Ningún local coincide con el filtro.</p>';
+    if (statsEl) statsEl.textContent = '';
+    return;
+  }
+
+  const pend = locales.filter(l => !isVisitado(l.codigo));
+  const vis  = locales.filter(l => isVisitado(l.codigo));
+  if (statsEl) statsEl.innerHTML =
+    `<span style="color:#e74c3c">🔴 ${pend.length} pendientes</span> &nbsp;·&nbsp; <span style="color:#27ae60">✅ ${vis.length} visitados</span> &nbsp;·&nbsp; ${locales.length} total`;
+
+  function card(l) {
+    const v = isVisitado(l.codigo);
+    const mesLbl = l.mes
+      ? `<span style="font-size:11px;color:#8e44ad;font-weight:600;white-space:nowrap">${esc(l.mes)}</span>`
+      : `<span style="font-size:11px;color:#bbb;white-space:nowrap">SIN MES</span>`;
+    return `
+      <div class="local-card">
+        <div class="local-card-header">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
+            <span>${v ? '✅' : '🔴'}</span>
+            <strong style="white-space:nowrap">${esc(l.codigo)}</strong>
+            <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.nombre)}</span>
+            ${mesLbl}
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <button class="btn btn-sm ${v ? 'btn-warning' : 'btn-success'}" style="font-size:11px;padding:3px 8px" onclick="toggleVisita('${esc(l.codigo)}')">${v ? '↩ Pendiente' : '✅ Visitado'}</button>
+            <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#9e1212;color:white" onclick="abrirCertModal('${esc(l.codigo)}')">📜 Certificado</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  let html = '';
+  if (pend.length) {
+    html += `<div style="font-size:12px;font-weight:700;color:#e74c3c;text-transform:uppercase;letter-spacing:0.5px;padding:6px 4px;margin-bottom:4px;border-bottom:2px solid #e74c3c">🔴 PENDIENTES (${pend.length})</div>`;
+    html += pend.map(card).join('');
+  }
+  if (vis.length) {
+    html += `<div style="font-size:12px;font-weight:700;color:#27ae60;text-transform:uppercase;letter-spacing:0.5px;padding:6px 4px;margin:12px 0 4px;border-bottom:2px solid #27ae60">✅ VISITADOS (${vis.length})</div>`;
+    html += vis.map(card).join('');
+  }
+  cont.innerHTML = html;
 }
 
 // ─── HISTÓRICO DE CERTIFICADOS EMITIDOS ───────────────────────────────────────
@@ -1422,8 +1650,10 @@ async function generarCertLocal() {
     tipoServ: tipoServSel,
   });
 
-  // Histórico local
+  // Histórico local + marcar como visitado este año
   registrarCertEmitido(local);
+  marcarVisitado(local.codigo);
+  renderEmitList();
 
   // Base64 del PDF (para respaldo y correo)
   let pdfB64 = null;
@@ -1473,15 +1703,26 @@ function init() {
 
   loadLibreta();
   loadCertsEmitidos();
+  loadVisitaStatus();
   renderLibreta();
-  renderEmitSelect();
   renderCertsEmitidos();
 
-  const last = localStorage.getItem('lastSection');
-  goToSection((last === 'locales' || last === 'config') ? last : 'emitir');
+  const selMes = document.getElementById('emitMesSel');
+  if (selMes) selMes.value = MESES_ES[new Date().getMonth()];
+  renderEmitList();
+
+  // Preparar vista interna con el perfil guardado sin mostrar aún
+  const isAdmin = currentProfile === 'admin';
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+  const last = localStorage.getItem('lastSection') || 'emitir';
+  goToSection(isAdmin ? last : 'emitir');
+  updatePerfilIndicator();
 
   // Si el navegador no tiene libreta y hay token, intenta restaurarla de la nube
   if (!libretaLocales.length && getGhToken()) restoreLibretaGitHub();
+
+  // Mostrar selector de perfil al inicio
+  mostrarSelectorPerfil();
 }
 
 document.addEventListener('keydown', e => {
