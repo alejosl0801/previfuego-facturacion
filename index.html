@@ -394,10 +394,6 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header"><h2>🗂️ Certificados emitidos</h2></div>
-      <div class="card-body"><div id="certsEmitidosLista"></div></div>
-    </div>
   </div>
 
   <!-- ════════════ SECCIÓN: LOCALES (libreta) ════════════ -->
@@ -1091,14 +1087,8 @@ function isVisitado(codigo) {
   return !!(visitaStatus[y] && visitaStatus[y][codigo] === 'visitado');
 }
 
-function toggleVisita(codigo) {
-  const y = anioActualKey();
-  if (!visitaStatus[y]) visitaStatus[y] = {};
-  visitaStatus[y][codigo] = isVisitado(codigo) ? 'pendiente' : 'visitado';
-  saveVisitaStatus();
-  renderEmitList();
-}
-
+// El marcado como visitado es SIEMPRE automático (al generar el certificado).
+// No hay forma manual de cambiarlo — así lo pidió el cliente explícitamente.
 function marcarVisitado(codigo) {
   const y = anioActualKey();
   if (!visitaStatus[y]) visitaStatus[y] = {};
@@ -1153,8 +1143,7 @@ function renderEmitList() {
             ${mesLbl}
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-            <button class="btn btn-sm ${v ? 'btn-warning' : 'btn-success'}" style="font-size:11px;padding:3px 8px" onclick="toggleVisita('${esc(l.codigo)}')">${v ? '↩ Pendiente' : '✅ Visitado'}</button>
-            <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#9e1212;color:white" onclick="abrirCertModal('${esc(l.codigo)}')">📜 Certificado</button>
+            ${v ? '' : `<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#9e1212;color:white" onclick="abrirCertModal('${esc(l.codigo)}')">📜 Certificado</button>`}
           </div>
         </div>
       </div>`;
