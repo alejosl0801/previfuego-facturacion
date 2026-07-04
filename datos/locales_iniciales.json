@@ -2,7 +2,7 @@
   {
     "codigo": "I003",
     "nombre": "IL CAPPO - MALL DEL SOL",
-    "direccion": "",
+    "direccion": "CC Mall del Sol",
     "email": "ilci03@ilci.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -52,7 +52,7 @@
   {
     "codigo": "K002",
     "nombre": "KFC - 9 DE OCTUBRE",
-    "direccion": "",
+    "direccion": "9 DE PCTUBRE  423 ENTRE CHILE Y CHIMBORAZO",
     "email": "kfck02@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -93,7 +93,7 @@
   {
     "codigo": "K025",
     "nombre": "KFC - MOBIL DURAN",
-    "direccion": "",
+    "direccion": "KM 1 1/2 VIA DURAN - TAMBO",
     "email": "kfck25@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -122,7 +122,7 @@
   {
     "codigo": "K029",
     "nombre": "KFC - MALECON 2000",
-    "direccion": "",
+    "direccion": "MALECON Y OLMEDO",
     "email": "kfck29@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -143,7 +143,7 @@
   {
     "codigo": "K034",
     "nombre": "KFC - VIA DAULE",
-    "direccion": "",
+    "direccion": "KM 4 1/2 VIA DAULE, AL LADO DE GRAN AKI",
     "email": "kfck34@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -180,7 +180,7 @@
   {
     "codigo": "K037",
     "nombre": "KFC - DOMINGO COMIN",
-    "direccion": "",
+    "direccion": "AV. DOMINGO COMIN SOLAR 1 Y CALLE 50",
     "email": "kfck37@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -217,7 +217,7 @@
   {
     "codigo": "K055",
     "nombre": "KFC - MOBIL CORDOVA",
-    "direccion": "",
+    "direccion": "CORDOVA S/N Y LOJA",
     "email": "kfck55@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -242,7 +242,7 @@
   {
     "codigo": "K063",
     "nombre": "KFC - RIO CENTRO SUR",
-    "direccion": "",
+    "direccion": "AV.25 DE JULIO Y PIO JARAMILLO",
     "email": "kfck63@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -267,7 +267,7 @@
   {
     "codigo": "K074",
     "nombre": "KFC - CALIFORNIA",
-    "direccion": "",
+    "direccion": "KM 12 1/2 VIA A DAULE",
     "email": "kfck74@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -308,7 +308,7 @@
   {
     "codigo": "K076",
     "nombre": "KFC - PARQUE CENTENARIO",
-    "direccion": "",
+    "direccion": "PEDRO MONCAYO 1005 Y VELEZ",
     "email": "kfck76@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -345,7 +345,7 @@
   {
     "codigo": "K077",
     "nombre": "KFC - RIO CENTRO LOS CEIBOS",
-    "direccion": "",
+    "direccion": "AV DEL BOMBERO C.C. RIOCENTRO CEIBOS",
     "email": "kfck77@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -370,7 +370,7 @@
   {
     "codigo": "K085",
     "nombre": "KFC - MOBIL CEIBOS",
-    "direccion": "",
+    "direccion": "AV. DEL BOMBERO S/N JOSE RUBIRA",
     "email": "kfck85@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -395,7 +395,7 @@
   {
     "codigo": "K087",
     "nombre": "KFC - TERMINAL TERRESTRE GYQ",
-    "direccion": "",
+    "direccion": "AV BENJAMIN ROSALES Y JAIME ROLDOS AGUILERA TERMINAL TERRESTRE DE GUAYAQUIL",
     "email": "kfck87@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -428,7 +428,7 @@
   {
     "codigo": "K095",
     "nombre": "KFC - PASEO SHOP KM 9 VIA DAULE",
-    "direccion": "",
+    "direccion": "KM 9.5 VIA A DAULE CENTRO COMERCIA PASEO SHOPPING",
     "email": "kfck95@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -453,7 +453,7 @@
   {
     "codigo": "K105",
     "nombre": "KFC - HIPER MARKET",
-    "direccion": "",
+    "direccion": "AV. FCO. DE ORELLANA C.C. RIOCENTRO NORTE",
     "email": "kfck105@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -478,7 +478,7 @@
   {
     "codigo": "K153",
     "nombre": "KFC - LIGA CANTONAL DURAN",
-    "direccion": "",
+    "direccion": "Duran, ciudadela Primamera 1 Av. Samuel Cisneros y Amazonas.",
     "email": "kfck153@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -515,7 +515,7 @@
   {
     "codigo": "K154",
     "nombre": "KFC - PASCUALES",
-    "direccion": "",
+    "direccion": "Av. Montecristi calle principal maz 8 solar 11 y 12",
     "email": "kfck154@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -560,7 +560,7 @@
   {
     "codigo": "M031",
     "nombre": "MENESTRAS DEL NEGRO - RIO CENTRO NORTE",
-    "direccion": "",
+    "direccion": "Av. Francisco de Orellana Cdla El Condor",
     "email": "m31@menestrasdelnegro.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -585,7 +585,7 @@
   {
     "codigo": "M035",
     "nombre": "MENESTRAS DEL NEGRO - GARZOTA",
-    "direccion": "",
+    "direccion": "La Garzota",
     "email": "m35@menestrasdelnegro.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -630,7 +630,7 @@
   {
     "codigo": "M058",
     "nombre": "MENESTRAS DEL NEGRO - LAS PENAS",
-    "direccion": "",
+    "direccion": "MALECON S/N Y LOJA, PATIO DE COMIDAS",
     "email": "m58@menestrasdelnegro.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -663,7 +663,7 @@
   {
     "codigo": "T032",
     "nombre": "TROPIBURGER - TERMINAL",
-    "direccion": "",
+    "direccion": "Av. Benjamin Rosales y Av. De Las Americas",
     "email": "trot32@tropiburger.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -688,7 +688,7 @@
   {
     "codigo": "V055",
     "nombre": "JUAN VALDEZ - MALL DEL SOL ZONA GASTRO",
-    "direccion": "",
+    "direccion": "CC Mall del Sol",
     "email": "jv55@juanvaldezcafe.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -705,7 +705,7 @@
   {
     "codigo": "A037",
     "nombre": "AMERICAN DELI - RIOCENTRO EL DORADO",
-    "direccion": "",
+    "direccion": "KM 10 1/2 VIA LA AURORA",
     "email": "amca37@americandeli.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -773,7 +773,7 @@
   {
     "codigo": "BS038",
     "nombre": "BASKIN ROBBINS - CEIBOS BASKIN",
-    "direccion": "",
+    "direccion": "KM 10 1/2 VIA LA AURORA",
     "email": "bs38@baskin-cinnabon.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -790,7 +790,7 @@
   {
     "codigo": "E006",
     "nombre": "ESPAÑOL - MALL EL SOL",
-    "direccion": "",
+    "direccion": "C.C. Plaza de las Americas",
     "email": "espe06@elespanol.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -807,7 +807,7 @@
   {
     "codigo": "E010",
     "nombre": "ESPAÑOL - SAN MARINO PB",
-    "direccion": "",
+    "direccion": "C. C. Ceibos",
     "email": "espe10@elespanol.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -824,7 +824,7 @@
   {
     "codigo": "E026",
     "nombre": "ESPAÑOL - PUNTILLA",
-    "direccion": "",
+    "direccion": "C.C. Condado Shopping P. B.",
     "email": "espe26@elespanol.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -845,7 +845,7 @@
   {
     "codigo": "I002",
     "nombre": "IL CAPPO - RIOCENTRO CEIBOS",
-    "direccion": "",
+    "direccion": "CC Riocentro Ceibos",
     "email": "ilci02@ilci.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -899,7 +899,7 @@
   {
     "codigo": "K007",
     "nombre": "KFC - ALBORADA",
-    "direccion": "",
+    "direccion": "ALBORADA 4TA ETAPA AV. GUILLERMO PAREJA Y MARIA EGAS",
     "email": "kfck07@kfc.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -940,7 +940,7 @@
   {
     "codigo": "K045",
     "nombre": "KFC - BOYACA",
-    "direccion": "",
+    "direccion": "AV. 9 DE OCTUBRE 706 ENTRE BOYACA Y GARCIA AVILES",
     "email": "kfck45@kfc.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -993,7 +993,7 @@
   {
     "codigo": "K065",
     "nombre": "KFC - MILAGRO",
-    "direccion": "",
+    "direccion": "PRESIDENTE ESPINOZA Y AV. 17 DE SEPTIEMBRE",
     "email": "kfck65@kfc.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -1034,7 +1034,7 @@
   {
     "codigo": "K090",
     "nombre": "KFC - MACHALA CENTRO",
-    "direccion": "",
+    "direccion": "AV. ROCAFUERTE 906 ENTRE 9 DE MAYO Y JUAN MONTALVO",
     "email": "kfck90@kfc.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -1091,7 +1091,7 @@
   {
     "codigo": "K091",
     "nombre": "KFC - MACHALA RIO CENTRO",
-    "direccion": "",
+    "direccion": "KM 1 1/2 VIA A PASAJE",
     "email": "kfck91@kfc.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -1124,7 +1124,7 @@
   {
     "codigo": "K148",
     "nombre": "KFC - TERMINAL TERRESTRE MACHALA",
-    "direccion": "",
+    "direccion": "Via a la Ferroviaria",
     "email": "kfck148@kfc.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -1169,7 +1169,7 @@
   {
     "codigo": "V015",
     "nombre": "JUAN VALDEZ - CEIBOS",
-    "direccion": "",
+    "direccion": "CC Riocentro Los Ceibos",
     "email": "jv15@juanvaldezcafe.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -1182,7 +1182,7 @@
   {
     "codigo": "V021",
     "nombre": "JUAN VALDEZ - MALL DEL SOL",
-    "direccion": "",
+    "direccion": "CC Mall del Sol",
     "email": "jv21@juanvaldezcafe.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -1253,7 +1253,7 @@
   {
     "codigo": "BS037",
     "nombre": "BASKIN ROBBINS / CINNABON - DORADO",
-    "direccion": "",
+    "direccion": "Av. Galo pLaza Lazo y Av Simon Bolivar",
     "email": "bs37@baskin-cinnabon.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1266,7 +1266,7 @@
   {
     "codigo": "G049",
     "nombre": "GUS - OUTLET DURAN",
-    "direccion": "",
+    "direccion": "Autopista Duran Boliche",
     "email": "gusg49@gus.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1291,7 +1291,7 @@
   {
     "codigo": "I005",
     "nombre": "IL CAPPO - SAN MARINO",
-    "direccion": "",
+    "direccion": "AV. FRANCISCO DE ORELLANA Y PLAZA DAÑIN CC. SAN MARINO",
     "email": "ilci05@ilci.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1312,7 +1312,7 @@
   {
     "codigo": "K075",
     "nombre": "KFC - MOBIL KENNEDY",
-    "direccion": "",
+    "direccion": "AV. FRANCISCO DE ORELLANA GASOLINERA MOBIL",
     "email": "kfck75@kfc.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1341,7 +1341,7 @@
   {
     "codigo": "K094",
     "nombre": "KFC - OUTLET DURAN",
-    "direccion": "",
+    "direccion": "AUTOPISTA DURAN BOLICHE PASEO SHOPPING DURAN",
     "email": "kfck94@kfc.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1370,7 +1370,7 @@
   {
     "codigo": "K145",
     "nombre": "KFC - SUPER AKI SAN EDUARDO",
-    "direccion": "",
+    "direccion": "Av.Jose Rodriguez Bonin y Av. Barcelona",
     "email": "kfck145@kfc.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1465,7 +1465,7 @@
   {
     "codigo": "M011",
     "nombre": "MENESTRAS DEL NEGRO - MALL SUR",
-    "direccion": "",
+    "direccion": "Centro Comercial Mall del Sur",
     "email": "m11@menestrasdelnegro.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1494,7 +1494,7 @@
   {
     "codigo": "M037",
     "nombre": "MENESTRAS DEL NEGRO - 9 DE OCTUBRE",
-    "direccion": "",
+    "direccion": "9 de Octubre",
     "email": "m37@menestrasdelnegro.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1535,7 +1535,7 @@
   {
     "codigo": "M046",
     "nombre": "MENESTRAS DEL NEGRO - SAN MARINO",
-    "direccion": "",
+    "direccion": "AV. FRANCISCO DE ORELLANA Y PLAZA DAÑIN CC. SAN MARINO",
     "email": "m46@menestrasdelnegro.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1564,7 +1564,7 @@
   {
     "codigo": "M047",
     "nombre": "MENESTRAS DEL NEGRO - PASEO SHOPPING DURAN",
-    "direccion": "",
+    "direccion": "Autopista Duran Boliche",
     "email": "m47@menestrasdelnegro.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1593,7 +1593,7 @@
   {
     "codigo": "M057",
     "nombre": "MENESTRAS DEL NEGRO - ALBORADA",
-    "direccion": "",
+    "direccion": "Benjamin Carrión y Rodolfo Baquerizo Esquina (junto al Magda)",
     "email": "m57@menestrasdelnegro.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1647,7 +1647,7 @@
   {
     "codigo": "G045",
     "nombre": "GUS - TUNGURAHUA",
-    "direccion": "",
+    "direccion": "Tungurahua 409 t y 9 de Octubre",
     "email": "gusg45@gus.com.ec",
     "mes": "ABRIL",
     "extintores": [
@@ -1672,7 +1672,7 @@
   {
     "codigo": "I012",
     "nombre": "IL CAPPO - TERMINAL TERRESTRE",
-    "direccion": "",
+    "direccion": "AV BENJAMIN ROSALES Y JAIME ROLDOS AGUILERA TERMINAL TERRESTRE DE GUAYAQUIL",
     "email": "ilci12@ilci.com.ec",
     "mes": "ABRIL",
     "extintores": [
@@ -1697,7 +1697,7 @@
   {
     "codigo": "K082",
     "nombre": "KFC - SHOPPING PLAYAS",
-    "direccion": "",
+    "direccion": "VIA DATA POSORJA EN LA Y, CENTRO COMERCIAL PASEO SHOPPING PLAYAS",
     "email": "kfck82@kfc.com.ec",
     "mes": "ABRIL",
     "extintores": [
@@ -1738,7 +1738,7 @@
   {
     "codigo": "K161",
     "nombre": "KFC - MALL DEL RIO GYE",
-    "direccion": "",
+    "direccion": "Hipermercados Av. Francisco de Orellana 120",
     "email": "kfck161@kfc.com.ec",
     "mes": "ABRIL",
     "extintores": [
@@ -1793,7 +1793,7 @@
   {
     "codigo": "A006",
     "nombre": "AMERICAN DELI - TERMINAL GYE",
-    "direccion": "",
+    "direccion": "Terminal Gye",
     "email": "amca06@americandeli.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -1818,7 +1818,7 @@
   {
     "codigo": "A024",
     "nombre": "AMERICAN DELI - MALL DEL SUR",
-    "direccion": "",
+    "direccion": "CC Mall del Sur",
     "email": "amca24@americandeli.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -1869,7 +1869,7 @@
   {
     "codigo": "E023",
     "nombre": "ESPAÑOL - PREEMB NAC GYE",
-    "direccion": "",
+    "direccion": "Aeropuerto J. J. Olmedo - Guayaquil",
     "email": "espe23@elespanol.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -1890,7 +1890,7 @@
   {
     "codigo": "G050",
     "nombre": "GUS - MALL DEL SUR",
-    "direccion": "",
+    "direccion": "Av. 25 de Julio y Jose de la Cuadra",
     "email": "gusg50@gus.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -1919,7 +1919,7 @@
   {
     "codigo": "K003",
     "nombre": "KFC - PLAZA QUIL",
-    "direccion": "",
+    "direccion": "AV.PLAZA DAÑIN C.C. PLAZA QUIL",
     "email": "kfck03@kfc.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -1960,7 +1960,7 @@
   {
     "codigo": "K059",
     "nombre": "KFC - MALL DEL SUR P/B",
-    "direccion": "",
+    "direccion": "AV. 25 DE JULIO S/N Y JOSE DE LA CUADRA, C.C. MALL DEL SUR PLANTA BAJA, ESQUINA",
     "email": "kfck59@kfc.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -1993,7 +1993,7 @@
   {
     "codigo": "K096",
     "nombre": "KFC - PORTETE",
-    "direccion": "",
+    "direccion": "AV. PORTETE ENTRE LA 16 AVA Y LA 17 AVA",
     "email": "kfck96@kfc.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -2050,7 +2050,7 @@
   {
     "codigo": "M056",
     "nombre": "MENESTRAS DEL NEGRO - AEROPUERTO GYE",
-    "direccion": "",
+    "direccion": "Av. De las Americas s/n y Hermano Miguel",
     "email": "m56@menestrasdelnegro.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -2071,7 +2071,7 @@
   {
     "codigo": "R003",
     "nombre": "CASA RES - 9 DE OCTUBRE",
-    "direccion": "",
+    "direccion": "9 de Octubre entre Rumichaca y Velez",
     "email": "r003@casares.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -2112,7 +2112,7 @@
   {
     "codigo": "R004",
     "nombre": "CASA RES - SAN MARINO",
-    "direccion": "",
+    "direccion": "AV. FRANCISCO DE ORELLANA Y PLAZA DAÑIN CC. SAN MARINO",
     "email": "r004@casares.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -2161,7 +2161,7 @@
   {
     "codigo": "R008",
     "nombre": "CASA RES - MALL DEL SOL",
-    "direccion": "",
+    "direccion": "CC Mall del Sol",
     "email": "r008@casares.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -2202,7 +2202,7 @@
   {
     "codigo": "R010",
     "nombre": "CASA RES - FRANCISCO DE ORELLANA",
-    "direccion": "",
+    "direccion": "Av. Francisco de orellana y Alberto Borges Najera",
     "email": "r010@casares.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -2291,7 +2291,7 @@
   {
     "codigo": "V004",
     "nombre": "JUAN VALDEZ - AEROPUERTO",
-    "direccion": "",
+    "direccion": "Aeropuerto J.J.Olmedo",
     "email": "jv04@juanvaldezcafe.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -2308,7 +2308,7 @@
   {
     "codigo": "V024",
     "nombre": "JUAN VALDEZ - PREEMBARQUE NACIONAL",
-    "direccion": "",
+    "direccion": "Aeropuerto J.J.Olmedo",
     "email": "jv24@juanvaldezcafe.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -2321,7 +2321,7 @@
   {
     "codigo": "V048",
     "nombre": "JUAN VALDEZ - MALL DEL RIO GYE",
-    "direccion": "",
+    "direccion": "CC Mall del Rio",
     "email": "jv48@juanvaldezcafe.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -2389,7 +2389,7 @@
   {
     "codigo": "G048",
     "nombre": "GUS - TERMINAL TERRESTRE",
-    "direccion": "",
+    "direccion": "Av Benjamin Rosales S/n y Av de las Americas",
     "email": "gusg48@gus.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2414,7 +2414,7 @@
   {
     "codigo": "G052",
     "nombre": "GUS - CITY MALL",
-    "direccion": "",
+    "direccion": "Centro Comercial City Mall",
     "email": "gusg52@gus.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2439,7 +2439,7 @@
   {
     "codigo": "I004",
     "nombre": "IL CAPPO - MALL DEL SUR",
-    "direccion": "",
+    "direccion": "CC Mall del Sur",
     "email": "ilci04@ilci.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2485,7 +2485,7 @@
   {
     "codigo": "K079",
     "nombre": "KFC - BABAHOYO",
-    "direccion": "",
+    "direccion": "Malecón y 9 de Octubre",
     "email": "kfck79@kfc.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2526,7 +2526,7 @@
   {
     "codigo": "K083",
     "nombre": "KFC - MUCHO LOTE",
-    "direccion": "",
+    "direccion": "AV. FRANCISCO DE ORELLANA E ISIDRO AYORA, SUPER AKI LOCAL 5 Y 6",
     "email": "kfck83@kfc.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2559,7 +2559,7 @@
   {
     "codigo": "K115",
     "nombre": "KFC - ENTRADA DE LA 8",
-    "direccion": "",
+    "direccion": "VIA PERIMETRAL, ENTRADA DE LA 8, SUPER AKI",
     "email": "kfck115@kfc.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2633,7 +2633,7 @@
   {
     "codigo": "M014",
     "nombre": "MENESTRAS DEL NEGRO - RIOCENTRO SUR",
-    "direccion": "",
+    "direccion": "Centro Comercial Rio Centro",
     "email": "m14@menestrasdelnegro.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2654,7 +2654,7 @@
   {
     "codigo": "M028",
     "nombre": "MENESTRAS DEL NEGRO - VILLAGE",
-    "direccion": "",
+    "direccion": "CC.Village KM 1 1/2 Via Samborondon",
     "email": "m28@menestrasdelnegro.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2679,7 +2679,7 @@
   {
     "codigo": "T043",
     "nombre": "TROPIBURGER - MALL EL FORTIN",
-    "direccion": "",
+    "direccion": "INMACONSA VIA PERIMETRAL S/N",
     "email": "trot43@tropiburger.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2729,7 +2729,7 @@
   {
     "codigo": "A007",
     "nombre": "AMERICAN DELI - SAN MARINO",
-    "direccion": "",
+    "direccion": "AV. FRANCISCO DE ORELLANA Y PLAZA DAÑIN CC. SAN MARINO",
     "email": "amca07@americandeli.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -2754,7 +2754,7 @@
   {
     "codigo": "A020",
     "nombre": "AMERICAN DELI - VILLAGE PLAZA",
-    "direccion": "",
+    "direccion": "CC Village Plaza",
     "email": "amca20@americandeli.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -2834,7 +2834,7 @@
   {
     "codigo": "G047",
     "nombre": "GUS - ALBORADA",
-    "direccion": "",
+    "direccion": "Av Rodolfo Baquerizo  V 23 y Alameda",
     "email": "gusg47@gus.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -2871,7 +2871,7 @@
   {
     "codigo": "G051",
     "nombre": "GUS - SHOPPING QUEVEDO",
-    "direccion": "",
+    "direccion": "Vía a Quevedo Buena Fé y Jose Peralta",
     "email": "gusg51@gus.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3008,7 +3008,7 @@
   {
     "codigo": "K058",
     "nombre": "KFC - MALL DEL SUR PLANTA ALTA",
-    "direccion": "",
+    "direccion": "AV. 25 DE JULIO S/N Y JOSE DE LA CUADRA, C.C. MALL DEL SUR PLANTA ALTA PATIO DE COMIDAS",
     "email": "kfck58@kfc.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3041,7 +3041,7 @@
   {
     "codigo": "K078",
     "nombre": "KFC - SHOPPING DAULE",
-    "direccion": "",
+    "direccion": "PASEO SHOPPING DAULE AV. VICENTE PIEDRAHITA FRENTE AL ESTADIO LOS DAULIS",
     "email": "kfck78@kfc.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3078,7 +3078,7 @@
   {
     "codigo": "K092",
     "nombre": "KFC - EL FORTIN",
-    "direccion": "",
+    "direccion": "INMACONSA VIA PERIMETRAL S/N",
     "email": "kfck92@kfc.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3107,7 +3107,7 @@
   {
     "codigo": "K093",
     "nombre": "KFC - QUEVEDO",
-    "direccion": "",
+    "direccion": "7 DE OCTUBRE Y 13RA C.C. VENTURA PLAZA LOCAL 1",
     "email": "kfck93@kfc.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3148,7 +3148,7 @@
   {
     "codigo": "K106",
     "nombre": "KFC - SHOPPING QUEVEDO",
-    "direccion": "",
+    "direccion": "VIA QUEVEDO BUENA FE NUEVO PASEO SHOPPING QUEVEDO",
     "email": "kfck106@kfc.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3189,7 +3189,7 @@
   {
     "codigo": "K149",
     "nombre": "KFC - PETROCOMERIAL VENTANAS",
-    "direccion": "",
+    "direccion": "Ventanas Gasolinera Petroecuador, entrada a los Girasoles",
     "email": "kfck149@kfc.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3234,7 +3234,7 @@
   {
     "codigo": "K162",
     "nombre": "KFC - DAULE ESTACION",
-    "direccion": "",
+    "direccion": "PACUALES VIA A DAULE SN Y GUALACEO KM15,5",
     "email": "kfck162@kfc.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3388,7 +3388,7 @@
   {
     "codigo": "M032",
     "nombre": "MENESTRAS DEL NEGRO - SHOPPING QUEVEDO",
-    "direccion": "",
+    "direccion": "Vía a Quevedo s/n - Buena Fe",
     "email": "m32@menestrasdelnegro.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3450,7 +3450,7 @@
   {
     "codigo": "V003",
     "nombre": "JUAN VALDEZ - SAN MARINO",
-    "direccion": "",
+    "direccion": "Av. Francisco de Orellana y Av Plaza Dañi",
     "email": "jv03@juanvaldezcafe.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3463,7 +3463,7 @@
   {
     "codigo": "V005",
     "nombre": "JUAN VALDEZ - URDESA",
-    "direccion": "",
+    "direccion": "Urb. Urdesa",
     "email": "jv05@juanvaldezcafe.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3488,7 +3488,7 @@
   {
     "codigo": "V016",
     "nombre": "JUAN VALDEZ - POLICENTRO",
-    "direccion": "",
+    "direccion": "AV. Del Periodista y Dr. Juan Leon Mera Condominio Policentro",
     "email": "jv16@juanvaldezcafe.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3530,7 +3530,7 @@
   {
     "codigo": "A019",
     "nombre": "AMERICAN DELI - MALL DEL SOL PATIO COMIDAS",
-    "direccion": "",
+    "direccion": "CC Mall del Sol",
     "email": "amca19@americandeli.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3551,7 +3551,7 @@
   {
     "codigo": "CA001",
     "nombre": "CAFA - CAFE ASTORIA SALIDA INTERNACIONAL",
-    "direccion": "",
+    "direccion": "Aeropuerto JJO",
     "email": "cafe.astoria1@cafeastoria.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3568,7 +3568,7 @@
   {
     "codigo": "CA002",
     "nombre": "CAFA - CAFE ASTORIA PREEMBARQUE INTERNACIONAL",
-    "direccion": "",
+    "direccion": "Aeropuerto JJO",
     "email": "cafe.astoria2@cafeastoria.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3585,7 +3585,7 @@
   {
     "codigo": "CA003",
     "nombre": "CAFA - CAFE DUPORT HALL PRINCIPAL",
-    "direccion": "",
+    "direccion": "Aeropuerto JJO",
     "email": "cafeduport@kfc.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3648,7 +3648,7 @@
   {
     "codigo": "E007",
     "nombre": "ESPAÑOL - URDESA",
-    "direccion": "",
+    "direccion": "C. C. Mall del Sol",
     "email": "espe07@elespanol.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3685,7 +3685,7 @@
   {
     "codigo": "E022",
     "nombre": "ESPAÑOL - ISLA EXP GYE",
-    "direccion": "",
+    "direccion": "C.C. San Luis P. B.",
     "email": "espe22@elespanol.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3706,7 +3706,7 @@
   {
     "codigo": "G044",
     "nombre": "GUS - BOYACA",
-    "direccion": "",
+    "direccion": "9 de Octubre 730 y Garcia Avilez",
     "email": "gusg44@gus.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3760,7 +3760,7 @@
   {
     "codigo": "K012",
     "nombre": "KFC - RIO CENTRO",
-    "direccion": "",
+    "direccion": "KM 2 VIA SAMBORONDON AV SORIANO SOLORZANO",
     "email": "kfck12@kfc.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3781,7 +3781,7 @@
   {
     "codigo": "K021",
     "nombre": "KFC - MALL EL SOL",
-    "direccion": "",
+    "direccion": "AV. CONSTITUCION SN, C.C. MALL DEL SOL, PATIO DE COMIDAS",
     "email": "kfck21@kfc.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3810,7 +3810,7 @@
   {
     "codigo": "K052",
     "nombre": "KFC - LAS PEÃ????AS",
-    "direccion": "",
+    "direccion": "MALECON S/N Y LOJA, PATIO DE COMIDAS",
     "email": "kfck52@kfc.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3835,7 +3835,7 @@
   {
     "codigo": "K053",
     "nombre": "KFC - PASEO SHOPPING BABAHOYO",
-    "direccion": "",
+    "direccion": "Vía Babahoyo a Juan Paseo Shopping Babahoyo",
     "email": "kfck53@kfc.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3921,7 +3921,7 @@
   {
     "codigo": "M010",
     "nombre": "MENESTRAS DEL NEGRO - MALECON",
-    "direccion": "",
+    "direccion": "Malecon 2000",
     "email": "m10@menestrasdelnegro.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3950,7 +3950,7 @@
   {
     "codigo": "M021",
     "nombre": "MENESTRAS DEL NEGRO - TERMINAL TER GYQ.",
-    "direccion": "",
+    "direccion": "Terminal Terrestre de Guayaquil",
     "email": "m21@menestrasdelnegro.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3975,7 +3975,7 @@
   {
     "codigo": "M039",
     "nombre": "MENESTRAS DEL NEGRO - PASEO SHOPPING BABAHOYO",
-    "direccion": "",
+    "direccion": "SHOPPING BABAHOYO",
     "email": "m39@menestrasdelnegro.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -4012,7 +4012,7 @@
   {
     "codigo": "M043",
     "nombre": "MENESTRAS DEL NEGRO - EL FORTIN",
-    "direccion": "",
+    "direccion": "Centro Comercial El Fortin",
     "email": "m43@menestrasdelnegro.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -4058,7 +4058,7 @@
   {
     "codigo": "A033",
     "nombre": "AMERICAN DELI - CITY MALL",
-    "direccion": "",
+    "direccion": "CC City Mall",
     "email": "amca33@americandeli.com.ec",
     "mes": "SEPTIEMBRE",
     "extintores": [
@@ -4096,7 +4096,7 @@
   {
     "codigo": "E031",
     "nombre": "ESPAÑOL - POLICENTRO",
-    "direccion": "",
+    "direccion": "C. C. City Mall",
     "email": "espe31@elespanol.com.ec",
     "mes": "SEPTIEMBRE",
     "extintores": [
@@ -4109,7 +4109,7 @@
   {
     "codigo": "K129",
     "nombre": "KFC - LLEVAR 5 ESQUINAS",
-    "direccion": "",
+    "direccion": "Guasmo Central  (5 Esquinas)",
     "email": "kfck129@kfc.com.ec",
     "mes": "SEPTIEMBRE",
     "extintores": [
@@ -4163,7 +4163,7 @@
   {
     "codigo": "B001",
     "nombre": "AMERICAN DELI - STATION SPORTS BAR",
-    "direccion": "",
+    "direccion": "Aeropuerto JJO",
     "email": "sports.bar@americandeli.com.ec, citybistro@americandeli.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4200,7 +4200,7 @@
   {
     "codigo": "E009",
     "nombre": "ESPAÑOL - CEIBOS",
-    "direccion": "",
+    "direccion": "Victor Emilio Estrada y Cedros Esquina",
     "email": "espe09@elespanol.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4221,7 +4221,7 @@
   {
     "codigo": "E030",
     "nombre": "ESPAÑOL - CITY MALL",
-    "direccion": "",
+    "direccion": "Av. Amazonas y Reina Victoria",
     "email": "espe30@elespanol.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4263,7 +4263,7 @@
   {
     "codigo": "K088",
     "nombre": "KFC - HIPERMARKET VIA DAULE",
-    "direccion": "",
+    "direccion": "KM 16 1/2 VIA DAULE DIAGONAL A ECUASAL",
     "email": "kfck88@kfc.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4300,7 +4300,7 @@
   {
     "codigo": "K109",
     "nombre": "KFC - CITY MALL PA",
-    "direccion": "",
+    "direccion": "AV. FELIPE PEZO Y BENJAMIN CARRION, C.C. CITY MALL PATIO DE COMIDAS",
     "email": "kfck109@kfc.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4329,7 +4329,7 @@
   {
     "codigo": "K110",
     "nombre": "KFC - CITY MALL PB",
-    "direccion": "",
+    "direccion": "AV. FELIPE PEZO Y BENJAMIN CARRION, C.C. CITY MALL LOCAL 32 Y 33 PLANTA BAJA",
     "email": "kfck110@kfc.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4366,7 +4366,7 @@
   {
     "codigo": "K117",
     "nombre": "KFC - 29 Y SEDALANA",
-    "direccion": "",
+    "direccion": "LA 29AVA Y SEDALANA, ESQUINA",
     "email": "kfck117@kfc.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4468,7 +4468,7 @@
   {
     "codigo": "M033",
     "nombre": "MENESTRAS DEL NEGRO - CITY MALL",
-    "direccion": "",
+    "direccion": "Centro Comercial City Mall",
     "email": "m33@menestrasdelnegro.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4601,7 +4601,7 @@
   {
     "codigo": "G054",
     "nombre": "GUS - RIOCENTRO EL DORADO",
-    "direccion": "",
+    "direccion": "KM 10 1/2 VIA LA AURORA",
     "email": "gusg54@gus.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -4746,7 +4746,7 @@
   {
     "codigo": "K048",
     "nombre": "KFC - PENINSULA SALINAS",
-    "direccion": "",
+    "direccion": "SAN FRANCISNO CALLE 9 SN",
     "email": "kfck48@kfc.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -4783,7 +4783,7 @@
   {
     "codigo": "K051",
     "nombre": "KFC - SAN MARINO PLANTA ALTA",
-    "direccion": "",
+    "direccion": "AV. FRANCISCO DE ORELLANA Y PLAZA DAÑIN CC. SAN MARINO",
     "email": "kfck51@kfc.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -4816,7 +4816,7 @@
   {
     "codigo": "K067",
     "nombre": "KFC - MOBIL BENEFICENCIA",
-    "direccion": "",
+    "direccion": "AV AMERICAS GASOLINERA MOBIL FRENTE AL AEROPUERTO",
     "email": "kfck67@kfc.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -4845,7 +4845,7 @@
   {
     "codigo": "K123",
     "nombre": "KFC - RIOCENTRO EL DORADO",
-    "direccion": "",
+    "direccion": "KM 10 1/2 VIA LA AURORA",
     "email": "kfck123@kfc.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5135,7 +5135,7 @@
   {
     "codigo": "M050",
     "nombre": "MENESTRAS DEL NEGRO - RIOCENTRO EL DORADO",
-    "direccion": "",
+    "direccion": "KM 10 1/2 VIA LA AURORA",
     "email": "m50@menestrasdelnegro.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5242,7 +5242,7 @@
   {
     "codigo": "V053",
     "nombre": "JUAN VALDEZ - PUERTO SANTA ANA",
-    "direccion": "",
+    "direccion": "Edificio The Point",
     "email": "jv53@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5423,7 +5423,7 @@
   {
     "codigo": "K039",
     "nombre": "KFC - AEROPUERTO GY",
-    "direccion": "",
+    "direccion": "AEROPUERTO DE GUAYAQUIL",
     "email": "kfck39@kfc.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
@@ -5452,7 +5452,7 @@
   {
     "codigo": "K142",
     "nombre": "KFC - SUPER AKI VINCES",
-    "direccion": "",
+    "direccion": "Aquiles Carriel S/N y Av. Sexta",
     "email": "kfck142@kfc.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
@@ -5717,7 +5717,7 @@
   {
     "codigo": "T051",
     "nombre": "TROPIBURGER - MALECON GYE",
-    "direccion": "",
+    "direccion": "Av. Malecon Simon Bolivar y Loja Local 1PB",
     "email": "trot51@tropiburger.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
