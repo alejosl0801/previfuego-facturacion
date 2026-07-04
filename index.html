@@ -320,6 +320,174 @@
     .acc-row > * + * { margin-left: 10px; }
     .cert-novedades-toggle > * + * { margin-left: 6px; }
   }
+
+  /* ══════════ MEJORAS VISUALES Y ANIMACIONES ══════════ */
+
+  /* 1. Base: scroll suave + sin flash azul al tocar en móvil */
+  html { scroll-behavior: smooth; }
+  body { -webkit-tap-highlight-color: transparent; }
+  button { -webkit-user-select: none; user-select: none; }
+
+  /* 2. Header con gradiente y sombra más rica */
+  header {
+    background: linear-gradient(135deg, #c0392b 0%, #922b21 60%, #7d1f16 100%);
+    box-shadow: 0 3px 14px rgba(146,43,33,0.45);
+  }
+
+  /* 3. Logo con entrada animada (una sola vez al cargar) */
+  header .logo { animation: logoIn 0.55s cubic-bezier(0.34,1.56,0.64,1) both; }
+  @keyframes logoIn { from { opacity: 0; transform: translateY(-10px) scale(0.92); } to { opacity: 1; transform: none; } }
+
+  /* 4. Feedback táctil: todos los botones se hunden levemente al presionar */
+  .btn, .nav-tab, .icon-btn, .cert-foto-btn, .nov-btn, .perfil-indicator {
+    transition: transform 0.12s ease, background 0.15s, box-shadow 0.2s;
+  }
+  .btn:active, .nav-tab:active, .icon-btn:active, .cert-foto-btn:active,
+  .nov-btn:active, .perfil-indicator:active { transform: scale(0.95); }
+
+  /* 5. Tarjetas de locales: entrada escalonada (fade + subida) */
+  .local-card { animation: cardIn 0.34s ease both; }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  /* 6. Tarjetas: elevación al pasar/tocar */
+  .local-card { transition: box-shadow 0.22s ease, transform 0.22s ease; }
+  .local-card:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.10); transform: translateY(-2px); }
+
+  /* 7. Punto rojo de pendiente con pulso suave */
+  .dot-pendiente { display: inline-block; animation: dotPulse 1.6s ease-in-out infinite; }
+  @keyframes dotPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.25); opacity: 0.75; } }
+
+  /* 8. Barra de progreso del mes (visitados / total) */
+  .mes-progress { height: 8px; background: #eee; border-radius: 99px; overflow: hidden; margin-top: 7px; }
+  .mes-progress-fill {
+    height: 100%; width: 0; border-radius: 99px;
+    background: linear-gradient(90deg, #27ae60, #2ecc71);
+    transition: width 0.8s cubic-bezier(0.22,1,0.36,1);
+  }
+  body.dark .mes-progress { background: #2d323a; }
+
+  /* 9. Contador con "pop" cuando cambia */
+  .stat-pop { animation: statPop 0.4s cubic-bezier(0.34,1.56,0.64,1); display: inline-block; }
+  @keyframes statPop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
+
+  /* 10. Estado vacío celebratorio */
+  .empty-fiesta {
+    text-align: center; padding: 34px 16px; border: 2px dashed #a9dfbf;
+    border-radius: 12px; background: #f4fbf6; animation: cardIn 0.4s ease both;
+  }
+  .empty-fiesta .big { font-size: 44px; display: block; margin-bottom: 8px; animation: bounceIn 0.7s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes bounceIn { 0% { transform: scale(0); } 65% { transform: scale(1.15); } 100% { transform: scale(1); } }
+  body.dark .empty-fiesta { background: #1a2e22; border-color: #27ae60; }
+
+  /* 11. Modal: fondo con blur + entrada animada */
+  #certModal { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+  #certModal > div { animation: modalIn 0.3s cubic-bezier(0.22,1,0.36,1) both; }
+  @keyframes modalIn { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: none; } }
+
+  /* 12. Transición entre pasos del modal */
+  .paso-anim { animation: pasoIn 0.28s ease both; }
+  @keyframes pasoIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+
+  /* 13. Indicadores de paso con transición de color suave */
+  .cert-step-ind { transition: background 0.3s, color 0.3s; }
+
+  /* 14. Foto adjuntada: aparece con fade + badge de check */
+  .cert-foto-preview.show { animation: fotoIn 0.35s ease both; }
+  @keyframes fotoIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+  .cert-foto-card { position: relative; }
+  .cert-foto-card.has-foto::after {
+    content: '✓'; position: absolute; top: 8px; right: 8px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #27ae60; color: white; font-weight: 900; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    animation: bounceIn 0.45s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 2px 6px rgba(39,174,96,0.5);
+  }
+
+  /* 15. Firma: marca de agua que desaparece al empezar a dibujar */
+  .cert-firma-wrap { position: relative; }
+  .cert-firma-wrap::before {
+    content: '✍️ Firma aquí'; position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #ccc; font-size: 15px; font-weight: 600; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .cert-firma-wrap.has-ink::before { opacity: 0; }
+
+  /* 16. Botón Generar Certificado con gradiente y glow pulsante */
+  .btn-generar {
+    background: linear-gradient(135deg, #27ae60, #1e8449) !important;
+    box-shadow: 0 3px 12px rgba(39,174,96,0.45);
+    animation: glowPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes glowPulse {
+    0%,100% { box-shadow: 0 3px 12px rgba(39,174,96,0.35); }
+    50% { box-shadow: 0 3px 20px rgba(39,174,96,0.65); }
+  }
+
+  /* 17. Status bars entran deslizando desde arriba */
+  .status-bar { animation: statusIn 0.3s ease both; }
+  @keyframes statusIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+  /* 18. Overlay de generación de PDF (spinner grande + éxito animado) */
+  #pdfOverlay {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    background: rgba(15,15,18,0.82); z-index: 3000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 18px; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  }
+  #pdfOverlay .spin-big {
+    width: 54px; height: 54px; border: 5px solid rgba(255,255,255,0.2);
+    border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  #pdfOverlay .ov-txt { color: white; font-size: 15px; font-weight: 700; letter-spacing: 0.3px; }
+  .check-circle {
+    width: 74px; height: 74px; border-radius: 50%; background: #27ae60;
+    display: flex; align-items: center; justify-content: center;
+    animation: bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 0 0 10px rgba(39,174,96,0.25);
+  }
+  .check-circle svg { width: 38px; height: 38px; }
+  .check-circle path {
+    stroke: white; stroke-width: 7; fill: none;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 60; stroke-dashoffset: 60;
+    animation: drawCheck 0.45s 0.15s ease forwards;
+  }
+  @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+
+  /* 19. Search box: lupa integrada + glow al enfocar */
+  .search-box {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23999' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: 12px center;
+    padding-left: 38px !important;
+    transition: border-color 0.2s, box-shadow 0.25s;
+  }
+  .search-box:focus { box-shadow: 0 0 0 4px rgba(192,57,43,0.12); }
+
+  /* 20. Modo oscuro: transición suave de colores en todo */
+  body, .card, .local-card, .card-header, .local-card-header, .local-card-body,
+  input, select, textarea, .search-box, td, .acc-row, .nov-btn {
+    transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease;
+  }
+
+  /* 21. Selector de perfil: tarjetas entran escalonadas */
+  .psel-card { animation: cardIn 0.45s ease both; }
+  .psel-card:nth-child(2) { animation-delay: 0.12s; }
+  .psel-card:active { transform: scale(0.96); }
+  .psel-title { animation: logoIn 0.5s ease both; }
+
+  /* 22. Badge del mes tipo pill */
+  .mes-pill {
+    background: #f3e8fb; color: #8e44ad; border-radius: 99px;
+    padding: 2px 9px; font-size: 10.5px; font-weight: 700; white-space: nowrap;
+    letter-spacing: 0.4px;
+  }
+  body.dark .mes-pill { background: #32233d; color: #c79aE8; }
+
+  /* Empty-state de "sin resultados de búsqueda" */
+  .empty-soft { text-align: center; padding: 26px 14px; color: #999; font-size: 13px; animation: cardIn 0.3s ease both; }
+  .empty-soft .big { font-size: 34px; display: block; margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -351,9 +519,18 @@
   </nav>
   <div class="hdr-right">
     <div id="perfilIndicator" class="perfil-indicator" onclick="mostrarSelectorPerfil()" title="Cambiar perfil">👤 Admin</div>
-    <button class="icon-btn" onclick="toggleDark()" title="Modo oscuro">🌙</button>
+    <button class="icon-btn" id="darkBtn" onclick="toggleDark()" title="Modo oscuro">🌙</button>
   </div>
 </header>
+
+<!-- Overlay de generación de certificado -->
+<div id="pdfOverlay" style="display:none">
+  <div class="spin-big" id="pdfOverlaySpin"></div>
+  <div id="pdfOverlayCheck" style="display:none" class="check-circle">
+    <svg viewBox="0 0 52 52"><path d="M14 27 L22 35 L38 18"/></svg>
+  </div>
+  <div class="ov-txt" id="pdfOverlayTxt">Generando certificado…</div>
+</div>
 
 <div class="container">
 
@@ -500,15 +677,11 @@
     <div class="card">
       <div class="card-header"><h2>📋 Correos de operaciones (siempre incluidos)</h2></div>
       <div class="card-body">
-        <p style="font-size:13px;color:#555;margin-bottom:12px">
-          Cada certificado se envía al correo del local <strong>y también</strong> a estos dos correos fijos,
-          sin importar qué local sea.
+        <p style="font-size:13px;color:#555">
+          Cada certificado se envía automáticamente al correo del local <strong>y también</strong> a:
+          <br>✉️ velia.sanchez@kfc.com.ec &nbsp;·&nbsp; ✉️ sandra.guanuna@kfc.com.ec &nbsp;·&nbsp; ✉️ salome.mosquera@kfc.com.ec
+          <br><span style="color:#999;font-size:12px">Estos correos están grabados en el sistema — no necesitas configurar nada.</span>
         </p>
-        <div class="form-row">
-          <div class="form-group"><label>Correo de operaciones 1</label><input id="opsEmail1" type="email" placeholder="operaciones1@correo.com" autocomplete="off" oninput="saveOpsEmails()" /></div>
-          <div class="form-group"><label>Correo de operaciones 2</label><input id="opsEmail2" type="email" placeholder="operaciones2@correo.com" autocomplete="off" oninput="saveOpsEmails()" /></div>
-        </div>
-        <span id="opsEmailsStatus" style="font-size:12px;color:#27ae60"></span>
       </div>
     </div>
 
@@ -643,7 +816,7 @@
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
         <button style="background:#95a5a6;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer" onclick="certPaso(2)">‹ Anterior</button>
-        <button style="background:#27ae60;color:white;border:none;border-radius:6px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer" onclick="generarCertLocal()">📜 Generar Certificado</button>
+        <button class="btn-generar" style="color:white;border:none;border-radius:6px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer" onclick="generarCertLocal()">📜 Generar Certificado</button>
       </div>
     </div>
 
@@ -711,32 +884,18 @@ function saveEmailjsCfg() {
   }
 }
 
-// ─── CONFIG (correos fijos de operaciones) ────────────────────────────────────
-function loadOpsEmails() {
-  const e1 = document.getElementById('opsEmail1');
-  const e2 = document.getElementById('opsEmail2');
-  if (e1) e1.value = localStorage.getItem('opsEmail1') || '';
-  if (e2) e2.value = localStorage.getItem('opsEmail2') || '';
-}
-
-function saveOpsEmails() {
-  const set = (id, key) => {
-    const v = (document.getElementById(id).value || '').trim();
-    if (v) localStorage.setItem(key, v); else localStorage.removeItem(key);
-  };
-  set('opsEmail1', 'opsEmail1');
-  set('opsEmail2', 'opsEmail2');
-  const el = document.getElementById('opsEmailsStatus');
-  if (el) {
-    el.textContent = '✅ Guardado en este navegador';
-    clearTimeout(saveOpsEmails._t);
-    saveOpsEmails._t = setTimeout(() => el.textContent = '', 3000);
-  }
-}
+// ─── CORREOS FIJOS DE OPERACIONES ─────────────────────────────────────────────
+// Grabados en el sistema — reciben TODOS los certificados, de cualquier local.
+// Confirmados por el cliente; no requieren configuración alguna.
+const OPS_EMAILS = [
+  'velia.sanchez@kfc.com.ec',
+  'sandra.guanuna@kfc.com.ec',
+  'salome.mosquera@kfc.com.ec',
+];
 
 function getDestinatariosCorreo(emailLocal) {
   const set = new Set();
-  [emailLocal, localStorage.getItem('opsEmail1'), localStorage.getItem('opsEmail2')]
+  [emailLocal, ...OPS_EMAILS]
     .forEach(e => { const v = (e || '').trim(); if (v) set.add(v); });
   return [...set];
 }
@@ -826,6 +985,12 @@ function toggleCard(id) {
 function toggleDark() {
   const dark = document.body.classList.toggle('dark');
   try { localStorage.setItem('darkMode', dark ? '1' : '0'); } catch(e) {}
+  actualizarIconoDark();
+}
+
+function actualizarIconoDark() {
+  const btn = document.getElementById('darkBtn');
+  if (btn) btn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
 }
 
 function fileToBase64(file) {
@@ -1111,7 +1276,7 @@ function renderEmitList() {
   if (!cont) return;
 
   if (!libretaLocales.length) {
-    cont.innerHTML = '<p style="color:#999;font-size:13px">No hay locales guardados. Ve a 🏢 Locales y agrega el primero (con su mes de servicio).</p>';
+    cont.innerHTML = '<div class="empty-soft"><span class="big">🏢</span>No hay locales guardados. Ve a 🏢 Locales y agrega el primero (con su mes de servicio).</div>';
     if (statsEl) statsEl.textContent = '';
     return;
   }
@@ -1126,26 +1291,45 @@ function renderEmitList() {
   locales.sort((a, b) => String(a.codigo).localeCompare(String(b.codigo)));
 
   if (!locales.length) {
-    cont.innerHTML = '<p style="color:#999;font-size:13px">Ningún local coincide con el filtro.</p>';
+    cont.innerHTML = '<div class="empty-soft"><span class="big">🔍</span>Ningún local coincide con el filtro.</div>';
     if (statsEl) statsEl.textContent = '';
     return;
   }
 
   const pend = locales.filter(l => !isVisitado(l.codigo));
   const vis  = locales.filter(l => isVisitado(l.codigo));
-  if (statsEl) statsEl.innerHTML =
-    `<span style="color:#e74c3c">🔴 ${pend.length} pendientes</span> &nbsp;·&nbsp; <span style="color:#27ae60">✅ ${vis.length} visitados</span> &nbsp;·&nbsp; ${locales.length} total`;
 
-  function card(l) {
+  // Contador con "pop" si cambió + barra de progreso animada del mes
+  if (statsEl) {
+    const clave = mesSel + '|' + q;
+    const pop = (renderEmitList._prev !== undefined &&
+                 renderEmitList._prevClave === clave &&
+                 renderEmitList._prev !== pend.length) ? ' stat-pop' : '';
+    renderEmitList._prev = pend.length;
+    renderEmitList._prevClave = clave;
+    const pct = locales.length ? Math.round(vis.length * 100 / locales.length) : 0;
+    statsEl.innerHTML =
+      `<span style="color:#e74c3c" class="${pop.trim()}">🔴 ${pend.length} pendientes</span> &nbsp;·&nbsp; ` +
+      `<span style="color:#27ae60">✅ ${vis.length} visitados</span> &nbsp;·&nbsp; ${locales.length} total` +
+      `<div class="mes-progress"><div class="mes-progress-fill" style="width:0%"></div></div>`;
+    // Animar la barra en el siguiente frame para que la transición se vea
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const fill = statsEl.querySelector('.mes-progress-fill');
+      if (fill) fill.style.width = pct + '%';
+    }));
+  }
+
+  function card(l, i) {
     const v = isVisitado(l.codigo);
     const mesLbl = l.mes
-      ? `<span style="font-size:11px;color:#8e44ad;font-weight:600;white-space:nowrap">${esc(l.mes)}</span>`
+      ? `<span class="mes-pill">${esc(l.mes)}</span>`
       : `<span style="font-size:11px;color:#bbb;white-space:nowrap">SIN MES</span>`;
+    const delay = Math.min(i, 12) * 0.04;
     return `
-      <div class="local-card">
+      <div class="local-card" style="animation-delay:${delay}s">
         <div class="local-card-header">
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
-            <span>${v ? '✅' : '🔴'}</span>
+            <span class="${v ? '' : 'dot-pendiente'}">${v ? '✅' : '🔴'}</span>
             <strong style="white-space:nowrap">${esc(l.codigo)}</strong>
             <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.nombre)}</span>
             ${mesLbl}
@@ -1158,6 +1342,15 @@ function renderEmitList() {
   }
 
   let html = '';
+  if (!pend.length && vis.length) {
+    // Todos los locales del filtro ya fueron visitados: celebración
+    const etiqueta = mesSel ? 'de ' + mesSel.charAt(0) + mesSel.slice(1).toLowerCase() : 'del filtro';
+    html += `<div class="empty-fiesta">
+      <span class="big">🎉</span>
+      <div style="font-size:15px;font-weight:800;color:#1e8449">¡Todos los locales ${esc(etiqueta)} están visitados!</div>
+      <div style="font-size:12px;color:#7dab8e;margin-top:4px">${vis.length} certificados completados</div>
+    </div>`;
+  }
   if (pend.length) {
     html += `<div style="font-size:12px;font-weight:700;color:#e74c3c;text-transform:uppercase;letter-spacing:0.5px;padding:6px 4px;margin-bottom:4px;border-bottom:2px solid #e74c3c">🔴 PENDIENTES (${pend.length})</div>`;
     html += pend.map(card).join('');
@@ -1570,7 +1763,7 @@ function abrirCertModal(codigo) {
   document.getElementById('accCatalogWrap').style.display = 'none';
   // Reset signature canvas
   const c = document.getElementById('sigCanvas');
-  if (c) { c._initialized = false; sigCtx = null; }
+  if (c) { c._initialized = false; sigCtx = null; const w = c.closest('.cert-firma-wrap'); if (w) w.classList.remove('has-ink'); }
   // Go to step 1
   certPaso(1);
   document.getElementById('certModal').style.display = 'flex';
@@ -1583,7 +1776,11 @@ function cerrarCertModal() {
 
 function certPaso(n) {
   [1,2,3].forEach(i => {
-    document.getElementById('certPaso'+i).style.display = i === n ? '' : 'none';
+    const paso = document.getElementById('certPaso'+i);
+    const mostrar = i === n;
+    paso.style.display = mostrar ? '' : 'none';
+    paso.classList.remove('paso-anim');
+    if (mostrar) { void paso.offsetWidth; paso.classList.add('paso-anim'); }
     const ind = document.getElementById('csi'+i);
     ind.classList.remove('active','done');
     if (i === n) ind.classList.add('active');
@@ -1660,11 +1857,12 @@ function initSignatureCanvas() {
     const src = e.touches ? e.touches[0] : e;
     return { x: src.clientX - r.left, y: src.clientY - r.top };
   };
-  canvas.addEventListener('mousedown',  e => { sigDrawing=true; const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); });
+  const marcaInk = () => { const w = canvas.closest('.cert-firma-wrap'); if (w) w.classList.add('has-ink'); };
+  canvas.addEventListener('mousedown',  e => { sigDrawing=true; marcaInk(); const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); });
   canvas.addEventListener('mousemove',  e => { if(!sigDrawing) return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); });
   canvas.addEventListener('mouseup',    () => sigDrawing=false);
   canvas.addEventListener('mouseleave', () => sigDrawing=false);
-  canvas.addEventListener('touchstart', e => { e.preventDefault(); sigDrawing=true; const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); }, {passive:false});
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); sigDrawing=true; marcaInk(); const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); }, {passive:false});
   canvas.addEventListener('touchmove',  e => { e.preventDefault(); if(!sigDrawing) return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); }, {passive:false});
   canvas.addEventListener('touchend',   () => sigDrawing=false);
 }
@@ -1676,6 +1874,8 @@ function clearSignature() {
   const W = c.offsetWidth || parseInt(c.style.width) || 436;
   const H = c.offsetHeight || parseInt(c.style.height) || 140;
   sigCtx.fillStyle = '#fff'; sigCtx.fillRect(0, 0, W, H);
+  const w = c.closest('.cert-firma-wrap');
+  if (w) w.classList.remove('has-ink');
 }
 
 function getSignatureB64() {
@@ -1736,45 +1936,79 @@ function updateAccTotal() {
   if (el) el.textContent = `Total accesorios: $${total.toFixed(2)}`;
 }
 
+// Overlay de progreso durante la generación (spinner → check animado)
+function pdfOverlayShow(txt) {
+  const ov = document.getElementById('pdfOverlay');
+  if (!ov) return;
+  document.getElementById('pdfOverlaySpin').style.display = '';
+  document.getElementById('pdfOverlayCheck').style.display = 'none';
+  document.getElementById('pdfOverlayTxt').textContent = txt || 'Generando certificado…';
+  ov.style.display = 'flex';
+}
+function pdfOverlaySuccess(txt) {
+  const ov = document.getElementById('pdfOverlay');
+  if (!ov || ov.style.display === 'none') return;
+  document.getElementById('pdfOverlaySpin').style.display = 'none';
+  const chk = document.getElementById('pdfOverlayCheck');
+  chk.style.display = 'flex';
+  // reinicia la animación del check
+  const nuevo = chk.cloneNode(true);
+  chk.parentNode.replaceChild(nuevo, chk);
+  document.getElementById('pdfOverlayTxt').textContent = txt || '¡Certificado generado!';
+  try { if (navigator.vibrate) navigator.vibrate(80); } catch(e) {}
+}
+function pdfOverlayHide() {
+  const ov = document.getElementById('pdfOverlay');
+  if (ov) ov.style.display = 'none';
+}
+
 async function generarCertLocal() {
   if (!certModalCodigo) return;
   const local = getLocalLibreta(certModalCodigo);
   if (!local) return;
 
-  // Fotos del nuevo estado
-  const FB64 = {};
-  for (const [key, file] of Object.entries(certFotos)) {
-    if (file) FB64[key] = await fileToBase64(file);
+  pdfOverlayShow('Generando certificado…');
+  let doc = null;
+  try {
+    // Fotos del nuevo estado
+    const FB64 = {};
+    for (const [key, file] of Object.entries(certFotos)) {
+      if (file) FB64[key] = await fileToBase64(file);
+    }
+    // Firma digital del canvas
+    const firmaB64 = getSignatureB64();
+    if (firmaB64) FB64.firma = firmaB64;
+
+    var now    = new Date();
+    var anio   = String(now.getFullYear());
+    var mesNum = String(now.getMonth() + 1).padStart(2, '0');
+
+    const tipoServSel = document.querySelector('input[name="certTipoServ"]:checked')?.value || 'mantenimiento';
+    const tipoLabel   = tipoServSel === 'recarga' ? 'RECARGA' : 'MANT';
+
+    // Accesorios del catálogo seleccionados
+    const ACCS_SEL = certHayNovedades
+      ? [...certAccsSelected].map(i => ({ desc: ACCESSORIES[i].desc }))
+      : [];
+
+    doc = await hacerPDF({
+      localNom:  local.nombre,
+      puntNom:   local.direccion || local.nombre,
+      localCode: local.codigo,
+      exts: (local.extintores || []).map(e=>({tipo:e.tipo,cap:e.cap})),
+      FB64,
+      ACCS: ACCS_SEL,
+      certNum: local.codigo+'-'+tipoLabel+' EXTINTORES-'+anio,
+      MA:  mesNum+'/'+anio,
+      MAS: mesNum+'/'+(parseInt(anio)+1),
+      anio,
+      tipoServ: tipoServSel,
+    });
+  } catch (e) {
+    pdfOverlayHide();
+    alert('Error generando el certificado: ' + (e && e.message || e));
+    return;
   }
-  // Firma digital del canvas
-  const firmaB64 = getSignatureB64();
-  if (firmaB64) FB64.firma = firmaB64;
-
-  const now    = new Date();
-  const anio   = String(now.getFullYear());
-  const mesNum = String(now.getMonth() + 1).padStart(2, '0');
-
-  const tipoServSel = document.querySelector('input[name="certTipoServ"]:checked')?.value || 'mantenimiento';
-  const tipoLabel   = tipoServSel === 'recarga' ? 'RECARGA' : 'MANT';
-
-  // Accesorios del catálogo seleccionados
-  const ACCS_SEL = certHayNovedades
-    ? [...certAccsSelected].map(i => ({ desc: ACCESSORIES[i].desc }))
-    : [];
-
-  const doc = await hacerPDF({
-    localNom:  local.nombre,
-    puntNom:   local.direccion || local.nombre,
-    localCode: local.codigo,
-    exts: (local.extintores || []).map(e=>({tipo:e.tipo,cap:e.cap})),
-    FB64,
-    ACCS: ACCS_SEL,
-    certNum: local.codigo+'-'+tipoLabel+' EXTINTORES-'+anio,
-    MA:  mesNum+'/'+anio,
-    MAS: mesNum+'/'+(parseInt(anio)+1),
-    anio,
-    tipoServ: tipoServSel,
-  });
 
   // Histórico local + marcar como visitado este año
   registrarCertEmitido(local);
@@ -1786,7 +2020,12 @@ async function generarCertLocal() {
   try { if (doc) pdfB64 = doc.output('datauristring').split(',')[1]; } catch(e) {}
 
   // Respaldo en GitHub
+  document.getElementById('pdfOverlayTxt').textContent = 'Respaldando en la nube…';
   try { if (doc) await subirCertGitHub(local.codigo, anio, doc); } catch(e) { console.warn('subirCert:', e); }
+
+  // Éxito animado y cierre
+  pdfOverlaySuccess('¡Certificado de ' + local.codigo + ' generado!');
+  setTimeout(pdfOverlayHide, 1400);
 
   cerrarCertModal();
   goToSection('emitir');
@@ -1883,9 +2122,9 @@ async function descargarCertArchivo(path, filename) {
 function init() {
   loadConfig();
   loadEmailjsCfg();
-  loadOpsEmails();
 
   try { if (localStorage.getItem('darkMode') === '1') document.body.classList.add('dark'); } catch(e) {}
+  actualizarIconoDark();
 
   loadLibreta();
   loadCertsEmitidos();
