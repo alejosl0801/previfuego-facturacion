@@ -23,7 +23,7 @@
   {
     "codigo": "J001",
     "nombre": "CAJUN - MALL DEL SOL",
-    "direccion": "",
+    "direccion": "CC Mall del Sol",
     "email": "cjnc01@cajun.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -730,7 +730,7 @@
   {
     "codigo": "BS004",
     "nombre": "BASKIN ROBBINS / CINNABON - MALL DEL SOL",
-    "direccion": "",
+    "direccion": "MALL DEL SOL",
     "email": "br04@baskin-cinnabon.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -747,7 +747,7 @@
   {
     "codigo": "BS009",
     "nombre": "BASKIN ROBBINS - RIO CENTRO SUR",
-    "direccion": "",
+    "direccion": "RIO CENTRO SUR",
     "email": "br09@baskin-cinnabon.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -760,7 +760,7 @@
   {
     "codigo": "CN031",
     "nombre": "BASKIN ROBBINS / CINNABON - RIOCENTRO CEIBOS",
-    "direccion": "",
+    "direccion": "RIOCENTRO CEIBOS",
     "email": "cn31@baskin-cinnabon.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -773,7 +773,7 @@
   {
     "codigo": "BS038",
     "nombre": "BASKIN ROBBINS - CEIBOS BASKIN",
-    "direccion": "KM 10 1/2 VIA LA AURORA",
+    "direccion": "CEIBOS BASKIN",
     "email": "bs38@baskin-cinnabon.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -790,7 +790,7 @@
   {
     "codigo": "E006",
     "nombre": "ESPAÑOL - MALL EL SOL",
-    "direccion": "C.C. Plaza de las Americas",
+    "direccion": "MALL EL SOL",
     "email": "espe06@elespanol.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -807,7 +807,7 @@
   {
     "codigo": "E010",
     "nombre": "ESPAÑOL - SAN MARINO PB",
-    "direccion": "C. C. Ceibos",
+    "direccion": "SAN MARINO PB",
     "email": "espe10@elespanol.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -824,7 +824,7 @@
   {
     "codigo": "E026",
     "nombre": "ESPAÑOL - PUNTILLA",
-    "direccion": "C.C. Condado Shopping P. B.",
+    "direccion": "PUNTILLA",
     "email": "espe26@elespanol.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -866,7 +866,7 @@
   {
     "codigo": "J002",
     "nombre": "CAJUN - SAN MARINO",
-    "direccion": "",
+    "direccion": "AV. FRANCISCO DE ORELLANA Y PLAZA DAÑIN CC. SAN MARINO",
     "email": "cjnc02@cajun.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -1195,7 +1195,7 @@
   {
     "codigo": "V075",
     "nombre": "JUAN VALDEZ - PASEO SHOPPING MACHALA",
-    "direccion": "",
+    "direccion": "PASEO SHOPPING MACHALA",
     "email": "jv75@juanvaldezcafe.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -1224,7 +1224,7 @@
   {
     "codigo": "V079",
     "nombre": "JUAN VALDEZ - MILAGRO",
-    "direccion": "",
+    "direccion": "MILAGRO",
     "email": "jv79@juanvaldezcafe.com.ec",
     "mes": "FEBRERO",
     "extintores": [
@@ -1253,7 +1253,7 @@
   {
     "codigo": "BS037",
     "nombre": "BASKIN ROBBINS / CINNABON - DORADO",
-    "direccion": "Av. Galo pLaza Lazo y Av Simon Bolivar",
+    "direccion": "DORADO",
     "email": "bs37@baskin-cinnabon.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1411,7 +1411,7 @@
   {
     "codigo": "K169",
     "nombre": "KFC - PLAZA PACIFICO DAULE",
-    "direccion": "",
+    "direccion": "PLAZA PACIFICO DAULE",
     "email": "kfck169@kfc.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1440,7 +1440,7 @@
   {
     "codigo": "K176",
     "nombre": "KFC - SUPERCINES",
-    "direccion": "",
+    "direccion": "SUPERCINES",
     "email": "kfck176@kfc.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1630,7 +1630,7 @@
   {
     "codigo": "V066",
     "nombre": "JUAN VALDEZ - PLAZA PACIFICO DAULE",
-    "direccion": "",
+    "direccion": "PLAZA PACIFICO DAULE",
     "email": "jv66@juanvaldezcafe.com.ec",
     "mes": "MARZO",
     "extintores": [
@@ -1763,7 +1763,7 @@
   {
     "codigo": "V057",
     "nombre": "JUAN VALDEZ - CORAL SAMBORONDON",
-    "direccion": "",
+    "direccion": "CORAL SAMBORONDON",
     "email": "jv57@juanvaldezcafe.com.ec",
     "mes": "ABRIL",
     "extintores": [
@@ -1776,7 +1776,7 @@
   {
     "codigo": "V087",
     "nombre": "JUAN VALDEZ - PASEO SHOPPING DAULE",
-    "direccion": "",
+    "direccion": "PASEO SHOPPING DAULE",
     "email": "jv87@juanvaldezcafe.com.ec",
     "mes": "ABRIL",
     "extintores": [
@@ -1843,7 +1843,7 @@
   {
     "codigo": "BS016",
     "nombre": "BASKIN ROBBINS / CINNABON - PUNTILLA",
-    "direccion": "",
+    "direccion": "PUNTILLA",
     "email": "br16@baskin-cinnabon.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -1856,7 +1856,7 @@
   {
     "codigo": "BS020",
     "nombre": "BASKIN ROBBINS - RIO CENTRO NORTE",
-    "direccion": "",
+    "direccion": "RIO CENTRO NORTE",
     "email": "br20@baskin-cinnabon.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -1869,7 +1869,7 @@
   {
     "codigo": "E023",
     "nombre": "ESPAÑOL - PREEMB NAC GYE",
-    "direccion": "Aeropuerto J. J. Olmedo - Guayaquil",
+    "direccion": "PREEMB NAC GYE",
     "email": "espe23@elespanol.com.ec",
     "mes": "MAYO",
     "extintores": [
@@ -2334,7 +2334,7 @@
   {
     "codigo": "CN034",
     "nombre": "CINNABON - RIO CENTRO SUR CINNABON TO GO",
-    "direccion": "",
+    "direccion": "RIO CENTRO SUR CINNABON TO GO",
     "email": "cn34@baskin-cinnabon.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2347,7 +2347,7 @@
   {
     "codigo": "CN035",
     "nombre": "CINNABON - RIO CENTRO NORTE",
-    "direccion": "",
+    "direccion": "RIO CENTRO NORTE",
     "email": "cn35@baskin-cinnabon.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2360,7 +2360,7 @@
   {
     "codigo": "F003",
     "nombre": "AMERICAN DELI - DOLCE INCONTRO AERGYE",
-    "direccion": "",
+    "direccion": "DOLCE INCONTRO AERGYE",
     "email": "f003@americandeli.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2464,7 +2464,7 @@
   {
     "codigo": "J008",
     "nombre": "CAJUN - TERMINAL",
-    "direccion": "",
+    "direccion": "Terminal Terrestre GYE",
     "email": "cjnc08@cajun.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2588,7 +2588,7 @@
   {
     "codigo": "K186",
     "nombre": "KFC - PINTULAC MILAGRO",
-    "direccion": "",
+    "direccion": "PINTULAC MILAGRO",
     "email": "kfck186@kfc.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2700,7 +2700,7 @@
   {
     "codigo": "V089",
     "nombre": "JUAN VALDEZ - PINTULAC MILAGRO",
-    "direccion": "",
+    "direccion": "PINTULAC MILAGRO",
     "email": "jv89@juanvaldezcafe.com.ec",
     "mes": "JUNIO",
     "extintores": [
@@ -2779,7 +2779,7 @@
   {
     "codigo": "DI001",
     "nombre": "DOLCE INCONTRO - DOLCE INCONTRO MALL DEL SOL",
-    "direccion": "",
+    "direccion": "Joaquin Orrantia y Juan Tanca Marengo Centro Comercial Mall del Sol",
     "email": "dolcei01@dolceincontro.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -2800,7 +2800,7 @@
   {
     "codigo": "DI002",
     "nombre": "DOLCE INCONTRO - DOLCE INCONTRO CEIBOS",
-    "direccion": "",
+    "direccion": "Km  6½ via a la Costa  y ave el Bombero  Centro Comercial Rio Centro Ceibos",
     "email": "dolcei02@dolceincontro.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -2817,7 +2817,7 @@
   {
     "codigo": "DI003",
     "nombre": "DOLCE INCONTRO - DOLCE INCONTRO SAMBORONDON",
-    "direccion": "",
+    "direccion": "Rio Centro Puntilla",
     "email": "dolcei03@dolceincontro.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -2904,7 +2904,7 @@
   {
     "codigo": "J006",
     "nombre": "CAJUN - CAJUN PUNTILLA",
-    "direccion": "",
+    "direccion": "Puntilla",
     "email": "cjnc06@cajun.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -2925,7 +2925,7 @@
   {
     "codigo": "J020",
     "nombre": "CAJUN - CAJUN PENINSULA",
-    "direccion": "",
+    "direccion": "Barrio San Francisco Av. Principal Sin Nombre Paseo Shopping",
     "email": "cjnc20@cajun.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -2962,7 +2962,7 @@
   {
     "codigo": "J021",
     "nombre": "CAJUN - MALL DEL SUR",
-    "direccion": "",
+    "direccion": "AV. 25 DE JULIO S/N Y JOSE DE LA CUADRA, C.C. MALL DEL SUR PLANTA ALTA PATIO DE COMIDAS",
     "email": "cjnc21@cajun.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -2983,7 +2983,7 @@
   {
     "codigo": "J029",
     "nombre": "CAJUN - CAJUN MALL DEL NORTE",
-    "direccion": "",
+    "direccion": "CAJUN MALL DEL NORTE",
     "email": "cjnc29@cajun.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3275,7 +3275,7 @@
   {
     "codigo": "K165",
     "nombre": "KFC - PLAZA TIA DURAN",
-    "direccion": "",
+    "direccion": "PLAZA TIA DURAN",
     "email": "kfck165@kfc.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3308,7 +3308,7 @@
   {
     "codigo": "K171",
     "nombre": "KFC - SHELL ABU DABI",
-    "direccion": "",
+    "direccion": "SHELL ABU DABI",
     "email": "kfck171@kfc.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3337,7 +3337,7 @@
   {
     "codigo": "K172",
     "nombre": "KFC - MALL DEL NORTE",
-    "direccion": "",
+    "direccion": "MALL DEL NORTE",
     "email": "kfck172@kfc.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3362,7 +3362,7 @@
   {
     "codigo": "H062",
     "nombre": "HELADERIAS - MALL DEL NORTE HELADERIA",
-    "direccion": "",
+    "direccion": "MALL DEL NORTE HELADERIA",
     "email": "kfck172@kfc.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3375,7 +3375,7 @@
   {
     "codigo": "H068",
     "nombre": "HELADERIAS - MALL DEL NORTE PATIO DE COMIDAS",
-    "direccion": "",
+    "direccion": "MALL DEL NORTE PATIO DE COMIDAS",
     "email": "kfck172@kfc.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3425,7 +3425,7 @@
   {
     "codigo": "M062",
     "nombre": "MENESTRAS DEL NEGRO - MN MALL DEL NORTE GY",
-    "direccion": "",
+    "direccion": "MN MALL DEL NORTE GY",
     "email": "m62@menestrasdelnegro.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3501,7 +3501,7 @@
   {
     "codigo": "V069",
     "nombre": "JUAN VALDEZ - QUEVEDO PASEO SHOPPING",
-    "direccion": "",
+    "direccion": "QUEVEDO PASEO SHOPPING",
     "email": "jv69@juanvaldezcafe.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -3598,7 +3598,7 @@
   {
     "codigo": "CN026",
     "nombre": "CINNABON - PREEMB INTER GYE",
-    "direccion": "",
+    "direccion": "PREEMB INTER GYE",
     "email": "cn26@baskin-cinnabon.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3611,7 +3611,7 @@
   {
     "codigo": "DI004",
     "nombre": "DOLCE INCONTRO - DOLCE INCONTRO URDESA",
-    "direccion": "",
+    "direccion": "Guayacanes 307 y calle tercera Urdesa",
     "email": "dolcei04@dolceincontro.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3648,7 +3648,7 @@
   {
     "codigo": "E007",
     "nombre": "ESPAÑOL - URDESA",
-    "direccion": "C. C. Mall del Sol",
+    "direccion": "URDESA",
     "email": "espe07@elespanol.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3685,7 +3685,7 @@
   {
     "codigo": "E022",
     "nombre": "ESPAÑOL - ISLA EXP GYE",
-    "direccion": "C.C. San Luis P. B.",
+    "direccion": "ISLA EXP GYE",
     "email": "espe22@elespanol.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3735,7 +3735,7 @@
   {
     "codigo": "J005",
     "nombre": "CAJUN - CAJUN CEIBOS",
-    "direccion": "",
+    "direccion": "Riocentro Ceibos",
     "email": "cjnc05@cajun.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -3872,7 +3872,7 @@
   {
     "codigo": "K187",
     "nombre": "KFC - DOMINGO COMIN Y ERNESTO ALBAN",
-    "direccion": "",
+    "direccion": "DOMINGO COMIN Y ERNESTO ALBAN",
     "email": "kfck187@kfc.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -4037,7 +4037,7 @@
   {
     "codigo": "V090",
     "nombre": "JUAN VALDEZ - SUPER AKI LA JOYA GYE",
-    "direccion": "",
+    "direccion": "SUPER AKI LA JOYA GYE",
     "email": "jv90@juanvaldezcafe.com.ec",
     "mes": "AGOSTO",
     "extintores": [
@@ -4083,7 +4083,7 @@
   {
     "codigo": "BS022",
     "nombre": "BASKIN ROBBINS - POLICENTRO",
-    "direccion": "",
+    "direccion": "POLICENTRO",
     "email": "br22@baskin-cinnabon.com.ec",
     "mes": "SEPTIEMBRE",
     "extintores": [
@@ -4096,7 +4096,7 @@
   {
     "codigo": "E031",
     "nombre": "ESPAÑOL - POLICENTRO",
-    "direccion": "C. C. City Mall",
+    "direccion": "POLICENTRO",
     "email": "espe31@elespanol.com.ec",
     "mes": "SEPTIEMBRE",
     "extintores": [
@@ -4146,7 +4146,7 @@
   {
     "codigo": "V080",
     "nombre": "JUAN VALDEZ - AGORA GYE",
-    "direccion": "",
+    "direccion": "AGORA GYE",
     "email": "jv80@juanvaldezcafe.com.ec",
     "mes": "SEPTIEMBRE",
     "extintores": [
@@ -4200,7 +4200,7 @@
   {
     "codigo": "E009",
     "nombre": "ESPAÑOL - CEIBOS",
-    "direccion": "Victor Emilio Estrada y Cedros Esquina",
+    "direccion": "CEIBOS",
     "email": "espe09@elespanol.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4221,7 +4221,7 @@
   {
     "codigo": "E030",
     "nombre": "ESPAÑOL - CITY MALL",
-    "direccion": "Av. Amazonas y Reina Victoria",
+    "direccion": "CITY MALL",
     "email": "espe30@elespanol.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4238,7 +4238,7 @@
   {
     "codigo": "J011",
     "nombre": "CAJUN - CITY MALL",
-    "direccion": "",
+    "direccion": "City mall",
     "email": "cjnc11@cajun.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4431,7 +4431,7 @@
   {
     "codigo": "K192",
     "nombre": "KFC - HYPERMARKET BUIJO CIUDAD CELESTE",
-    "direccion": "",
+    "direccion": "HYPERMARKET BUIJO CIUDAD CELESTE",
     "email": "kfck192@kfc.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4493,7 +4493,7 @@
   {
     "codigo": "M061",
     "nombre": "MENESTRAS DEL NEGRO - PORTETE",
-    "direccion": "",
+    "direccion": "PORTETE",
     "email": "m61@menestrasdelnegro.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4542,7 +4542,7 @@
   {
     "codigo": "V091",
     "nombre": "JUAN VALDEZ - HYPERMARKET BUIJO CIUDAD CELESTE",
-    "direccion": "",
+    "direccion": "HYPERMARKET BUIJO CIUDAD CELESTE",
     "email": "jv91@juanvaldezcafe.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
@@ -4559,7 +4559,7 @@
   {
     "codigo": "A047",
     "nombre": "AMERICAN DELI - RIO CENTRO NORTE GYE",
-    "direccion": "",
+    "direccion": "RIO CENTRO NORTE GYE",
     "email": "amca47@americandeli.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -4584,7 +4584,7 @@
   {
     "codigo": "E044",
     "nombre": "ESPAÑOL - EL DORADO",
-    "direccion": "",
+    "direccion": "EL DORADO",
     "email": "espe44@elespanol.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -4626,7 +4626,7 @@
   {
     "codigo": "I017",
     "nombre": "IL CAPPO - RIO CENTRO NORTE GYE",
-    "direccion": "",
+    "direccion": "RIO CENTRO NORTE GYE",
     "email": "ilci17@ilci.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -4651,7 +4651,7 @@
   {
     "codigo": "I018",
     "nombre": "IL CAPPO - DORADO GYE",
-    "direccion": "",
+    "direccion": "DORADO GYE",
     "email": "ilci18@ilci.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -4676,7 +4676,7 @@
   {
     "codigo": "J030",
     "nombre": "CAJUN - RIO CENTRO SUR GYE",
-    "direccion": "",
+    "direccion": "RIO CENTRO SUR GYE",
     "email": "cjnc30@cajun.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -4701,7 +4701,7 @@
   {
     "codigo": "J031",
     "nombre": "CAJUN - GRAN PIAZZA MACHA",
-    "direccion": "",
+    "direccion": "GRAN PIAZZA MACHA",
     "email": "cjnc31@cajun.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -4874,7 +4874,7 @@
   {
     "codigo": "K173",
     "nombre": "KFC - OASIS",
-    "direccion": "",
+    "direccion": "OASIS",
     "email": "kfck173@kfc.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -4915,7 +4915,7 @@
   {
     "codigo": "K178",
     "nombre": "KFC - MALECON SALINAS",
-    "direccion": "",
+    "direccion": "MALECON SALINAS",
     "email": "kfck178@kfc.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -4976,7 +4976,7 @@
   {
     "codigo": "K179",
     "nombre": "KFC - ESTACION SANTA ELENA",
-    "direccion": "",
+    "direccion": "ESTACION SANTA ELENA",
     "email": "kfck179@kfc.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5033,7 +5033,7 @@
   {
     "codigo": "K180",
     "nombre": "KFC - GRAN PIAZZA MACHALA",
-    "direccion": "",
+    "direccion": "GRAN PIAZZA MACHALA",
     "email": "kfck180@kfc.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5078,7 +5078,7 @@
   {
     "codigo": "K184",
     "nombre": "KFC - SUPERMAXI MACHALA",
-    "direccion": "",
+    "direccion": "SUPERMAXI MACHALA",
     "email": "kfck184@kfc.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5160,7 +5160,7 @@
   {
     "codigo": "M065",
     "nombre": "MENESTRAS DEL NEGRO - GRAN PIAZZA MACH",
-    "direccion": "",
+    "direccion": "GRAN PIAZZA MACH",
     "email": "m65@menestrasdelnegro.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5205,7 +5205,7 @@
   {
     "codigo": "T054",
     "nombre": "TROPIBURGER - GRAN PIAZZA MACHALA",
-    "direccion": "",
+    "direccion": "GRAN PIAZZA MACHALA",
     "email": "trot54@tropiburger.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5259,7 +5259,7 @@
   {
     "codigo": "V073",
     "nombre": "JUAN VALDEZ - CORAL LOS CEIBOS",
-    "direccion": "",
+    "direccion": "CORAL LOS CEIBOS",
     "email": "jv73@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5276,7 +5276,7 @@
   {
     "codigo": "V076",
     "nombre": "JUAN VALDEZ - TERMINAL TERRESTE GYE",
-    "direccion": "",
+    "direccion": "TERMINAL TERRESTE GYE",
     "email": "jv76@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5293,7 +5293,7 @@
   {
     "codigo": "V077",
     "nombre": "JUAN VALDEZ - FERRISARIATO KENNEDY",
-    "direccion": "",
+    "direccion": "FERRISARIATO KENNEDY",
     "email": "jv77@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5310,7 +5310,7 @@
   {
     "codigo": "V078",
     "nombre": "JUAN VALDEZ - RIOCENTRO SUR GYE",
-    "direccion": "",
+    "direccion": "RIOCENTRO SUR GYE",
     "email": "jv78@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5323,7 +5323,7 @@
   {
     "codigo": "V082",
     "nombre": "JUAN VALDEZ - GRAN PIAZZA MACHA",
-    "direccion": "",
+    "direccion": "GRAN PIAZZA MACHA",
     "email": "jv82@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5348,7 +5348,7 @@
   {
     "codigo": "V085",
     "nombre": "JUAN VALDEZ - PASEO SHOPPING PENINSULA",
-    "direccion": "",
+    "direccion": "PASEO SHOPPING PENINSULA",
     "email": "jv85@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
@@ -5373,7 +5373,7 @@
   {
     "codigo": "J010",
     "nombre": "CAJUN - RIO CENTRO NORTE",
-    "direccion": "",
+    "direccion": "Rio Centro norte",
     "email": "cjnc10@cajun.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
@@ -5398,7 +5398,7 @@
   {
     "codigo": "J019",
     "nombre": "CAJUN - RIOCENTRO EL DORADO",
-    "direccion": "",
+    "direccion": "KM 10 1/2 VIA LA AURORA",
     "email": "cjnc19@cajun.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
@@ -5493,7 +5493,7 @@
   {
     "codigo": "K175",
     "nombre": "KFC - VIA A LA COSTA",
-    "direccion": "",
+    "direccion": "VIA A LA COSTA",
     "email": "kfck175@kfc.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
@@ -5546,7 +5546,7 @@
   {
     "codigo": "K182",
     "nombre": "KFC - JUAN TANCA MARENGO",
-    "direccion": "",
+    "direccion": "JUAN TANCA MARENGO",
     "email": "kfck182@kfc.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
@@ -5607,7 +5607,7 @@
   {
     "codigo": "K183",
     "nombre": "KFC - LA QUADRA QUEVEDO",
-    "direccion": "",
+    "direccion": "LA QUADRA QUEVEDO",
     "email": "kfck183@kfc.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
@@ -5660,7 +5660,7 @@
   {
     "codigo": "K194",
     "nombre": "KFC - ISIDRO AYORA",
-    "direccion": "",
+    "direccion": "ISIDRO AYORA",
     "email": "kfck194@kfc.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
@@ -5742,7 +5742,7 @@
   {
     "codigo": "V084",
     "nombre": "JUAN VALDEZ - TORRE MILLENIUM",
-    "direccion": "",
+    "direccion": "TORRE MILLENIUM",
     "email": "jv84@juanvaldezcafe.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
@@ -5763,7 +5763,7 @@
   {
     "codigo": "V086",
     "nombre": "JUAN VALDEZ - PASEO SHOPPING PLAYAS",
-    "direccion": "",
+    "direccion": "PASEO SHOPPING PLAYAS",
     "email": "jv86@juanvaldezcafe.com.ec",
     "mes": "ABRIL",
     "extintores": [
