@@ -24,7 +24,7 @@
     "codigo": "J001",
     "nombre": "CAJUN - MALL DEL SOL",
     "direccion": "",
-    "email": "",
+    "email": "cjnc01@cajun.com.ec",
     "mes": "ENERO",
     "extintores": [
       {
@@ -731,7 +731,7 @@
     "codigo": "BS004",
     "nombre": "BASKIN ROBBINS / CINNABON - MALL DEL SOL",
     "direccion": "",
-    "email": "",
+    "email": "br04@baskin-cinnabon.com.ec",
     "mes": "FEBRERO",
     "extintores": [
       {
@@ -748,7 +748,7 @@
     "codigo": "BS009",
     "nombre": "BASKIN ROBBINS - RIO CENTRO SUR",
     "direccion": "",
-    "email": "",
+    "email": "br09@baskin-cinnabon.com.ec",
     "mes": "FEBRERO",
     "extintores": [
       {
@@ -774,7 +774,7 @@
     "codigo": "BS038",
     "nombre": "BASKIN ROBBINS - CEIBOS BASKIN",
     "direccion": "",
-    "email": "",
+    "email": "bs38@baskin-cinnabon.com.ec",
     "mes": "FEBRERO",
     "extintores": [
       {
@@ -791,7 +791,7 @@
     "codigo": "E006",
     "nombre": "ESPAÑOL - MALL EL SOL",
     "direccion": "",
-    "email": "",
+    "email": "espe06@elespanol.com.ec",
     "mes": "FEBRERO",
     "extintores": [
       {
@@ -808,7 +808,7 @@
     "codigo": "E010",
     "nombre": "ESPAÑOL - SAN MARINO PB",
     "direccion": "",
-    "email": "",
+    "email": "espe10@elespanol.com.ec",
     "mes": "FEBRERO",
     "extintores": [
       {
@@ -825,7 +825,7 @@
     "codigo": "E026",
     "nombre": "ESPAÑOL - PUNTILLA",
     "direccion": "",
-    "email": "",
+    "email": "espe26@elespanol.com.ec",
     "mes": "FEBRERO",
     "extintores": [
       {
@@ -867,7 +867,7 @@
     "codigo": "J002",
     "nombre": "CAJUN - SAN MARINO",
     "direccion": "",
-    "email": "",
+    "email": "cjnc02@cajun.com.ec",
     "mes": "FEBRERO",
     "extintores": [
       {
@@ -1196,7 +1196,7 @@
     "codigo": "V075",
     "nombre": "JUAN VALDEZ - PASEO SHOPPING MACHALA",
     "direccion": "",
-    "email": "",
+    "email": "jv75@juanvaldezcafe.com.ec",
     "mes": "FEBRERO",
     "extintores": [
       {
@@ -1225,7 +1225,7 @@
     "codigo": "V079",
     "nombre": "JUAN VALDEZ - MILAGRO",
     "direccion": "",
-    "email": "",
+    "email": "jv79@juanvaldezcafe.com.ec",
     "mes": "FEBRERO",
     "extintores": [
       {
@@ -1254,7 +1254,7 @@
     "codigo": "BS037",
     "nombre": "BASKIN ROBBINS / CINNABON - DORADO",
     "direccion": "",
-    "email": "",
+    "email": "bs37@baskin-cinnabon.com.ec",
     "mes": "MARZO",
     "extintores": [
       {
@@ -1631,7 +1631,7 @@
     "codigo": "V066",
     "nombre": "JUAN VALDEZ - PLAZA PACIFICO DAULE",
     "direccion": "",
-    "email": "",
+    "email": "jv66@juanvaldezcafe.com.ec",
     "mes": "MARZO",
     "extintores": [
       {
@@ -1777,7 +1777,7 @@
     "codigo": "V087",
     "nombre": "JUAN VALDEZ - PASEO SHOPPING DAULE",
     "direccion": "",
-    "email": "",
+    "email": "jv87@juanvaldezcafe.com.ec",
     "mes": "ABRIL",
     "extintores": [
       {
@@ -1857,7 +1857,7 @@
     "codigo": "BS020",
     "nombre": "BASKIN ROBBINS - RIO CENTRO NORTE",
     "direccion": "",
-    "email": "",
+    "email": "br20@baskin-cinnabon.com.ec",
     "mes": "MAYO",
     "extintores": [
       {
@@ -1870,7 +1870,7 @@
     "codigo": "E023",
     "nombre": "ESPAÑOL - PREEMB NAC GYE",
     "direccion": "",
-    "email": "",
+    "email": "espe23@elespanol.com.ec",
     "mes": "MAYO",
     "extintores": [
       {
@@ -2465,7 +2465,7 @@
     "codigo": "J008",
     "nombre": "CAJUN - TERMINAL",
     "direccion": "",
-    "email": "",
+    "email": "cjnc08@cajun.com.ec",
     "mes": "JUNIO",
     "extintores": [
       {
@@ -2701,7 +2701,7 @@
     "codigo": "V089",
     "nombre": "JUAN VALDEZ - PINTULAC MILAGRO",
     "direccion": "",
-    "email": "",
+    "email": "jv89@juanvaldezcafe.com.ec",
     "mes": "JUNIO",
     "extintores": [
       {
@@ -2780,7 +2780,7 @@
     "codigo": "DI001",
     "nombre": "DOLCE INCONTRO - DOLCE INCONTRO MALL DEL SOL",
     "direccion": "",
-    "email": "",
+    "email": "dolcei01@dolceincontro.com.ec",
     "mes": "JULIO",
     "extintores": [
       {
@@ -2801,7 +2801,7 @@
     "codigo": "DI002",
     "nombre": "DOLCE INCONTRO - DOLCE INCONTRO CEIBOS",
     "direccion": "",
-    "email": "",
+    "email": "dolcei02@dolceincontro.com.ec",
     "mes": "JULIO",
     "extintores": [
       {
@@ -2818,7 +2818,7 @@
     "codigo": "DI003",
     "nombre": "DOLCE INCONTRO - DOLCE INCONTRO SAMBORONDON",
     "direccion": "",
-    "email": "",
+    "email": "dolcei03@dolceincontro.com.ec",
     "mes": "JULIO",
     "extintores": [
       {
@@ -2872,7 +2872,7 @@
     "codigo": "G051",
     "nombre": "GUS - SHOPPING QUEVEDO",
     "direccion": "",
-    "email": "",
+    "email": "gusg51@gus.com.ec",
     "mes": "JULIO",
     "extintores": [
       {
@@ -2905,7 +2905,7 @@
     "codigo": "J006",
     "nombre": "CAJUN - CAJUN PUNTILLA",
     "direccion": "",
-    "email": "",
+    "email": "cjnc06@cajun.com.ec",
     "mes": "JULIO",
     "extintores": [
       {
@@ -2926,7 +2926,7 @@
     "codigo": "J020",
     "nombre": "CAJUN - CAJUN PENINSULA",
     "direccion": "",
-    "email": "",
+    "email": "cjnc20@cajun.com.ec",
     "mes": "JULIO",
     "extintores": [
       {
@@ -2963,7 +2963,7 @@
     "codigo": "J021",
     "nombre": "CAJUN - MALL DEL SUR",
     "direccion": "",
-    "email": "",
+    "email": "cjnc21@cajun.com.ec",
     "mes": "JULIO",
     "extintores": [
       {
@@ -2984,7 +2984,7 @@
     "codigo": "J029",
     "nombre": "CAJUN - CAJUN MALL DEL NORTE",
     "direccion": "",
-    "email": "",
+    "email": "cjnc29@cajun.com.ec",
     "mes": "JULIO",
     "extintores": [
       {
@@ -3502,7 +3502,7 @@
     "codigo": "V069",
     "nombre": "JUAN VALDEZ - QUEVEDO PASEO SHOPPING",
     "direccion": "",
-    "email": "",
+    "email": "jv69@juanvaldezcafe.com.ec",
     "mes": "JULIO",
     "extintores": [
       {
@@ -3586,7 +3586,7 @@
     "codigo": "CA003",
     "nombre": "CAFA - CAFE DUPORT HALL PRINCIPAL",
     "direccion": "",
-    "email": "",
+    "email": "cafeduport@kfc.com.ec",
     "mes": "AGOSTO",
     "extintores": [
       {
@@ -3612,7 +3612,7 @@
     "codigo": "DI004",
     "nombre": "DOLCE INCONTRO - DOLCE INCONTRO URDESA",
     "direccion": "",
-    "email": "",
+    "email": "dolcei04@dolceincontro.com.ec",
     "mes": "AGOSTO",
     "extintores": [
       {
@@ -3649,7 +3649,7 @@
     "codigo": "E007",
     "nombre": "ESPAÑOL - URDESA",
     "direccion": "",
-    "email": "",
+    "email": "espe07@elespanol.com.ec",
     "mes": "AGOSTO",
     "extintores": [
       {
@@ -3686,7 +3686,7 @@
     "codigo": "E022",
     "nombre": "ESPAÑOL - ISLA EXP GYE",
     "direccion": "",
-    "email": "",
+    "email": "espe22@elespanol.com.ec",
     "mes": "AGOSTO",
     "extintores": [
       {
@@ -3736,7 +3736,7 @@
     "codigo": "J005",
     "nombre": "CAJUN - CAJUN CEIBOS",
     "direccion": "",
-    "email": "",
+    "email": "cjnc05@cajun.com.ec",
     "mes": "AGOSTO",
     "extintores": [
       {
@@ -4038,7 +4038,7 @@
     "codigo": "V090",
     "nombre": "JUAN VALDEZ - SUPER AKI LA JOYA GYE",
     "direccion": "",
-    "email": "",
+    "email": "jv90@juanvaldezcafe.com.ec",
     "mes": "AGOSTO",
     "extintores": [
       {
@@ -4084,7 +4084,7 @@
     "codigo": "BS022",
     "nombre": "BASKIN ROBBINS - POLICENTRO",
     "direccion": "",
-    "email": "",
+    "email": "br22@baskin-cinnabon.com.ec",
     "mes": "SEPTIEMBRE",
     "extintores": [
       {
@@ -4097,7 +4097,7 @@
     "codigo": "E031",
     "nombre": "ESPAÑOL - POLICENTRO",
     "direccion": "",
-    "email": "",
+    "email": "espe31@elespanol.com.ec",
     "mes": "SEPTIEMBRE",
     "extintores": [
       {
@@ -4147,7 +4147,7 @@
     "codigo": "V080",
     "nombre": "JUAN VALDEZ - AGORA GYE",
     "direccion": "",
-    "email": "",
+    "email": "jv80@juanvaldezcafe.com.ec",
     "mes": "SEPTIEMBRE",
     "extintores": [
       {
@@ -4201,7 +4201,7 @@
     "codigo": "E009",
     "nombre": "ESPAÑOL - CEIBOS",
     "direccion": "",
-    "email": "",
+    "email": "espe09@elespanol.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
       {
@@ -4222,7 +4222,7 @@
     "codigo": "E030",
     "nombre": "ESPAÑOL - CITY MALL",
     "direccion": "",
-    "email": "",
+    "email": "espe30@elespanol.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
       {
@@ -4239,7 +4239,7 @@
     "codigo": "J011",
     "nombre": "CAJUN - CITY MALL",
     "direccion": "",
-    "email": "",
+    "email": "cjnc11@cajun.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
       {
@@ -4543,7 +4543,7 @@
     "codigo": "V091",
     "nombre": "JUAN VALDEZ - HYPERMARKET BUIJO CIUDAD CELESTE",
     "direccion": "",
-    "email": "",
+    "email": "jv91@juanvaldezcafe.com.ec",
     "mes": "OCTUBRE",
     "extintores": [
       {
@@ -4560,7 +4560,7 @@
     "codigo": "A047",
     "nombre": "AMERICAN DELI - RIO CENTRO NORTE GYE",
     "direccion": "",
-    "email": "",
+    "email": "amca47@americandeli.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
       {
@@ -4585,7 +4585,7 @@
     "codigo": "E044",
     "nombre": "ESPAÑOL - EL DORADO",
     "direccion": "",
-    "email": "",
+    "email": "espe44@elespanol.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
       {
@@ -4627,7 +4627,7 @@
     "codigo": "I017",
     "nombre": "IL CAPPO - RIO CENTRO NORTE GYE",
     "direccion": "",
-    "email": "",
+    "email": "ilci17@ilci.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
       {
@@ -4652,7 +4652,7 @@
     "codigo": "I018",
     "nombre": "IL CAPPO - DORADO GYE",
     "direccion": "",
-    "email": "",
+    "email": "ilci18@ilci.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
       {
@@ -4677,7 +4677,7 @@
     "codigo": "J030",
     "nombre": "CAJUN - RIO CENTRO SUR GYE",
     "direccion": "",
-    "email": "",
+    "email": "cjnc30@cajun.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
       {
@@ -4702,7 +4702,7 @@
     "codigo": "J031",
     "nombre": "CAJUN - GRAN PIAZZA MACHA",
     "direccion": "",
-    "email": "",
+    "email": "cjnc31@cajun.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
       {
@@ -5260,7 +5260,7 @@
     "codigo": "V073",
     "nombre": "JUAN VALDEZ - CORAL LOS CEIBOS",
     "direccion": "",
-    "email": "",
+    "email": "jv73@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
       {
@@ -5277,7 +5277,7 @@
     "codigo": "V076",
     "nombre": "JUAN VALDEZ - TERMINAL TERRESTE GYE",
     "direccion": "",
-    "email": "",
+    "email": "jv76@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
       {
@@ -5294,7 +5294,7 @@
     "codigo": "V077",
     "nombre": "JUAN VALDEZ - FERRISARIATO KENNEDY",
     "direccion": "",
-    "email": "",
+    "email": "jv77@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
       {
@@ -5311,7 +5311,7 @@
     "codigo": "V078",
     "nombre": "JUAN VALDEZ - RIOCENTRO SUR GYE",
     "direccion": "",
-    "email": "",
+    "email": "jv78@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
       {
@@ -5324,7 +5324,7 @@
     "codigo": "V082",
     "nombre": "JUAN VALDEZ - GRAN PIAZZA MACHA",
     "direccion": "",
-    "email": "",
+    "email": "jv82@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
       {
@@ -5349,7 +5349,7 @@
     "codigo": "V085",
     "nombre": "JUAN VALDEZ - PASEO SHOPPING PENINSULA",
     "direccion": "",
-    "email": "",
+    "email": "jv85@juanvaldezcafe.com.ec",
     "mes": "NOVIEMBRE",
     "extintores": [
       {
@@ -5374,7 +5374,7 @@
     "codigo": "J010",
     "nombre": "CAJUN - RIO CENTRO NORTE",
     "direccion": "",
-    "email": "",
+    "email": "cjnc10@cajun.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
       {
@@ -5399,7 +5399,7 @@
     "codigo": "J019",
     "nombre": "CAJUN - RIOCENTRO EL DORADO",
     "direccion": "",
-    "email": "",
+    "email": "cjnc19@cajun.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
       {
@@ -5743,7 +5743,7 @@
     "codigo": "V084",
     "nombre": "JUAN VALDEZ - TORRE MILLENIUM",
     "direccion": "",
-    "email": "",
+    "email": "jv84@juanvaldezcafe.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
       {
@@ -5764,7 +5764,7 @@
     "codigo": "V086",
     "nombre": "JUAN VALDEZ - PASEO SHOPPING PLAYAS",
     "direccion": "",
-    "email": "",
+    "email": "jv86@juanvaldezcafe.com.ec",
     "mes": "ABRIL",
     "extintores": [
       {
