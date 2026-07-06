@@ -1726,17 +1726,26 @@ async function hacerPDF(opts) {
 
   const pdfName = 'CERT-'+localCode+'-'+anio+'.pdf';
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const esAdmin = currentProfile === 'admin';
   let blobUrl = null;
   try { blobUrl = doc.output('bloburl'); } catch(e) {}
-  if (isIOS) {
-    // El navegador puede bloquear esta pestaña silenciosamente (async = pierde el
-    // gesto del usuario). Por eso SIEMPRE se guarda un enlace manual abajo también.
-    try { window.open(blobUrl || doc.output('dataurlstring'), '_blank'); } catch(e) {}
+  if (esAdmin) {
+    // Admin: puede descargar el PDF (y también verlo cuando quiera, desde el archivo).
+    if (isIOS) {
+      // El navegador puede bloquear esta pestaña silenciosamente (async = pierde el
+      // gesto del usuario). Por eso SIEMPRE se guarda un enlace manual abajo también.
+      try { window.open(blobUrl || doc.output('dataurlstring'), '_blank'); } catch(e) {}
+    } else {
+      doc.save(pdfName);
+    }
   } else {
-    doc.save(pdfName);
+    // Técnico: SOLO puede ver el certificado en este momento — nunca descargarlo,
+    // y no vuelve a tener acceso después (no hay historial ni archivo en su vista).
+    try { window.open(blobUrl || doc.output('dataurlstring'), '_blank'); } catch(e) {}
   }
   doc._certBlobUrl = blobUrl;
   doc._certFileName = pdfName;
+  doc._puedeDescargar = esAdmin;
   return doc;
 }
 
@@ -2038,11 +2047,19 @@ async function generarCertLocal() {
     st.innerHTML = `<div class="status-bar status-ok">✅ Certificado de <strong>${esc(local.codigo)}</strong> generado` +
       (getGhToken() ? ' y respaldado en la nube' : '') + '.</div>';
     // Enlace manual siempre visible: en iOS el navegador puede bloquear la pestaña
-    // automática, así que este es el modo garantizado de abrir/guardar el PDF.
+    // automática, así que este es el modo garantizado de abrir el PDF.
+    // El atributo download SOLO se agrega para admin — el técnico únicamente
+    // puede verlo ahora mismo, nunca descargarlo ni volver a acceder después.
     if (doc && doc._certBlobUrl) {
+      const puedeDescargar = !!doc._puedeDescargar;
+      const attrDescarga = puedeDescargar ? `download="${esc(doc._certFileName || 'certificado.pdf')}"` : '';
+      const texto = puedeDescargar ? '📄 Ver / descargar el certificado (toca aquí)' : '👁️ Ver el certificado (toca aquí)';
       st.innerHTML += `<div class="status-bar status-info">` +
-        `<a href="${esc(doc._certBlobUrl)}" target="_blank" download="${esc(doc._certFileName || 'certificado.pdf')}" ` +
-        `style="color:#1a5276;font-weight:700;text-decoration:underline">📄 Ver / descargar el certificado (toca aquí)</a></div>`;
+        `<a href="${esc(doc._certBlobUrl)}" target="_blank" ${attrDescarga} ` +
+        `style="color:#1a5276;font-weight:700;text-decoration:underline">${texto}</a></div>`;
+      if (!puedeDescargar) {
+        st.innerHTML += `<div class="status-bar status-warn" style="font-size:12px">⚠️ Esta es tu única oportunidad de ver este certificado. Una vez que salgas, no podrás volver a abrirlo.</div>`;
+      }
     }
   }
 
