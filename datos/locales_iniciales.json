@@ -52,7 +52,7 @@
   {
     "codigo": "K002",
     "nombre": "KFC - 9 DE OCTUBRE",
-    "direccion": "9 DE PCTUBRE  423 ENTRE CHILE Y CHIMBORAZO",
+    "direccion": "9 DE OCTUBRE 423 ENTRE CHILE Y CHIMBORAZO",
     "email": "kfck02@kfc.com.ec",
     "mes": "ENERO",
     "extintores": [
@@ -2800,7 +2800,7 @@
   {
     "codigo": "DI002",
     "nombre": "DOLCE INCONTRO - DOLCE INCONTRO CEIBOS",
-    "direccion": "Km  6½ via a la Costa  y ave el Bombero  Centro Comercial Rio Centro Ceibos",
+    "direccion": "Km 6½ via a la Costa y ave el Bombero Centro Comercial Rio Centro Ceibos",
     "email": "dolcei02@dolceincontro.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -2834,7 +2834,7 @@
   {
     "codigo": "G047",
     "nombre": "GUS - ALBORADA",
-    "direccion": "Av Rodolfo Baquerizo  V 23 y Alameda",
+    "direccion": "Av Rodolfo Baquerizo V 23 y Alameda",
     "email": "gusg47@gus.com.ec",
     "mes": "JULIO",
     "extintores": [
@@ -4109,7 +4109,7 @@
   {
     "codigo": "K129",
     "nombre": "KFC - LLEVAR 5 ESQUINAS",
-    "direccion": "Guasmo Central  (5 Esquinas)",
+    "direccion": "Guasmo Central (5 Esquinas)",
     "email": "kfck129@kfc.com.ec",
     "mes": "SEPTIEMBRE",
     "extintores": [
