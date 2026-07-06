@@ -579,6 +579,10 @@
       {
         "tipo": "PQS",
         "cap": "20 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
       }
     ]
   },
@@ -1016,18 +1020,6 @@
       {
         "tipo": "CO2",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -1073,18 +1065,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -1106,18 +1086,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -1151,18 +1119,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -1206,18 +1162,6 @@
       {
         "tipo": "CO2",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -1235,18 +1179,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -1587,6 +1519,10 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
       }
     ]
   },
@@ -1720,18 +1656,6 @@
       {
         "tipo": "PQS",
         "cap": "5 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -2508,18 +2432,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -2673,6 +2585,10 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
       }
     ]
   },
@@ -2711,18 +2627,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -2886,18 +2790,6 @@
       {
         "tipo": "CO2",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -2944,18 +2836,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -3060,18 +2940,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -3130,18 +2998,6 @@
       {
         "tipo": "PQS",
         "cap": "20 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -3171,18 +3027,6 @@
       {
         "tipo": "CO2",
         "cap": "5 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -3216,18 +3060,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -3407,18 +3239,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -3512,18 +3332,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -3854,18 +3662,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -3994,18 +3790,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -4487,6 +4271,10 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
+      },
+      {
+        "tipo": "TIPO K",
+        "cap": "2.5 GLS"
       }
     ]
   },
@@ -4728,18 +4516,6 @@
       {
         "tipo": "TIPO K",
         "cap": "2.5 GLS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -4765,18 +4541,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -4958,18 +4722,6 @@
       {
         "tipo": "TIPO K",
         "cap": "2.5 GLS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -5015,18 +4767,6 @@
       {
         "tipo": "TIPO K",
         "cap": "2.5 GLS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -5060,18 +4800,6 @@
       {
         "tipo": "TIPO K",
         "cap": "2.5 GLS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -5117,18 +4845,6 @@
       {
         "tipo": "TIPO K",
         "cap": "2.5 GLS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -5187,18 +4903,6 @@
       {
         "tipo": "TIPO K",
         "cap": "2.5 GLS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -5224,18 +4928,6 @@
       {
         "tipo": "TIPO K",
         "cap": "2.5 GLS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -5330,18 +5022,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -5355,18 +5035,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -5475,18 +5143,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -5642,18 +5298,6 @@
       {
         "tipo": "TIPO K",
         "cap": "2.5 GLS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -5699,18 +5343,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   },
@@ -5770,18 +5402,6 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
-      },
-      {
-        "tipo": "MOVILIZACIÓN",
-        "cap": ""
       }
     ]
   }
