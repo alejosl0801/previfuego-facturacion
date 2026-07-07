@@ -580,8 +580,7 @@
 
     <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <button class="btn btn-primary" onclick="libretaNuevo()">＋ Nuevo local</button>
-      <button class="btn btn-info" onclick="importarLocalesIniciales()">📥 Importar datos iniciales</button>
-      <span id="importStatus" style="font-size:12px"></span>
+      <button class="btn btn-info" onclick="cargarLocalesPublico()">🔄 Actualizar lista</button>
     </div>
 
     <div class="card" id="libFormCard" style="display:none">
@@ -1029,47 +1028,52 @@ async function ghPutFile(path, base64Content, message) {
 }
 
 // ─── LIBRETA DE LOCALES ───────────────────────────────────────────────────────
+// Fuente única de verdad: datos/locales_iniciales.json, público en el sitio.
+// LECTURA: cualquier celular (técnico o admin) la carga automáticamente al
+// abrir la app, sin token, sin configuración — la primera vez y siempre.
+// ESCRITURA: solo el admin puede guardar cambios (agregar/editar un local),
+// y para eso sí necesita su GitHub Token, porque GitHub exige autenticación
+// para cualquier escritura — no hay forma de evitarlo del lado de guardar.
 let libretaLocales = [];
+const LOCALES_FILE = 'datos/locales_iniciales.json';
 
 function loadLibreta() {
+  // Cache local para pintar al instante; siempre se refresca con cargarLocalesPublico().
   try { libretaLocales = JSON.parse(localStorage.getItem('libretaLocales') || '[]'); }
   catch(e) { libretaLocales = []; }
   if (!Array.isArray(libretaLocales)) libretaLocales = [];
 }
 
-function saveLibreta() {
-  try { localStorage.setItem('libretaLocales', JSON.stringify(libretaLocales)); } catch(e) {}
-  if (getGhToken()) {
-    clearTimeout(saveLibreta._t);
-    saveLibreta._t = setTimeout(backupLibretaGitHub, 2000);
-  }
-}
-
-async function backupLibretaGitHub() {
+// Carga pública, sin token — funciona en cualquier dispositivo, siempre.
+async function cargarLocalesPublico() {
   try {
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(libretaLocales, null, 2))));
-    await ghPutFile('datos/libreta_locales.json', content, 'libreta: actualización ' + new Date().toISOString());
-  } catch(e) { console.warn('backup libreta:', e); }
-}
-
-// Restaura la libreta desde GitHub si el navegador aún no tiene datos.
-async function restoreLibretaGitHub() {
-  const token = getGhToken();
-  if (!token) return;
-  try {
-    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/datos/libreta_locales.json?ref=${GH_BRANCH}`, {
-      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
-    });
+    const r = await fetch(`${LOCALES_FILE}?t=${Date.now()}`);
     if (!r.ok) return;
-    const d = await r.json();
-    const json = JSON.parse(decodeURIComponent(escape(atob(d.content))));
+    const json = await r.json();
     if (Array.isArray(json) && json.length) {
       libretaLocales = json;
       try { localStorage.setItem('libretaLocales', JSON.stringify(json)); } catch(e) {}
       renderLibreta();
       renderEmitList();
     }
-  } catch(e) { console.warn('restore libreta:', e); }
+  } catch(e) { console.warn('cargarLocalesPublico:', e); }
+}
+
+function saveLibreta() {
+  try { localStorage.setItem('libretaLocales', JSON.stringify(libretaLocales)); } catch(e) {}
+  if (getGhToken()) {
+    clearTimeout(saveLibreta._t);
+    saveLibreta._t = setTimeout(guardarLocalesGitHub, 2000);
+  }
+}
+
+// Solo admin: guarda la libreta completa de vuelta al archivo público
+// (requiere token porque GitHub exige autenticación para escribir).
+async function guardarLocalesGitHub() {
+  try {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(libretaLocales, null, 2))));
+    await ghPutFile(LOCALES_FILE, content, 'locales: actualización ' + new Date().toISOString());
+  } catch(e) { console.warn('guardarLocalesGitHub:', e); }
 }
 
 function getLocalLibreta(codigo) {
@@ -1207,40 +1211,6 @@ function guardarLocalForm() {
   renderLibreta();
   renderEmitList();
   libCancelForm();
-}
-
-// Importa datos/locales_iniciales.json (carga masiva única, ej. primera vez que se usa la app).
-// No borra locales existentes: agrega los nuevos y actualiza los que coincidan por código.
-// Este archivo contiene correos reales de clientes: se lee SIEMPRE vía la API
-// autenticada de GitHub (con el token del admin), nunca por fetch público, para
-// que nunca quede expuesto en el sitio desplegado.
-async function importarLocalesIniciales() {
-  const st = document.getElementById('importStatus');
-  const token = getGhToken();
-  if (!token) { st.innerHTML = '<span style="color:#e74c3c">Configura tu GitHub Token primero (contiene datos de clientes).</span>'; return; }
-  if (!confirm('Esto agregará/actualizará locales desde datos/locales_iniciales.json. ¿Continuar?')) return;
-  st.innerHTML = '<span style="color:#999">⏳ Importando...</span>';
-  try {
-    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/datos/locales_iniciales.json?ref=${GH_BRANCH}`, {
-      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
-    });
-    if (!r.ok) throw new Error(`No se encontró el archivo (HTTP ${r.status})`);
-    const d = await r.json();
-    const nuevos = JSON.parse(decodeURIComponent(escape(atob(d.content))));
-    if (!Array.isArray(nuevos)) throw new Error('Formato inválido');
-    let agregados = 0, actualizados = 0;
-    nuevos.forEach(n => {
-      const idx = libretaLocales.findIndex(l => l.codigo === n.codigo);
-      if (idx >= 0) { libretaLocales[idx] = { ...libretaLocales[idx], ...n }; actualizados++; }
-      else { libretaLocales.push(n); agregados++; }
-    });
-    saveLibreta();
-    renderLibreta();
-    renderEmitList();
-    st.innerHTML = `<span style="color:#27ae60">✅ ${agregados} agregados, ${actualizados} actualizados (${libretaLocales.length} en total)</span>`;
-  } catch (e) {
-    st.innerHTML = `<span style="color:#e74c3c">Error: ${esc(e.message)}</span>`;
-  }
 }
 
 // ─── VISITAS (pendiente / visitado, por año) ──────────────────────────────────
@@ -1460,7 +1430,12 @@ let _LOGO_CACHE = null;
 async function fetchLogo() {
   if (_LOGO_CACHE) return _LOGO_CACHE;
   try {
-    const r = await fetch('https://raw.githubusercontent.com/alejosl0801/previfuego-backend/main/logo.js');
+    // Límite de tiempo: si la red falla o se cuelga (señal débil en el campo),
+    // el certificado se genera igual sin logo — nunca debe quedarse esperando.
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), 4000);
+    const r = await fetch('https://raw.githubusercontent.com/alejosl0801/previfuego-backend/main/logo.js', { signal: ctrl.signal });
+    clearTimeout(timeoutId);
     const t = await r.text();
     const m = t.match(/var LOGO_B64\s*=\s*"([^"]+)"/);
     if (m) { _LOGO_CACHE = m[1]; return m[1]; }
@@ -2168,8 +2143,8 @@ function init() {
   goToSection(isAdmin ? last : 'emitir');
   updatePerfilIndicator();
 
-  // Si el navegador no tiene libreta y hay token, intenta restaurarla de la nube
-  if (!libretaLocales.length && getGhToken()) restoreLibretaGitHub();
+  // Carga pública y automática: cualquier celular, sin token, siempre actualizada.
+  cargarLocalesPublico();
 
   // Mostrar selector de perfil al inicio
   mostrarSelectorPerfil();
