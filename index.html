@@ -9,7 +9,7 @@
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
 (function(){
-  var V = '20260704002';
+  var V = '20260708001';
   function go(){
     var cur = (location.search.match(/[?&]v=([^&]*)/) || [])[1];
     if (cur !== V) location.replace(location.pathname + '?v=' + V);
@@ -1234,12 +1234,25 @@ function isVisitado(codigo) {
 }
 
 // El marcado como visitado es SIEMPRE automático (al generar el certificado).
-// No hay forma manual de cambiarlo — así lo pidió el cliente explícitamente.
+// Los técnicos nunca tienen forma manual de cambiarlo. El admin sí puede
+// reiniciar un local a pendiente (ver marcarPendiente) para corregir pruebas
+// o errores, pero nunca marcarlo como visitado manualmente.
 function marcarVisitado(codigo) {
   const y = anioActualKey();
   if (!visitaStatus[y]) visitaStatus[y] = {};
   visitaStatus[y][codigo] = 'visitado';
   saveVisitaStatus();
+}
+
+// Reinicio manual: SOLO el admin puede hacerlo (para corregir certificados de
+// prueba o marcados por error). El PDF ya subido a GitHub no se borra.
+function marcarPendiente(codigo) {
+  if (currentProfile !== 'admin') return;
+  if (!confirm(`¿Reiniciar "${codigo}" a pendiente? Volverá a aparecer en la lista de pendientes.`)) return;
+  const y = anioActualKey();
+  if (visitaStatus[y]) delete visitaStatus[y][codigo];
+  saveVisitaStatus();
+  renderEmitList();
 }
 
 // ─── EMISIÓN (lista organizada por mes de servicio) ───────────────────────────
@@ -1294,10 +1307,26 @@ function renderEmitList() {
 
   function card(l, i) {
     const v = isVisitado(l.codigo);
+    const esAdmin = currentProfile === 'admin';
     const mesLbl = l.mes
       ? `<span class="mes-pill">${esc(l.mes)}</span>`
       : `<span style="font-size:11px;color:#bbb;white-space:nowrap">SIN MES</span>`;
     const delay = Math.min(i, 12) * 0.04;
+
+    let acciones = '';
+    if (!v) {
+      // El admin nunca emite certificados — solo los técnicos.
+      if (!esAdmin) {
+        acciones = `<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#9e1212;color:white" onclick="abrirCertModal('${esc(l.codigo)}')">📜 Certificado</button>`;
+      }
+    } else if (esAdmin) {
+      // El admin revisa/descarga lo que ya generó el técnico, y puede
+      // reiniciar un local a pendiente si el certificado fue una prueba/error.
+      acciones = `
+        <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#2874a6;color:white" onclick="descargarCertLocal('${esc(l.codigo)}')">⬇️ Ver certificado</button>
+        <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#888;color:white" onclick="marcarPendiente('${esc(l.codigo)}')">↩ Marcar pendiente</button>`;
+    }
+
     return `
       <div class="local-card" style="animation-delay:${delay}s">
         <div class="local-card-header">
@@ -1308,7 +1337,7 @@ function renderEmitList() {
             ${mesLbl}
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-            ${v ? '' : `<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#9e1212;color:white" onclick="abrirCertModal('${esc(l.codigo)}')">📜 Certificado</button>`}
+            ${acciones}
           </div>
         </div>
       </div>`;
@@ -2059,6 +2088,34 @@ async function subirCertGitHub(localCode, anio, doc) {
   // jsPDF → base64 (sin el prefijo data:)
   const content = doc.output('datauristring').split(',')[1];
   await ghPutFile(path, content, `cert: ${localCode} ${mes}-${anio}`);
+}
+
+// Busca y descarga el certificado ya emitido de un local (solo admin, desde la
+// lista de Emitir Certificado). No sabemos en qué carpeta de mes quedó subido
+// (se guarda con el mes calendario en que el técnico lo generó, no el mes de
+// servicio del local), así que se prueba primero el mes del local y luego el
+// resto de meses del año actual hasta encontrarlo.
+async function descargarCertLocal(codigo) {
+  const token = getGhToken();
+  if (!token) { alert('Configura tu GitHub Token en Configuración para ver certificados.'); return; }
+  const anio = anioActualKey();
+  const local = libretaLocales.find(x => x.codigo === codigo);
+  const mesesProbar = local && local.mes
+    ? [local.mes, ...MESES_ES.filter(m => m !== local.mes)]
+    : MESES_ES.slice();
+  for (const mes of mesesProbar) {
+    const path = `certificados/${mes}-${anio}/CERT-${codigo}-${anio}.pdf`;
+    try {
+      const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+      });
+      if (!r.ok) continue;
+      const d = await r.json();
+      await descargarCertArchivo(path, d.name);
+      return;
+    } catch (e) { /* seguir probando el siguiente mes */ }
+  }
+  alert(`No se encontró un certificado guardado de ${codigo} para ${anio}.`);
 }
 
 // ─── ARCHIVO DE CERTIFICADOS (solo admin) ─────────────────────────────────────
