@@ -265,6 +265,7 @@
   .cert-foto-btn { flex: 1; padding: 8px 4px; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; }
   .cert-foto-btn.cam { background: #2980b9; color: white; }
   .cert-foto-btn.gal { background: #7f8c8d; color: white; }
+  .cert-foto-btn:disabled { opacity: .5; cursor: not-allowed; }
   .cert-firma-wrap { border: 1.5px solid #ddd; border-radius: 8px; overflow: hidden; background: #fafafa; margin-bottom: 10px; }
   #sigCanvas { display: block; -webkit-touch-action: none; touch-action: none; cursor: crosshair; width: 100%; }
   .cert-firma-nota { font-size: 11px; color: #aaa; text-align: center; margin-top: 4px; }
@@ -735,6 +736,11 @@
       <button onclick="cerrarCertModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;line-height:1;padding:0 4px">✕</button>
     </div>
 
+    <div id="certDraftAviso" style="display:none;background:#fff8e1;border:1px solid #f0c96b;color:#7a5c00;font-size:11.5px;font-weight:600;border-radius:6px;padding:7px 10px;margin-bottom:12px;align-items:center;gap:8px;justify-content:space-between">
+      <span>📋 Se restauró tu progreso guardado de este certificado</span>
+      <a href="javascript:void(0)" onclick="certDescartarDraft()" style="color:#9e1212;font-weight:700;white-space:nowrap;text-decoration:underline">Descartar</a>
+    </div>
+
     <div class="cert-steps">
       <div class="cert-step-ind active" id="csi1">1 · Fotos</div>
       <div class="cert-step-ind" id="csi2">2 · Firma</div>
@@ -993,15 +999,6 @@ function toggleDark() {
 function actualizarIconoDark() {
   const btn = document.getElementById('darkBtn');
   if (btn) btn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
-}
-
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
 }
 
 // ─── GITHUB PERSISTENCE ──────────────────────────────────────────────────────
@@ -1431,10 +1428,86 @@ async function enviarCertCorreo(pdfBase64, nombreArchivo, emailLocal, nombreLoca
 
 // ─── CERTIFICADOS PDF ─────────────────────────────────────────────────────────
 let certModalCodigo = null;
-let certFotos = {};       // { antes: File, despues: File, cilindro: File }
+let certFotos = {};       // { antes: base64jpeg, despues: base64jpeg, cilindro: base64jpeg }
 let certHayNovedades = false;
 let certAccsSelected = new Set();  // indices into ACCESSORIES
+let certDraftFirmaPendiente = null; // firma restaurada de un borrador, pendiente de pintar en el canvas
 let sigCtx = null, sigDrawing = false;
+
+// ─── BORRADOR DE CERTIFICADO (sobrevive cierres del navegador) ─────────────
+// El proceso real toma 20-40 min entre fotos (antes → mantenimiento → después → cilindro),
+// así que cada paso se guarda de inmediato para no perder nada si la app se cierra o recarga.
+const CERT_DRAFT_MAX_EDAD_MS = 48 * 60 * 60 * 1000; // ignorar borradores de más de 2 días
+
+function certDraftKey(codigo) { return 'certDraft_' + codigo; }
+
+function certGuardarDraft(patch) {
+  if (!certModalCodigo) return;
+  const key = certDraftKey(certModalCodigo);
+  let draft = {};
+  try { draft = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) { draft = {}; }
+  Object.assign(draft, patch, { ts: Date.now() });
+  try { localStorage.setItem(key, JSON.stringify(draft)); }
+  catch(e) { console.warn('certGuardarDraft:', e); }
+}
+
+function certCargarDraft(codigo) {
+  try {
+    const draft = JSON.parse(localStorage.getItem(certDraftKey(codigo)) || 'null');
+    if (!draft || !draft.ts || (Date.now() - draft.ts) > CERT_DRAFT_MAX_EDAD_MS) return null;
+    return draft;
+  } catch(e) { return null; }
+}
+
+function certBorrarDraft(codigo) {
+  try { localStorage.removeItem(certDraftKey(codigo)); } catch(e) {}
+}
+
+function certDescartarDraft() {
+  if (!certModalCodigo) return;
+  if (!confirm('¿Descartar las fotos y datos guardados de este certificado?')) return;
+  certBorrarDraft(certModalCodigo);
+  abrirCertModal(certModalCodigo);
+}
+
+// Comprime cualquier foto (aunque pese varios MB) a un JPEG liviano en vez de rechazarla.
+function certComprimirImagen(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error || new Error('No se pudo leer el archivo'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('No se pudo procesar la imagen'));
+      img.onload = () => {
+        try {
+          const maxDim = 1400;
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width >= height) { height = Math.round(height * maxDim / width); width = maxDim; }
+            else { width = Math.round(width * maxDim / height); height = maxDim; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+          const targetChars = 900 * 1024 * 4 / 3; // ~900KB de imagen
+          let quality = 0.75;
+          let dataUrl = canvas.toDataURL('image/jpeg', quality);
+          let tries = 0;
+          while (dataUrl.length > targetChars && quality > 0.35 && tries < 4) {
+            quality -= 0.15;
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+            tries++;
+          }
+          resolve(dataUrl.split(',')[1]);
+        } catch (e) { reject(e); }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 const ACCESSORIES = [
   { desc: 'Abrazadera plástica',   precio: 1.50 },
@@ -1772,7 +1845,7 @@ function abrirCertModal(codigo) {
   if (cilCard) cilCard.style.display = tieneCO2 ? '' : 'none';
   // Tipo de servicio por defecto: mantenimiento
   document.querySelectorAll('input[name="certTipoServ"]').forEach(r => { r.checked = (r.value === 'mantenimiento'); });
-  certTipoChange();
+  certAplicarTipoUI();
   // Reset novedades
   document.getElementById('novBtnBad').className = 'nov-btn';
   document.getElementById('novBtnOk').className  = 'nov-btn active-ok';
@@ -1780,6 +1853,34 @@ function abrirCertModal(codigo) {
   // Reset signature canvas
   const c = document.getElementById('sigCanvas');
   if (c) { c._initialized = false; sigCtx = null; const w = c.closest('.cert-firma-wrap'); if (w) w.classList.remove('has-ink'); }
+  certDraftFirmaPendiente = null;
+
+  // Restaurar progreso guardado (el trabajo real toma su tiempo entre foto y foto)
+  const draft = certCargarDraft(codigo);
+  const avisoEl = document.getElementById('certDraftAviso');
+  if (draft) {
+    if (draft.fotos) {
+      certFotos = { ...draft.fotos };
+      ['antes','despues','cilindro'].forEach(k => {
+        if (!certFotos[k]) return;
+        const prev = document.getElementById('certFotoPreview_'+k);
+        const card = document.getElementById('certFotoCard_'+k);
+        if (prev) { prev.src = 'data:image/jpeg;base64,'+certFotos[k]; prev.classList.add('show'); }
+        if (card) card.classList.add('has-foto');
+      });
+    }
+    if (draft.tipoServ) {
+      document.querySelectorAll('input[name="certTipoServ"]').forEach(r => { r.checked = (r.value === draft.tipoServ); });
+      certTipoChange();
+    }
+    if (typeof draft.hayNovedades === 'boolean') certSetNovedades(draft.hayNovedades);
+    if (Array.isArray(draft.accs)) certAccsSelected = new Set(draft.accs);
+    if (draft.firma) certDraftFirmaPendiente = draft.firma;
+    if (avisoEl) avisoEl.style.display = 'flex';
+  } else if (avisoEl) {
+    avisoEl.style.display = 'none';
+  }
+
   // Go to step 1
   certPaso(1);
   document.getElementById('certModal').style.display = 'flex';
@@ -1806,10 +1907,16 @@ function certPaso(n) {
   if (n === 3) renderAccCatalog();
 }
 
-function certTipoChange() {
+function certAplicarTipoUI() {
   const v = document.querySelector('input[name="certTipoServ"]:checked')?.value;
   document.getElementById('lblMant').style.borderColor = v === 'mantenimiento' ? '#9e1212' : '#ddd';
   document.getElementById('lblRec').style.borderColor  = v === 'recarga'       ? '#9e1212' : '#ddd';
+  return v;
+}
+
+function certTipoChange() {
+  const v = certAplicarTipoUI();
+  certGuardarDraft({ tipoServ: v });
 }
 
 function certAbrirFoto(tipo, modo) {
@@ -1828,24 +1935,21 @@ function certAbrirFoto(tipo, modo) {
         input.value = '';
         return;
       }
-      if (file.size > 4 * 1024 * 1024) {
-        alert(`La foto es demasiado grande (${(file.size/1024/1024).toFixed(1)} MB). Usa una foto menor a 4 MB.`);
-        input.value = '';
-        return;
-      }
-      certFotos[tipo] = file;
-      const reader = new FileReader();
-      reader.onload = e => {
+      const card = document.getElementById('certFotoCard_'+tipo);
+      const btns = card ? card.querySelectorAll('.cert-foto-btn') : [];
+      btns.forEach(b => b.disabled = true);
+      certComprimirImagen(file).then(b64 => {
+        certFotos[tipo] = b64;
         const prev = document.getElementById('certFotoPreview_'+tipo);
-        const card = document.getElementById('certFotoCard_'+tipo);
-        if (prev) { prev.src = e.target.result; prev.classList.add('show'); }
+        if (prev) { prev.src = 'data:image/jpeg;base64,'+b64; prev.classList.add('show'); }
         if (card) card.classList.add('has-foto');
-      };
-      reader.onerror = () => {
-        alert('No se pudo leer la foto. Intenta con otra imagen.');
+        certGuardarDraft({ fotos: certFotos });
+      }).catch(err => {
+        alert('No se pudo procesar la foto: ' + (err && err.message || err));
+      }).finally(() => {
         input.value = '';
-      };
-      reader.readAsDataURL(file);
+        btns.forEach(b => b.disabled = false);
+      });
     });
     document.body.appendChild(input);
   }
@@ -1874,13 +1978,22 @@ function initSignatureCanvas() {
     return { x: src.clientX - r.left, y: src.clientY - r.top };
   };
   const marcaInk = () => { const w = canvas.closest('.cert-firma-wrap'); if (w) w.classList.add('has-ink'); };
+  const guardarFirma = () => { const b64 = getSignatureB64(); if (b64) certGuardarDraft({ firma: b64 }); };
   canvas.addEventListener('mousedown',  e => { sigDrawing=true; marcaInk(); const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); });
   canvas.addEventListener('mousemove',  e => { if(!sigDrawing) return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); });
-  canvas.addEventListener('mouseup',    () => sigDrawing=false);
+  canvas.addEventListener('mouseup',    () => { sigDrawing=false; guardarFirma(); });
   canvas.addEventListener('mouseleave', () => sigDrawing=false);
   canvas.addEventListener('touchstart', e => { e.preventDefault(); sigDrawing=true; marcaInk(); const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); }, {passive:false});
   canvas.addEventListener('touchmove',  e => { e.preventDefault(); if(!sigDrawing) return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); }, {passive:false});
-  canvas.addEventListener('touchend',   () => sigDrawing=false);
+  canvas.addEventListener('touchend',   () => { sigDrawing=false; guardarFirma(); });
+
+  // Restaurar firma de un borrador guardado
+  if (certDraftFirmaPendiente) {
+    const img = new Image();
+    img.onload = () => { sigCtx.drawImage(img, 0, 0, W, H); marcaInk(); };
+    img.src = 'data:image/png;base64,' + certDraftFirmaPendiente;
+    certDraftFirmaPendiente = null;
+  }
 }
 
 function clearSignature() {
@@ -1911,6 +2024,7 @@ function certSetNovedades(hayNov) {
   document.getElementById('novBtnBad').className = 'nov-btn' + (hayNov  ? ' active-bad' : '');
   document.getElementById('novBtnOk').className  = 'nov-btn' + (!hayNov ? ' active-ok'  : '');
   document.getElementById('accCatalogWrap').style.display = hayNov ? '' : 'none';
+  certGuardarDraft({ hayNovedades: hayNov });
 }
 
 function renderAccCatalog() {
@@ -1944,6 +2058,7 @@ function renderAccCatalog() {
 function certToggleAcc(i) {
   if (certAccsSelected.has(i)) certAccsSelected.delete(i); else certAccsSelected.add(i);
   renderAccCatalog();
+  certGuardarDraft({ accs: [...certAccsSelected] });
 }
 
 function updateAccTotal() {
@@ -1986,10 +2101,10 @@ async function generarCertLocal() {
   pdfOverlayShow('Generando certificado…');
   let doc = null;
   try {
-    // Fotos del nuevo estado
+    // Fotos del nuevo estado (ya vienen comprimidas a base64 desde certAbrirFoto)
     const FB64 = {};
-    for (const [key, file] of Object.entries(certFotos)) {
-      if (file) FB64[key] = await fileToBase64(file);
+    for (const [key, b64] of Object.entries(certFotos)) {
+      if (b64) FB64[key] = b64;
     }
     // Firma digital del canvas
     const firmaB64 = getSignatureB64();
@@ -2030,6 +2145,7 @@ async function generarCertLocal() {
   registrarCertEmitido(local);
   marcarVisitado(local.codigo);
   renderEmitList();
+  certBorrarDraft(local.codigo);
 
   // Base64 del PDF (para respaldo y correo)
   let pdfB64 = null;
