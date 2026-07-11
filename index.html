@@ -263,12 +263,8 @@
   .cert-foto-preview.show { display: block; }
   .cert-foto-btns { display: flex; gap: 6px; }
   .cert-foto-btn { flex: 1; padding: 8px 4px; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; }
-  .cert-foto-btn.cam { background: #2980b9; color: white; }
   .cert-foto-btn.gal { background: #7f8c8d; color: white; }
   .cert-foto-btn:disabled { opacity: .5; cursor: not-allowed; }
-  .cert-firma-wrap { border: 1.5px solid #ddd; border-radius: 8px; overflow: hidden; background: #fafafa; margin-bottom: 10px; }
-  #sigCanvas { display: block; -webkit-touch-action: none; touch-action: none; cursor: crosshair; width: 100%; }
-  .cert-firma-nota { font-size: 11px; color: #aaa; text-align: center; margin-top: 4px; }
   .acc-catalog { border: 1px solid #e8e8e8; border-radius: 8px; overflow: hidden; max-height: 250px; overflow-y: auto; }
   .acc-row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: background 0.1s; }
   .acc-row:last-child { border-bottom: none; }
@@ -283,7 +279,6 @@
   .nov-btn.active-bad { border-color: #c0392b; background: #fdecea; color: #c0392b; }
   .nov-btn.active-ok  { border-color: #27ae60; background: #eafaf1; color: #27ae60; }
   body.dark .cert-foto-card { border-color: #3a3f47; }
-  body.dark .cert-firma-wrap { border-color: #3a3f47; background: #262a30; }
   body.dark .acc-catalog { border-color: #333; }
   body.dark .acc-row { border-color: #2d2d2d; }
   body.dark .acc-row:hover { background: #262a30; }
@@ -404,16 +399,6 @@
     animation: bounceIn 0.45s cubic-bezier(0.34,1.56,0.64,1);
     box-shadow: 0 2px 6px rgba(39,174,96,0.5);
   }
-
-  /* 15. Firma: marca de agua que desaparece al empezar a dibujar */
-  .cert-firma-wrap { position: relative; }
-  .cert-firma-wrap::before {
-    content: '✍️ Firma aquí'; position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    color: #ccc; font-size: 15px; font-weight: 600; pointer-events: none;
-    transition: opacity 0.3s;
-  }
-  .cert-firma-wrap.has-ink::before { opacity: 0; }
 
   /* 16. Botón Generar Certificado con gradiente y glow pulsante */
   .btn-generar {
@@ -727,7 +712,7 @@
 
 </div>
 
-<!-- CERT MODAL (3 pasos) -->
+<!-- CERT MODAL (2 pasos) -->
 <div id="certModal" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)cerrarCertModal()">
   <div style="background:white;border-radius:12px;padding:22px;max-width:480px;width:93%;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
 
@@ -743,8 +728,7 @@
 
     <div class="cert-steps">
       <div class="cert-step-ind active" id="csi1">1 · Fotos</div>
-      <div class="cert-step-ind" id="csi2">2 · Firma</div>
-      <div class="cert-step-ind" id="csi3">3 · Accesorios</div>
+      <div class="cert-step-ind" id="csi2">2 · Accesorios</div>
     </div>
 
     <!-- ── PASO 1: FOTOS ── -->
@@ -767,49 +751,32 @@
         <div class="cert-foto-label">📷 Antes del mantenimiento</div>
         <img class="cert-foto-preview" id="certFotoPreview_antes" alt="" />
         <div class="cert-foto-btns">
-          <button class="cert-foto-btn cam" onclick="certAbrirFoto('antes','cam')">📸 Cámara</button>
-          <button class="cert-foto-btn gal" onclick="certAbrirFoto('antes','gal')">🖼️ Galería</button>
+          <button class="cert-foto-btn gal" onclick="certAbrirFoto('antes')">🖼️ Adjuntar foto</button>
         </div>
       </div>
       <div class="cert-foto-card" id="certFotoCard_despues">
         <div class="cert-foto-label">📷 Después del mantenimiento</div>
         <img class="cert-foto-preview" id="certFotoPreview_despues" alt="" />
         <div class="cert-foto-btns">
-          <button class="cert-foto-btn cam" onclick="certAbrirFoto('despues','cam')">📸 Cámara</button>
-          <button class="cert-foto-btn gal" onclick="certAbrirFoto('despues','gal')">🖼️ Galería</button>
+          <button class="cert-foto-btn gal" onclick="certAbrirFoto('despues')">🖼️ Adjuntar foto</button>
         </div>
       </div>
       <div class="cert-foto-card" id="certFotoCard_cilindro">
         <div class="cert-foto-label">🧯 Cilindro CO₂</div>
         <img class="cert-foto-preview" id="certFotoPreview_cilindro" alt="" />
         <div class="cert-foto-btns">
-          <button class="cert-foto-btn cam" onclick="certAbrirFoto('cilindro','cam')">📸 Cámara</button>
-          <button class="cert-foto-btn gal" onclick="certAbrirFoto('cilindro','gal')">🖼️ Galería</button>
+          <button class="cert-foto-btn gal" onclick="certAbrirFoto('cilindro')">🖼️ Adjuntar foto</button>
         </div>
       </div>
 
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
         <button style="background:#bbb;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer" onclick="cerrarCertModal()">Cancelar</button>
-        <button style="background:#9e1212;color:white;border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer" onclick="certPaso(2)">Siguiente — Firma ›</button>
+        <button style="background:#9e1212;color:white;border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer" onclick="certPaso(2)">Siguiente — Accesorios ›</button>
       </div>
     </div>
 
-    <!-- ── PASO 2: FIRMA ── -->
+    <!-- ── PASO 2: ACCESORIOS ── -->
     <div id="certPaso2" style="display:none">
-      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">✍️ Firma del encargado del local</div>
-      <div class="cert-firma-wrap">
-        <canvas id="sigCanvas" height="140"></canvas>
-      </div>
-      <div class="cert-firma-nota">Dibuja la firma en el recuadro de arriba</div>
-      <button onclick="clearSignature()" style="margin-top:8px;background:#e74c3c;color:white;border:none;border-radius:5px;padding:6px 14px;font-size:12px;cursor:pointer">🗑️ Limpiar</button>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-        <button style="background:#95a5a6;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer" onclick="certPaso(1)">‹ Anterior</button>
-        <button style="background:#9e1212;color:white;border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer" onclick="certPaso(3)">Siguiente — Accesorios ›</button>
-      </div>
-    </div>
-
-    <!-- ── PASO 3: ACCESORIOS ── -->
-    <div id="certPaso3" style="display:none">
       <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">🔧 ¿Hay novedades?</div>
       <div class="cert-novedades-toggle">
         <button class="nov-btn" id="novBtnBad" onclick="certSetNovedades(true)">⚠️ Accesorios dañados</button>
@@ -820,7 +787,7 @@
         <div class="acc-total-bar" id="accTotal">Total accesorios: $0.00</div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-        <button style="background:#95a5a6;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer" onclick="certPaso(2)">‹ Anterior</button>
+        <button style="background:#95a5a6;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer" onclick="certPaso(1)">‹ Anterior</button>
         <button class="btn-generar" style="color:white;border:none;border-radius:6px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer" onclick="generarCertLocal()">📜 Generar Certificado</button>
       </div>
     </div>
@@ -1431,12 +1398,10 @@ let certModalCodigo = null;
 let certFotos = {};       // { antes: base64jpeg, despues: base64jpeg, cilindro: base64jpeg }
 let certHayNovedades = false;
 let certAccsSelected = new Set();  // indices into ACCESSORIES
-let certDraftFirmaPendiente = null; // firma restaurada de un borrador, pendiente de pintar en el canvas
-let sigCtx = null, sigDrawing = false;
 
 // ─── BORRADOR DE CERTIFICADO (sobrevive cierres del navegador) ─────────────
-// El proceso real toma 20-40 min entre fotos (antes → mantenimiento → después → cilindro),
-// así que cada paso se guarda de inmediato para no perder nada si la app se cierra o recarga.
+// El técnico adjunta fotos ya tomadas desde la galería, pero puede hacerlo en varias
+// veces, así que cada paso se guarda de inmediato para no perder nada si la app se cierra.
 const CERT_DRAFT_MAX_EDAD_MS = 48 * 60 * 60 * 1000; // ignorar borradores de más de 2 días
 
 function certDraftKey(codigo) { return 'certDraft_' + codigo; }
@@ -1723,9 +1688,9 @@ async function hacerPDF(opts) {
 
   y = bloqueAutorizacion(y);
 
-  // ── Page 2: Evidence photos + signature + accessories ───────────────────────
+  // ── Page 2: Evidence photos + accessories ────────────────────────────────────
   const fotoKeys = ['antes','despues','cilindro'].filter(k => FB64&&FB64[k]);
-  if (fotoKeys.length>0 || FB64.firma || (ACCS&&ACCS.length>0)) {
+  if (fotoKeys.length>0 || (ACCS&&ACCS.length>0)) {
     doc.addPage(); fondoBase(); piePagina();
     let y2 = 18;
 
@@ -1764,20 +1729,6 @@ async function hacerPDF(opts) {
         });
         if (col>0) y2+=fh+12;
       }
-    }
-
-    // Firma del encargado
-    if (FB64 && FB64.firma) {
-      y2 += 4;
-      dR(); doc.setLineWidth(0.5); doc.line(ML,y2,ML+CW,y2); y2 += 5;
-      doc.setFillColor(253,251,251); dR(); doc.setLineWidth(0.3);
-      doc.rect(ML,y2,CW,38,'FD');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); tR();
-      doc.text('FIRMA DEL ENCARGADO:', ML+5, y2+7);
-      try { doc.addImage('data:image/png;base64,'+FB64.firma,'PNG',ML+5,y2+10,70,22); } catch(e){}
-      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); tG();
-      doc.text('Encargado del local — '+(localNom||'').toUpperCase(), ML+5, y2+36);
-      y2 += 44;
     }
 
     if (ACCS&&ACCS.length>0) {
@@ -1850,12 +1801,8 @@ function abrirCertModal(codigo) {
   document.getElementById('novBtnBad').className = 'nov-btn';
   document.getElementById('novBtnOk').className  = 'nov-btn active-ok';
   document.getElementById('accCatalogWrap').style.display = 'none';
-  // Reset signature canvas
-  const c = document.getElementById('sigCanvas');
-  if (c) { c._initialized = false; sigCtx = null; const w = c.closest('.cert-firma-wrap'); if (w) w.classList.remove('has-ink'); }
-  certDraftFirmaPendiente = null;
 
-  // Restaurar progreso guardado (el trabajo real toma su tiempo entre foto y foto)
+  // Restaurar progreso guardado
   const draft = certCargarDraft(codigo);
   const avisoEl = document.getElementById('certDraftAviso');
   if (draft) {
@@ -1875,7 +1822,6 @@ function abrirCertModal(codigo) {
     }
     if (typeof draft.hayNovedades === 'boolean') certSetNovedades(draft.hayNovedades);
     if (Array.isArray(draft.accs)) certAccsSelected = new Set(draft.accs);
-    if (draft.firma) certDraftFirmaPendiente = draft.firma;
     if (avisoEl) avisoEl.style.display = 'flex';
   } else if (avisoEl) {
     avisoEl.style.display = 'none';
@@ -1892,7 +1838,7 @@ function cerrarCertModal() {
 }
 
 function certPaso(n) {
-  [1,2,3].forEach(i => {
+  [1,2].forEach(i => {
     const paso = document.getElementById('certPaso'+i);
     const mostrar = i === n;
     paso.style.display = mostrar ? '' : 'none';
@@ -1903,8 +1849,7 @@ function certPaso(n) {
     if (i === n) ind.classList.add('active');
     else if (i < n) ind.classList.add('done');
   });
-  if (n === 2) initSignatureCanvas();
-  if (n === 3) renderAccCatalog();
+  if (n === 2) renderAccCatalog();
 }
 
 function certAplicarTipoUI() {
@@ -1919,14 +1864,13 @@ function certTipoChange() {
   certGuardarDraft({ tipoServ: v });
 }
 
-function certAbrirFoto(tipo, modo) {
-  let input = document.getElementById('_fi_'+tipo+'_'+modo);
+function certAbrirFoto(tipo) {
+  let input = document.getElementById('_fi_'+tipo);
   if (!input) {
     input = document.createElement('input');
     input.type = 'file'; input.accept = 'image/*';
-    input.id = '_fi_'+tipo+'_'+modo;
+    input.id = '_fi_'+tipo;
     input.style.display = 'none';
-    if (modo === 'cam') input.setAttribute('capture', 'environment');
     input.addEventListener('change', () => {
       const file = input.files[0];
       if (!file) return;
@@ -1954,69 +1898,6 @@ function certAbrirFoto(tipo, modo) {
     document.body.appendChild(input);
   }
   input.value = ''; input.click();
-}
-
-function initSignatureCanvas() {
-  const canvas = document.getElementById('sigCanvas');
-  if (!canvas || canvas._initialized) return;
-  canvas._initialized = true;
-  const W = canvas.offsetWidth || 436;
-  const H = 140;
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width  = W * dpr;
-  canvas.height = H * dpr;
-  canvas.style.width  = W + 'px';
-  canvas.style.height = H + 'px';
-  sigCtx = canvas.getContext('2d');
-  sigCtx.scale(dpr, dpr);
-  sigCtx.strokeStyle = '#1a1a1a'; sigCtx.lineWidth = 2;
-  sigCtx.lineCap = 'round'; sigCtx.lineJoin = 'round';
-  sigCtx.fillStyle = '#fff'; sigCtx.fillRect(0, 0, W, H);
-  const pos = e => {
-    const r = canvas.getBoundingClientRect();
-    const src = e.touches ? e.touches[0] : e;
-    return { x: src.clientX - r.left, y: src.clientY - r.top };
-  };
-  const marcaInk = () => { const w = canvas.closest('.cert-firma-wrap'); if (w) w.classList.add('has-ink'); };
-  const guardarFirma = () => { const b64 = getSignatureB64(); if (b64) certGuardarDraft({ firma: b64 }); };
-  canvas.addEventListener('mousedown',  e => { sigDrawing=true; marcaInk(); const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); });
-  canvas.addEventListener('mousemove',  e => { if(!sigDrawing) return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); });
-  canvas.addEventListener('mouseup',    () => { sigDrawing=false; guardarFirma(); });
-  canvas.addEventListener('mouseleave', () => sigDrawing=false);
-  canvas.addEventListener('touchstart', e => { e.preventDefault(); sigDrawing=true; marcaInk(); const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); }, {passive:false});
-  canvas.addEventListener('touchmove',  e => { e.preventDefault(); if(!sigDrawing) return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); }, {passive:false});
-  canvas.addEventListener('touchend',   () => { sigDrawing=false; guardarFirma(); });
-
-  // Restaurar firma de un borrador guardado
-  if (certDraftFirmaPendiente) {
-    const img = new Image();
-    img.onload = () => { sigCtx.drawImage(img, 0, 0, W, H); marcaInk(); };
-    img.src = 'data:image/png;base64,' + certDraftFirmaPendiente;
-    certDraftFirmaPendiente = null;
-  }
-}
-
-function clearSignature() {
-  if (!sigCtx) return;
-  const c = document.getElementById('sigCanvas');
-  if (!c) return;
-  const W = c.offsetWidth || parseInt(c.style.width) || 436;
-  const H = c.offsetHeight || parseInt(c.style.height) || 140;
-  sigCtx.fillStyle = '#fff'; sigCtx.fillRect(0, 0, W, H);
-  const w = c.closest('.cert-firma-wrap');
-  if (w) w.classList.remove('has-ink');
-}
-
-function getSignatureB64() {
-  const c = document.getElementById('sigCanvas');
-  if (!c || !sigCtx) return null;
-  const data = sigCtx.getImageData(0, 0, c.width, c.height).data;
-  let hasInk = false;
-  for (let i = 0; i < data.length; i += 4) {
-    if (data[i] < 200 || data[i+1] < 200 || data[i+2] < 200) { hasInk = true; break; }
-  }
-  if (!hasInk) return null;
-  return c.toDataURL('image/png').split(',')[1];
 }
 
 function certSetNovedades(hayNov) {
@@ -2106,10 +1987,6 @@ async function generarCertLocal() {
     for (const [key, b64] of Object.entries(certFotos)) {
       if (b64) FB64[key] = b64;
     }
-    // Firma digital del canvas
-    const firmaB64 = getSignatureB64();
-    if (firmaB64) FB64.firma = firmaB64;
-
     var now    = new Date();
     var anio   = String(now.getFullYear());
     var mesNum = String(now.getMonth() + 1).padStart(2, '0');
