@@ -799,7 +799,7 @@
 <script>
 // Se sube en cada cambio publicado, para confirmar visualmente que un dispositivo
 // ya tomó la última actualización (Configuración → parte de abajo del encabezado).
-const APP_VERSION = '1.0';
+const APP_VERSION = '1.1';
 
 // ─── UTILIDADES ────────────────────────────────────────────────────────────────
 function esc(s) {
@@ -976,6 +976,15 @@ function actualizarIconoDark() {
 // ─── GITHUB PERSISTENCE ──────────────────────────────────────────────────────
 const GH_REPO = 'alejosl0801/previfuego-facturacion';
 const GH_BRANCH = 'main';
+
+// El repo es público: leer no requiere token (solo escribir sí). Si hay un token
+// configurado se manda igual, para aprovechar el límite de peticiones más alto.
+function ghReadHeaders() {
+  const h = { Accept: 'application/vnd.github+json' };
+  const token = getGhToken();
+  if (token) h.Authorization = `token ${token}`;
+  return h;
+}
 
 // Sube (crea o actualiza) un archivo al repo. content = base64 sin prefijo data:.
 async function ghPutFile(path, base64Content, message) {
@@ -2094,8 +2103,6 @@ async function subirCertGitHub(localCode, anio, doc) {
 // servicio del local), así que se prueba primero el mes del local y luego el
 // resto de meses del año actual hasta encontrarlo.
 async function descargarCertLocal(codigo) {
-  const token = getGhToken();
-  if (!token) { alert('Configura tu GitHub Token en Configuración para ver certificados.'); return; }
   const anio = anioActualKey();
   const local = libretaLocales.find(x => x.codigo === codigo);
   const mesesProbar = local && local.mes
@@ -2105,7 +2112,7 @@ async function descargarCertLocal(codigo) {
     const path = `certificados/${mes}-${anio}/CERT-${codigo}-${anio}.pdf`;
     try {
       const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
-        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+        headers: ghReadHeaders()
       });
       if (!r.ok) continue;
       const d = await r.json();
@@ -2117,14 +2124,11 @@ async function descargarCertLocal(codigo) {
 }
 
 // ─── ARCHIVO DE CERTIFICADOS (solo admin) ─────────────────────────────────────
-// Los PDF se guardan en el repo pero NUNCA se publican en el sitio (excluidos
-// del despliegue de GitHub Pages). El único acceso es aquí, vía la API de
-// GitHub con el token del admin.
+// Los PDF se guardan en el repo pero no se publican en el sitio (excluidos del
+// despliegue de GitHub Pages). El acceso es solo desde aquí, vía la API de GitHub.
 async function renderArchivoCertificados() {
   const cont = document.getElementById('archivoCertList');
   if (!cont) return;
-  const token = getGhToken();
-  if (!token) { cont.innerHTML = '<p style="color:#e67e22;font-size:13px">Configura tu GitHub Token arriba para ver el archivo.</p>'; return; }
   const mes = document.getElementById('archivoMesSel')?.value;
   const anio = document.getElementById('archivoAnio')?.value;
   if (!mes || !anio) { cont.innerHTML = ''; return; }
@@ -2132,7 +2136,7 @@ async function renderArchivoCertificados() {
   cont.innerHTML = '<p style="color:#999;font-size:13px">⏳ Buscando...</p>';
   try {
     const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${dir}?ref=${GH_BRANCH}`, {
-      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+      headers: ghReadHeaders()
     });
     if (!r.ok) { cont.innerHTML = '<p style="color:#999;font-size:13px">Sin certificados guardados para ese mes.</p>'; return; }
     const files = await r.json();
@@ -2148,12 +2152,11 @@ async function renderArchivoCertificados() {
   }
 }
 
-// Descarga un PDF del archivo autenticándose con el token (el blob NUNCA es público)
+// Descarga un PDF del archivo de certificados (repo público: no requiere token)
 async function descargarCertArchivo(path, filename) {
-  const token = getGhToken();
   try {
     const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
-      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+      headers: ghReadHeaders()
     });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
