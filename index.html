@@ -244,28 +244,15 @@
   body.dark .section-title { color: #ff7b6b; }
   body.dark code { background: #2d323a !important; color: #d6d6d6; }
 
-  /* ── Cert modal pasos ── */
-  .cert-steps { display: flex; gap: 0; margin-bottom: 18px; border-radius: 6px; overflow: hidden; }
-  .cert-step-ind {
-    flex: 1; text-align: center; padding: 7px 4px;
-    font-size: 11px; font-weight: 700; background: #eee; color: #999;
-    border-right: 2px solid white;
+  /* ── Fotos de certificado: se adjuntan desde la lista, no dentro del modal ── */
+  .foto-pills { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 2px; }
+  .foto-pill {
+    border: 1.5px solid #ddd; background: white; color: #888; border-radius: 20px;
+    padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer;
+    transition: all 0.15s;
   }
-  .cert-step-ind:last-child { border-right: none; }
-  .cert-step-ind.active { background: #9e1212; color: white; }
-  .cert-step-ind.done { background: #27ae60; color: white; }
-  .cert-foto-card {
-    border: 2px dashed #ddd; border-radius: 8px; padding: 10px;
-    margin-bottom: 8px; transition: border-color 0.2s;
-  }
-  .cert-foto-card.has-foto { border-color: #27ae60; border-style: solid; }
-  .cert-foto-label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-  .cert-foto-preview { width: 100%; height: 90px; object-fit: cover; border-radius: 4px; display: none; margin-bottom: 6px; }
-  .cert-foto-preview.show { display: block; }
-  .cert-foto-btns { display: flex; gap: 6px; }
-  .cert-foto-btn { flex: 1; padding: 8px 4px; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; }
-  .cert-foto-btn.gal { background: #7f8c8d; color: white; }
-  .cert-foto-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .foto-pill.done { border-color: #27ae60; background: #eafaf1; color: #1e8449; }
+  .foto-pill:disabled { opacity: .5; cursor: not-allowed; }
   .acc-catalog { border: 1px solid #e8e8e8; border-radius: 8px; overflow: hidden; max-height: 250px; overflow-y: auto; }
   .acc-row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: background 0.1s; }
   .acc-row:last-child { border-bottom: none; }
@@ -279,7 +266,8 @@
   .nov-btn { flex: 1; padding: 9px; border: 1.5px solid #ddd; border-radius: 6px; background: white; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; transition: all 0.15s; }
   .nov-btn.active-bad { border-color: #c0392b; background: #fdecea; color: #c0392b; }
   .nov-btn.active-ok  { border-color: #27ae60; background: #eafaf1; color: #27ae60; }
-  body.dark .cert-foto-card { border-color: #3a3f47; }
+  body.dark .foto-pill { background: #1f2227; border-color: #3a3f47; color: #999; }
+  body.dark .foto-pill.done { background: #123b26; border-color: #27ae60; color: #6bcb77; }
   body.dark .acc-catalog { border-color: #333; }
   body.dark .acc-row { border-color: #2d2d2d; }
   body.dark .acc-row:hover { background: #262a30; }
@@ -304,15 +292,11 @@
     header { padding: 12px 10px !important; gap: 8px 12px; }
     .hdr-right { gap: 8px; }
     main { padding: 12px 10px !important; }
-    .cert-steps { font-size: 12px; }
-    .cert-step-ind { padding: 7px 8px !important; font-size: 11px; }
-    .cert-foto-btns { flex-wrap: wrap; }
   }
   @supports not (gap: 1px) {
     header > * + *, .nav-tabs > * + *, .hdr-right > * + * { margin-left: 8px; }
     .local-card-header > div + div { margin-left: 8px; }
-    .cert-steps > * + * { margin-left: 0; }
-    .cert-foto-btns > * + * { margin-left: 6px; }
+    .foto-pills > * + * { margin-left: 6px; }
     .form-row > * + * { margin-left: 16px; }
     .acc-row > * + * { margin-left: 10px; }
     .cert-novedades-toggle > * + * { margin-left: 6px; }
@@ -336,10 +320,10 @@
   @keyframes logoIn { from { opacity: 0; transform: translateY(-10px) scale(0.92); } to { opacity: 1; transform: none; } }
 
   /* 4. Feedback táctil: todos los botones se hunden levemente al presionar */
-  .btn, .nav-tab, .icon-btn, .cert-foto-btn, .nov-btn, .perfil-indicator {
+  .btn, .nav-tab, .icon-btn, .foto-pill, .nov-btn, .perfil-indicator {
     transition: transform 0.12s ease, background 0.15s, box-shadow 0.2s;
   }
-  .btn:active, .nav-tab:active, .icon-btn:active, .cert-foto-btn:active,
+  .btn:active, .nav-tab:active, .icon-btn:active, .foto-pill:active,
   .nov-btn:active, .perfil-indicator:active { transform: scale(0.95); }
 
   /* 5. Tarjetas de locales: entrada escalonada (fade + subida) */
@@ -381,25 +365,8 @@
   #certModal > div { animation: modalIn 0.3s cubic-bezier(0.22,1,0.36,1) both; }
   @keyframes modalIn { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: none; } }
 
-  /* 12. Transición entre pasos del modal */
-  .paso-anim { animation: pasoIn 0.28s ease both; }
-  @keyframes pasoIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
-
-  /* 13. Indicadores de paso con transición de color suave */
-  .cert-step-ind { transition: background 0.3s, color 0.3s; }
-
-  /* 14. Foto adjuntada: aparece con fade + badge de check */
-  .cert-foto-preview.show { animation: fotoIn 0.35s ease both; }
-  @keyframes fotoIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
-  .cert-foto-card { position: relative; }
-  .cert-foto-card.has-foto::after {
-    content: '✓'; position: absolute; top: 8px; right: 8px;
-    width: 22px; height: 22px; border-radius: 50%;
-    background: #27ae60; color: white; font-weight: 900; font-size: 13px;
-    display: flex; align-items: center; justify-content: center;
-    animation: bounceIn 0.45s cubic-bezier(0.34,1.56,0.64,1);
-    box-shadow: 0 2px 6px rgba(39,174,96,0.5);
-  }
+  /* 14. Pill de foto: pop al marcarse como lista */
+  .foto-pill.done { animation: statPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
 
   /* 16. Botón Generar Certificado con gradiente y glow pulsante */
   .btn-generar {
@@ -713,7 +680,7 @@
 
 </div>
 
-<!-- CERT MODAL (2 pasos) -->
+<!-- CERT MODAL (una sola vista: las fotos ya se adjuntan desde el panel de la lista) -->
 <div id="certModal" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)cerrarCertModal()">
   <div style="background:white;border-radius:12px;padding:22px;max-width:480px;width:93%;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
 
@@ -722,75 +689,33 @@
       <button onclick="cerrarCertModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;line-height:1;padding:0 4px">✕</button>
     </div>
 
-    <div id="certDraftAviso" style="display:none;background:#fff8e1;border:1px solid #f0c96b;color:#7a5c00;font-size:11.5px;font-weight:600;border-radius:6px;padding:7px 10px;margin-bottom:12px;align-items:center;gap:8px;justify-content:space-between">
-      <span>📋 Se restauró tu progreso guardado de este certificado</span>
-      <a href="javascript:void(0)" onclick="certDescartarDraft()" style="color:#9e1212;font-weight:700;white-space:nowrap;text-decoration:underline">Descartar</a>
-    </div>
+    <div id="certFotoStatus" style="font-size:12.5px;font-weight:700;border-radius:6px;padding:8px 10px;margin-bottom:14px"></div>
 
-    <div class="cert-steps">
-      <div class="cert-step-ind active" id="csi1">1 · Fotos</div>
-      <div class="cert-step-ind" id="csi2">2 · Accesorios</div>
-    </div>
-
-    <!-- ── PASO 1: FOTOS ── -->
-    <div id="certPaso1">
-      <div style="margin-bottom:14px">
-        <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Tipo de trabajo</div>
-        <div style="display:flex;gap:8px">
-          <label id="lblMant" style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:border-color 0.15s">
-            <input type="radio" name="certTipoServ" value="mantenimiento" style="width:auto;accent-color:#9e1212" onchange="certTipoChange()" /> 🔧 Mantenimiento
-          </label>
-          <label id="lblRec" style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:border-color 0.15s">
-            <input type="radio" name="certTipoServ" value="recarga" style="width:auto;accent-color:#9e1212" onchange="certTipoChange()" /> ⟳ Recarga
-          </label>
-        </div>
-      </div>
-
-      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Evidencia Fotográfica</div>
-
-      <div class="cert-foto-card" id="certFotoCard_antes">
-        <div class="cert-foto-label">📷 Antes del mantenimiento</div>
-        <img class="cert-foto-preview" id="certFotoPreview_antes" alt="" />
-        <div class="cert-foto-btns">
-          <button class="cert-foto-btn gal" onclick="certAbrirFoto('antes')">🖼️ Adjuntar foto</button>
-        </div>
-      </div>
-      <div class="cert-foto-card" id="certFotoCard_despues">
-        <div class="cert-foto-label">📷 Después del mantenimiento</div>
-        <img class="cert-foto-preview" id="certFotoPreview_despues" alt="" />
-        <div class="cert-foto-btns">
-          <button class="cert-foto-btn gal" onclick="certAbrirFoto('despues')">🖼️ Adjuntar foto</button>
-        </div>
-      </div>
-      <div class="cert-foto-card" id="certFotoCard_cilindro">
-        <div class="cert-foto-label">🧯 Cilindro CO₂</div>
-        <img class="cert-foto-preview" id="certFotoPreview_cilindro" alt="" />
-        <div class="cert-foto-btns">
-          <button class="cert-foto-btn gal" onclick="certAbrirFoto('cilindro')">🖼️ Adjuntar foto</button>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-        <button style="background:#bbb;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer" onclick="cerrarCertModal()">Cancelar</button>
-        <button style="background:#9e1212;color:white;border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer" onclick="certPaso(2)">Siguiente — Accesorios ›</button>
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Tipo de trabajo</div>
+      <div style="display:flex;gap:8px">
+        <label id="lblMant" style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:border-color 0.15s">
+          <input type="radio" name="certTipoServ" value="mantenimiento" style="width:auto;accent-color:#9e1212" onchange="certTipoChange()" /> 🔧 Mantenimiento
+        </label>
+        <label id="lblRec" style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:border-color 0.15s">
+          <input type="radio" name="certTipoServ" value="recarga" style="width:auto;accent-color:#9e1212" onchange="certTipoChange()" /> ⟳ Recarga
+        </label>
       </div>
     </div>
 
-    <!-- ── PASO 2: ACCESORIOS ── -->
-    <div id="certPaso2" style="display:none">
-      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">🔧 ¿Hay novedades?</div>
-      <div class="cert-novedades-toggle">
-        <button class="nov-btn" id="novBtnBad" onclick="certSetNovedades(true)">⚠️ Accesorios dañados</button>
-        <button class="nov-btn active-ok" id="novBtnOk" onclick="certSetNovedades(false)">✅ Sin novedades</button>
-      </div>
-      <div id="accCatalogWrap" style="display:none">
-        <div class="acc-catalog" id="accCatalog"></div>
-        <div class="acc-total-bar" id="accTotal">Total accesorios: $0.00</div>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-        <button style="background:#95a5a6;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer" onclick="certPaso(1)">‹ Anterior</button>
-        <button class="btn-generar" style="color:white;border:none;border-radius:6px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer" onclick="generarCertLocal()">📜 Generar Certificado</button>
-      </div>
+    <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">🔧 ¿Hay novedades?</div>
+    <div class="cert-novedades-toggle">
+      <button class="nov-btn" id="novBtnBad" onclick="certSetNovedades(true)">⚠️ Accesorios dañados</button>
+      <button class="nov-btn active-ok" id="novBtnOk" onclick="certSetNovedades(false)">✅ Sin novedades</button>
+    </div>
+    <div id="accCatalogWrap" style="display:none">
+      <div class="acc-catalog" id="accCatalog"></div>
+      <div class="acc-total-bar" id="accTotal">Total accesorios: $0.00</div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button style="background:#bbb;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer" onclick="cerrarCertModal()">Cancelar</button>
+      <button class="btn-generar" style="color:white;border:none;border-radius:6px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer" onclick="generarCertLocal()">📜 Generar Certificado</button>
     </div>
 
   </div>
@@ -799,7 +724,7 @@
 <script>
 // Se sube en cada cambio publicado, para confirmar visualmente que un dispositivo
 // ya tomó la última actualización (Configuración → parte de abajo del encabezado).
-const APP_VERSION = '1.1';
+const APP_VERSION = '1.2';
 
 // ─── UTILIDADES ────────────────────────────────────────────────────────────────
 function esc(s) {
@@ -1292,10 +1217,21 @@ function renderEmitList() {
     const delay = Math.min(i, 12) * 0.04;
 
     let acciones = '';
+    let fotoPills = '';
     if (!v) {
       // El admin nunca emite certificados — solo los técnicos.
       if (!esAdmin) {
         acciones = `<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#9e1212;color:white" onclick="abrirCertModal('${esc(l.codigo)}')">📜 Certificado</button>`;
+        // Fotos adjuntables directo desde la lista, sin abrir el certificado:
+        // cada una queda "lista" apenas se sube, las demás pueden esperar lo
+        // que haga falta (el técnico decide cuándo tomar la siguiente).
+        const tieneCO2 = (l.extintores || []).some(e => (e.tipo||'').toUpperCase() === 'CO2');
+        const fotosEstado = certFotosEstado(l.codigo);
+        const tiposFoto = [['antes','Antes'], ...(tieneCO2 ? [['cilindro','Cilindro']] : []), ['despues','Después']];
+        fotoPills = `<div class="foto-pills">` + tiposFoto.map(([k, lbl]) => {
+          const done = !!fotosEstado[k];
+          return `<button class="foto-pill ${done?'done':''}" onclick="certFotoListAbrir('${esc(l.codigo)}','${k}')">${done?'✅':'📷'} ${esc(lbl)}</button>`;
+        }).join('') + `</div>`;
       }
     } else if (esAdmin) {
       // El admin revisa/descarga lo que ya generó el técnico, y puede
@@ -1318,6 +1254,7 @@ function renderEmitList() {
             ${acciones}
           </div>
         </div>
+        ${fotoPills}
       </div>`;
   }
 
@@ -1420,9 +1357,9 @@ const CERT_DRAFT_MAX_EDAD_MS = 48 * 60 * 60 * 1000; // ignorar borradores de má
 
 function certDraftKey(codigo) { return 'certDraft_' + codigo; }
 
-function certGuardarDraft(patch) {
-  if (!certModalCodigo) return;
-  const key = certDraftKey(certModalCodigo);
+function certGuardarDraft(codigo, patch) {
+  if (!codigo) return;
+  const key = certDraftKey(codigo);
   let draft = {};
   try { draft = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) { draft = {}; }
   Object.assign(draft, patch, { ts: Date.now() });
@@ -1442,11 +1379,17 @@ function certBorrarDraft(codigo) {
   try { localStorage.removeItem(certDraftKey(codigo)); } catch(e) {}
 }
 
-function certDescartarDraft() {
-  if (!certModalCodigo) return;
-  if (!confirm('¿Descartar las fotos y datos guardados de este certificado?')) return;
-  certBorrarDraft(certModalCodigo);
-  abrirCertModal(certModalCodigo);
+// Guarda una foto de un local directamente desde el panel de Emitir Certificado,
+// sin necesidad de abrir el certificado. Cada foto queda "lista" (✅) de inmediato
+// y las demás quedan pendientes hasta que el técnico tenga tiempo de tomarlas.
+function certGuardarFotoDraft(codigo, tipo, b64) {
+  const draft = certCargarDraft(codigo) || {};
+  const fotos = { ...(draft.fotos || {}), [tipo]: b64 };
+  certGuardarDraft(codigo, { fotos });
+}
+
+function certFotosEstado(codigo) {
+  return (certCargarDraft(codigo) || {}).fotos || {};
 }
 
 // Comprime cualquier foto (aunque pese varios MB) a un JPEG liviano en vez de rechazarla.
@@ -1795,19 +1738,8 @@ function abrirCertModal(codigo) {
   const local = getLocalLibreta(codigo);
   if (!local) { alert('Local no encontrado en la libreta.'); return; }
   certModalCodigo = codigo;
-  certFotos = {}; certHayNovedades = false; certAccsSelected = new Set();
+  certHayNovedades = false; certAccsSelected = new Set();
   document.getElementById('certModalTitle').textContent = codigo + ' — ' + (local.nombre || '');
-  // Reset foto previews
-  ['antes','despues','cilindro'].forEach(k => {
-    const prev = document.getElementById('certFotoPreview_'+k);
-    const card = document.getElementById('certFotoCard_'+k);
-    if (prev) { prev.src=''; prev.classList.remove('show'); }
-    if (card) card.classList.remove('has-foto');
-  });
-  // Ocultar foto de cilindro CO₂ si el local no tiene CO2
-  const tieneCO2 = (local.extintores || []).some(e => (e.tipo||'').toUpperCase() === 'CO2');
-  const cilCard = document.getElementById('certFotoCard_cilindro');
-  if (cilCard) cilCard.style.display = tieneCO2 ? '' : 'none';
   // Tipo de servicio por defecto: mantenimiento
   document.querySelectorAll('input[name="certTipoServ"]').forEach(r => { r.checked = (r.value === 'mantenimiento'); });
   certAplicarTipoUI();
@@ -1816,54 +1748,37 @@ function abrirCertModal(codigo) {
   document.getElementById('novBtnOk').className  = 'nov-btn active-ok';
   document.getElementById('accCatalogWrap').style.display = 'none';
 
-  // Restaurar progreso guardado
+  // Las fotos ya se adjuntaron (o no) desde el panel de Emitir Certificado;
+  // acá solo se muestran de forma informativa, sin poder editarlas.
   const draft = certCargarDraft(codigo);
-  const avisoEl = document.getElementById('certDraftAviso');
+  certFotos = { ...(draft && draft.fotos || {}) };
+  const tieneCO2 = (local.extintores || []).some(e => (e.tipo||'').toUpperCase() === 'CO2');
+  const tipos = [['antes','Antes'], ...(tieneCO2 ? [['cilindro','Cilindro']] : []), ['despues','Después']];
+  const listas = tipos.filter(([k]) => certFotos[k]).length;
+  const statusEl = document.getElementById('certFotoStatus');
+  if (statusEl) {
+    const ok = listas === tipos.length;
+    statusEl.style.background = ok ? '#eafaf1' : '#fff8e1';
+    statusEl.style.color = ok ? '#1e8449' : '#7a5c00';
+    statusEl.textContent = `📷 Fotos: ${listas}/${tipos.length} adjuntas` + (ok ? '' : ' — faltan, adjúntalas desde la lista');
+  }
+
   if (draft) {
-    if (draft.fotos) {
-      certFotos = { ...draft.fotos };
-      ['antes','despues','cilindro'].forEach(k => {
-        if (!certFotos[k]) return;
-        const prev = document.getElementById('certFotoPreview_'+k);
-        const card = document.getElementById('certFotoCard_'+k);
-        if (prev) { prev.src = 'data:image/jpeg;base64,'+certFotos[k]; prev.classList.add('show'); }
-        if (card) card.classList.add('has-foto');
-      });
-    }
     if (draft.tipoServ) {
       document.querySelectorAll('input[name="certTipoServ"]').forEach(r => { r.checked = (r.value === draft.tipoServ); });
       certTipoChange();
     }
     if (typeof draft.hayNovedades === 'boolean') certSetNovedades(draft.hayNovedades);
     if (Array.isArray(draft.accs)) certAccsSelected = new Set(draft.accs);
-    if (avisoEl) avisoEl.style.display = 'flex';
-  } else if (avisoEl) {
-    avisoEl.style.display = 'none';
   }
+  renderAccCatalog();
 
-  // Go to step 1
-  certPaso(1);
   document.getElementById('certModal').style.display = 'flex';
 }
 
 function cerrarCertModal() {
   document.getElementById('certModal').style.display = 'none';
   certModalCodigo = null; certFotos = {}; certAccsSelected = new Set();
-}
-
-function certPaso(n) {
-  [1,2].forEach(i => {
-    const paso = document.getElementById('certPaso'+i);
-    const mostrar = i === n;
-    paso.style.display = mostrar ? '' : 'none';
-    paso.classList.remove('paso-anim');
-    if (mostrar) { void paso.offsetWidth; paso.classList.add('paso-anim'); }
-    const ind = document.getElementById('csi'+i);
-    ind.classList.remove('active','done');
-    if (i === n) ind.classList.add('active');
-    else if (i < n) ind.classList.add('done');
-  });
-  if (n === 2) renderAccCatalog();
 }
 
 function certAplicarTipoUI() {
@@ -1875,15 +1790,17 @@ function certAplicarTipoUI() {
 
 function certTipoChange() {
   const v = certAplicarTipoUI();
-  certGuardarDraft({ tipoServ: v });
+  certGuardarDraft(certModalCodigo, { tipoServ: v });
 }
 
-function certAbrirFoto(tipo) {
-  let input = document.getElementById('_fi_'+tipo);
+// Adjunta una foto de un local directamente desde el panel de Emitir Certificado
+// (botón "Antes"/"Cilindro"/"Después" de la tarjeta), sin abrir el certificado.
+function certFotoListAbrir(codigo, tipo) {
+  let input = document.getElementById('_fl_'+codigo+'_'+tipo);
   if (!input) {
     input = document.createElement('input');
     input.type = 'file'; input.accept = 'image/*';
-    input.id = '_fi_'+tipo;
+    input.id = '_fl_'+codigo+'_'+tipo;
     input.style.display = 'none';
     input.addEventListener('change', () => {
       const file = input.files[0];
@@ -1893,21 +1810,12 @@ function certAbrirFoto(tipo) {
         input.value = '';
         return;
       }
-      const card = document.getElementById('certFotoCard_'+tipo);
-      const btns = card ? card.querySelectorAll('.cert-foto-btn') : [];
-      btns.forEach(b => b.disabled = true);
       certComprimirImagen(file).then(b64 => {
-        certFotos[tipo] = b64;
-        const prev = document.getElementById('certFotoPreview_'+tipo);
-        if (prev) { prev.src = 'data:image/jpeg;base64,'+b64; prev.classList.add('show'); }
-        if (card) card.classList.add('has-foto');
-        certGuardarDraft({ fotos: certFotos });
+        certGuardarFotoDraft(codigo, tipo, b64);
+        renderEmitList();
       }).catch(err => {
         alert('No se pudo procesar la foto: ' + (err && err.message || err));
-      }).finally(() => {
-        input.value = '';
-        btns.forEach(b => b.disabled = false);
-      });
+      }).finally(() => { input.value = ''; });
     });
     document.body.appendChild(input);
   }
@@ -1919,7 +1827,7 @@ function certSetNovedades(hayNov) {
   document.getElementById('novBtnBad').className = 'nov-btn' + (hayNov  ? ' active-bad' : '');
   document.getElementById('novBtnOk').className  = 'nov-btn' + (!hayNov ? ' active-ok'  : '');
   document.getElementById('accCatalogWrap').style.display = hayNov ? '' : 'none';
-  certGuardarDraft({ hayNovedades: hayNov });
+  certGuardarDraft(certModalCodigo, { hayNovedades: hayNov });
 }
 
 function renderAccCatalog() {
@@ -1953,7 +1861,7 @@ function renderAccCatalog() {
 function certToggleAcc(i) {
   if (certAccsSelected.has(i)) certAccsSelected.delete(i); else certAccsSelected.add(i);
   renderAccCatalog();
-  certGuardarDraft({ accs: [...certAccsSelected] });
+  certGuardarDraft(certModalCodigo, { accs: [...certAccsSelected] });
 }
 
 function updateAccTotal() {
@@ -1996,7 +1904,7 @@ async function generarCertLocal() {
   pdfOverlayShow('Generando certificado…');
   let doc = null;
   try {
-    // Fotos del nuevo estado (ya vienen comprimidas a base64 desde certAbrirFoto)
+    // Fotos ya adjuntadas y comprimidas a base64 desde el panel de la lista
     const FB64 = {};
     for (const [key, b64] of Object.entries(certFotos)) {
       if (b64) FB64[key] = b64;
