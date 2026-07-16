@@ -739,6 +739,10 @@
     "mes": "FEBRERO",
     "extintores": [
       {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
         "tipo": "PQS",
         "cap": "10 LBS"
       }
@@ -795,6 +799,10 @@
     "mes": "FEBRERO",
     "extintores": [
       {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
         "tipo": "PQS",
         "cap": "10 LBS"
       }
@@ -824,6 +832,10 @@
     "email": "espe26@elespanol.com.ec",
     "mes": "FEBRERO",
     "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
       {
         "tipo": "PQS",
         "cap": "5 LBS"
@@ -1142,7 +1154,16 @@
     "direccion": "PASEO SHOPPING MACHALA",
     "email": "jv75@juanvaldezcafe.com.ec",
     "mes": "FEBRERO",
-    "extintores": []
+    "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      }
+    ]
   },
   {
     "codigo": "V079",
@@ -1686,6 +1707,10 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
       }
     ]
   },
@@ -3436,6 +3461,14 @@
     "mes": "AGOSTO",
     "extintores": [
       {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
         "tipo": "PQS",
         "cap": "10 LBS"
       },
@@ -3470,6 +3503,10 @@
       },
       {
         "tipo": "PQS",
+        "cap": "5 LBS"
+      },
+      {
+        "tipo": "CO2",
         "cap": "5 LBS"
       }
     ]
@@ -3795,6 +3832,10 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
       }
     ]
   },
@@ -3894,6 +3935,10 @@
     "mes": "SEPTIEMBRE",
     "extintores": [
       {
+        "tipo": "CO2",
+        "cap": "10 LBS"
+      },
+      {
         "tipo": "PQS",
         "cap": "5 LBS"
       }
@@ -3944,6 +3989,10 @@
     "mes": "OCTUBRE",
     "extintores": [
       {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
         "tipo": "PQS",
         "cap": "5 LBS"
       },
@@ -3963,6 +4012,10 @@
       {
         "tipo": "PQS",
         "cap": "10 LBS"
+      },
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
       }
     ]
   },
@@ -5325,6 +5378,10 @@
     "email": "jv84@juanvaldezcafe.com.ec",
     "mes": "DICIEMBRE",
     "extintores": [
+      {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
       {
         "tipo": "PQS",
         "cap": "10 LBS"

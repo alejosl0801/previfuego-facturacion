@@ -724,7 +724,7 @@
 <script>
 // Se sube en cada cambio publicado, para confirmar visualmente que un dispositivo
 // ya tomó la última actualización (Configuración → parte de abajo del encabezado).
-const APP_VERSION = '1.3';
+const APP_VERSION = '1.4';
 
 // ─── UTILIDADES ────────────────────────────────────────────────────────────────
 function esc(s) {
@@ -734,6 +734,19 @@ function esc(s) {
 }
 
 const MESES_ES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+
+// Un "cilindro grande" es un extintor de CO2 de verdad grande (50/75 LBS), no
+// cualquier extintor de CO2 chico (5/10/20 LBS, que va como uno más en las
+// fotos de antes/después). Solo los locales con uno de estos necesitan la
+// foto aparte del cilindro.
+const CILINDRO_GRANDE_LBS_MIN = 50;
+function tieneCilindroGrande(extintores) {
+  return (extintores || []).some(e => {
+    if ((e.tipo || '').toUpperCase() !== 'CO2') return false;
+    const lbs = parseInt(e.cap, 10);
+    return !isNaN(lbs) && lbs >= CILINDRO_GRANDE_LBS_MIN;
+  });
+}
 
 // ─── CONFIG (GitHub Token) ─────────────────────────────────────────────────────
 function loadConfig() {
@@ -1225,9 +1238,8 @@ function renderEmitList() {
         // Fotos adjuntables directo desde la lista, sin abrir el certificado:
         // cada una queda "lista" apenas se sube, las demás pueden esperar lo
         // que haga falta (el técnico decide cuándo tomar la siguiente).
-        const tieneCO2 = (l.extintores || []).some(e => (e.tipo||'').toUpperCase() === 'CO2');
         const fotosEstado = certFotosEstado(l.codigo);
-        const tiposFoto = [['antes','Antes'], ...(tieneCO2 ? [['cilindro','Cilindro']] : []), ['despues','Después']];
+        const tiposFoto = [['antes','Antes'], ...(tieneCilindroGrande(l.extintores) ? [['cilindro','Cilindro']] : []), ['despues','Después']];
         fotoPills = `<div class="foto-pills">` + tiposFoto.map(([k, lbl]) => {
           const done = !!fotosEstado[k];
           return `<button class="foto-pill ${done?'done':''}" onclick="certFotoListAbrir('${esc(l.codigo)}','${k}')">${done?'✅':'📷'} ${esc(lbl)}</button>`;
@@ -1752,8 +1764,7 @@ function abrirCertModal(codigo) {
   // acá solo se muestran de forma informativa, sin poder editarlas.
   const draft = certCargarDraft(codigo);
   certFotos = { ...(draft && draft.fotos || {}) };
-  const tieneCO2 = (local.extintores || []).some(e => (e.tipo||'').toUpperCase() === 'CO2');
-  const tipos = [['antes','Antes'], ...(tieneCO2 ? [['cilindro','Cilindro']] : []), ['despues','Después']];
+  const tipos = [['antes','Antes'], ...(tieneCilindroGrande(local.extintores) ? [['cilindro','Cilindro']] : []), ['despues','Después']];
   const listas = tipos.filter(([k]) => certFotos[k]).length;
   const statusEl = document.getElementById('certFotoStatus');
   if (statusEl) {
