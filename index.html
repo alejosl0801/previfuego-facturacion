@@ -712,7 +712,7 @@
 <script>
 // Se sube en cada cambio publicado, para confirmar visualmente que un dispositivo
 // ya tomó la última actualización (Configuración → parte de abajo del encabezado).
-const APP_VERSION = '1.8';
+const APP_VERSION = '1.9';
 
 // ─── UTILIDADES ────────────────────────────────────────────────────────────────
 function esc(s) {
@@ -1413,7 +1413,7 @@ function certComprimirImagen(file) {
           const ctx = canvas.getContext('2d');
           ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          const targetChars = 900 * 1024 * 4 / 3; // ~900KB de imagen
+          const targetChars = 350 * 1024 * 4 / 3; // ~350KB de imagen (certificados con 3 fotos deben caber cómodos en un solo blob de Git)
           let quality = 0.75;
           let dataUrl = canvas.toDataURL('image/jpeg', quality);
           let tries = 0;
@@ -2046,15 +2046,27 @@ async function renderArchivoCertificados() {
   }
 }
 
+// Lee el base64 de un archivo del repo. Para archivos > ~1MB (certificados
+// con fotos), la Contents API no incluye "content" — hay que pedirlo aparte
+// vía la Git Data API usando el sha que sí viene siempre.
+async function ghGetFileContentB64(path) {
+  const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+    headers: ghReadHeaders()
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  if (d.content) return d.content;
+  if (!d.sha) throw new Error('Sin contenido ni sha');
+  const blobR = await fetch(`https://api.github.com/repos/${GH_REPO}/git/blobs/${d.sha}`, { headers: ghReadHeaders() });
+  if (!blobR.ok) throw new Error('HTTP ' + blobR.status);
+  return (await blobR.json()).content;
+}
+
 // Descarga un PDF del archivo de certificados (repo público: no requiere token)
 async function descargarCertArchivo(path, filename) {
   try {
-    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
-      headers: ghReadHeaders()
-    });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const d = await r.json();
-    const blob = await (await fetch(`data:application/pdf;base64,${d.content.replace(/\n/g, '')}`)).blob();
+    const content = await ghGetFileContentB64(path);
+    const blob = await (await fetch(`data:application/pdf;base64,${content.replace(/\n/g, '')}`)).blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = filename;
