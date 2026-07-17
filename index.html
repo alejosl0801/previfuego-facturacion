@@ -712,7 +712,7 @@
 <script>
 // Se sube en cada cambio publicado, para confirmar visualmente que un dispositivo
 // ya tomó la última actualización (Configuración → parte de abajo del encabezado).
-const APP_VERSION = '1.6';
+const APP_VERSION = '1.7';
 
 // ─── UTILIDADES ────────────────────────────────────────────────────────────────
 function esc(s) {
@@ -1942,8 +1942,7 @@ async function generarCertLocal() {
   const st = document.getElementById('emitStatus');
   if (st) {
     if (esAdminNow) {
-      st.innerHTML = `<div class="status-bar status-ok">✅ Certificado de <strong>${esc(local.codigo)}</strong> generado` +
-        (getGhToken() ? ' y respaldado en la nube' : '') + '.</div>';
+      st.innerHTML = `<div class="status-bar status-ok">✅ Certificado de <strong>${esc(local.codigo)}</strong> generado y respaldado en la nube.</div>`;
       // Enlace manual siempre visible: en iOS el navegador puede bloquear la pestaña
       // automática, así que este es el modo garantizado de abrir el PDF.
       if (doc && doc._certBlobUrl) {
@@ -1968,16 +1967,28 @@ async function generarCertLocal() {
   }
 }
 
-// Sube el PDF del certificado a GitHub: certificados/[MES]-[ANIO]/CERT-[CODIGO]-[ANIO].pdf
+// Worker de Cloudflare: guarda el GitHub token del lado del servidor, así que
+// cualquier dispositivo (técnico incluido, sin token propio) puede respaldar
+// certificados. Ver worker/worker-certificados.js.
+const CERT_WORKER_URL = 'https://previfuego-cert.alejosl0801.workers.dev';
+
+// Sube el PDF del certificado: certificados/[MES]-[ANIO]/CERT-[CODIGO]-[ANIO].pdf
 async function subirCertGitHub(localCode, anio, doc) {
-  const token = getGhToken();
-  if (!token) return;
   const now = new Date();
   const mes = MESES_ES[now.getMonth()];
   const path = `certificados/${mes}-${anio}/CERT-${localCode}-${anio}.pdf`;
   // jsPDF → base64 (sin el prefijo data:)
   const content = doc.output('datauristring').split(',')[1];
-  await ghPutFile(path, content, `cert: ${localCode} ${mes}-${anio}`);
+  try {
+    const r = await fetch(CERT_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, content }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  } catch (e) {
+    console.warn('subirCertGitHub:', e);
+  }
 }
 
 // Busca y descarga el certificado ya emitido de un local (solo admin, desde la
