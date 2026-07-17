@@ -9,6 +9,11 @@
  *   - Los técnicos respaldan certificados sin ingresar ninguna clave.
  *   - El admin lista/descarga certificados y edita locales sin tener el token.
  *
+ * Los certificados con fotos suelen pesar varios MB, y la API de "Contents"
+ * de GitHub (PUT /contents/{path}) tiene un límite práctico de ~1MB antes de
+ * empezar a fallar. Por eso subirCertGitHub usa la Git Data API (blob + tree
+ * + commit), que soporta archivos de hasta 100MB.
+ *
  * Solo puede tocar certificados/*.pdf y datos/libreta_locales.json — nada
  * más del repo.
  *
@@ -48,22 +53,73 @@ export default {
       body: JSON.stringify({ message, content: contentB64, branch: GH_BRANCH, ...(sha ? { sha } : {}) }),
     });
 
+    // Sube un archivo de cualquier tamaño razonable (hasta 100MB) vía la Git
+    // Data API: blob -> tree -> commit -> mover la rama al nuevo commit.
+    // Necesario para PDFs con fotos, que fácilmente pasan de 1MB.
+    async function ghPutBlob(path, base64Content, message) {
+      const paso = async (nombre, resp) => {
+        if (!resp.ok) throw new Error(nombre + ': HTTP ' + resp.status + ' ' + (await resp.text()).slice(0, 300));
+        return resp.json();
+      };
+      const refData = await paso('ref', await fetch(
+        `https://api.github.com/repos/${GH_REPO}/git/refs/heads/${GH_BRANCH}`, { headers: auth }));
+      const commitSha = refData.object.sha;
+
+      const commitData = await paso('commit', await fetch(
+        `https://api.github.com/repos/${GH_REPO}/git/commits/${commitSha}`, { headers: auth }));
+      const baseTreeSha = commitData.tree.sha;
+
+      const blobData = await paso('blob', await fetch(`https://api.github.com/repos/${GH_REPO}/git/blobs`, {
+        method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: base64Content, encoding: 'base64' }),
+      }));
+
+      const treeData = await paso('tree', await fetch(`https://api.github.com/repos/${GH_REPO}/git/trees`, {
+        method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base_tree: baseTreeSha, tree: [{ path, mode: '100644', type: 'blob', sha: blobData.sha }] }),
+      }));
+
+      const newCommitData = await paso('newCommit', await fetch(`https://api.github.com/repos/${GH_REPO}/git/commits`, {
+        method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, tree: treeData.sha, parents: [commitSha] }),
+      }));
+
+      await paso('updateRef', await fetch(`https://api.github.com/repos/${GH_REPO}/git/refs/heads/${GH_BRANCH}`, {
+        method: 'PATCH', headers: { ...auth, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sha: newCommitData.sha }),
+      }));
+    }
+
+    // Lee un archivo devolviendo su base64, usando la Git Data API si la
+    // Contents API no incluyó el contenido (pasa con archivos > ~1MB).
+    async function ghGetContent(path) {
+      const r = await ghGet(path);
+      if (!r.ok) return null;
+      const d = await r.json();
+      if (d.content) return d.content;
+      if (!d.sha) return null;
+      const blobR = await fetch(`https://api.github.com/repos/${GH_REPO}/git/blobs/${d.sha}`, { headers: auth });
+      if (!blobR.ok) return null;
+      return (await blobR.json()).content;
+    }
+
     try {
       // ── DIAGNÓSTICO: probar que el token puede escribir (GET ?action=selftest) ──
-      // Solo para depurar: escribe/borra un archivo de prueba y devuelve el
-      // error real de GitHub si algo falla (token sin permiso, repo mal
-      // escrito, secret no configurado, etc.)
+      // Solo para depurar: escribe/borra un archivo de prueba (con el mismo
+      // método que usan los certificados reales) y devuelve el error real de
+      // GitHub si algo falla.
       if (action === 'selftest') {
         if (!env.GH_TOKEN) return json({ ok: false, paso: 'secret', error: 'GH_TOKEN no está configurado en el Worker' });
         const testPath = 'certificados/_selftest.txt';
-        const put = await ghPut(testPath, btoa('selftest ' + new Date().toISOString()), 'selftest: prueba de escritura');
-        const putBody = await put.text();
-        if (!put.ok) return json({ ok: false, paso: 'escritura', status: put.status, error: putBody.slice(0, 500) });
+        try {
+          await ghPutBlob(testPath, btoa('selftest ' + new Date().toISOString()), 'selftest: prueba de escritura');
+        } catch (e) {
+          return json({ ok: false, paso: 'escritura', error: String(e && e.message || e) });
+        }
         // Limpieza: borrar el archivo de prueba
-        let sha = null;
         const chk = await ghGet(testPath);
-        if (chk.ok) sha = (await chk.json()).sha;
-        if (sha) {
+        if (chk.ok) {
+          const sha = (await chk.json()).sha;
           await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${testPath}`, {
             method: 'DELETE', headers: { ...auth, 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: 'selftest: limpieza', sha, branch: GH_BRANCH }),
@@ -75,11 +131,10 @@ export default {
       // ── LOCALES: leer la lista (GET ?action=locales) ──────────────────────
       // Sin token, sin login: cualquier celular la llama al abrir la app.
       if (action === 'locales' && request.method === 'GET') {
-        let r = await ghGet(LOCALES_PATH);
-        if (!r.ok) r = await ghGet(LOCALES_SEMILLA); // primera vez: aún no hay libreta guardada
-        if (!r.ok) return json({ locales: [] });
-        const d = await r.json();
-        const texto = decodeURIComponent(escape(atob(d.content.replace(/\n/g, ''))));
+        let content = await ghGetContent(LOCALES_PATH);
+        if (!content) content = await ghGetContent(LOCALES_SEMILLA); // primera vez: aún no hay libreta guardada
+        if (!content) return json({ locales: [] });
+        const texto = decodeURIComponent(escape(atob(content.replace(/\n/g, ''))));
         return json({ locales: JSON.parse(texto) });
       }
 
@@ -101,11 +156,11 @@ export default {
         const body = await request.json();
         if (!pathOk(body.path)) return json({ error: 'Ruta no permitida' }, 400);
         if (!body.content) return json({ error: 'Falta el contenido' }, 400);
-        let sha = null;
-        const chk = await ghGet(body.path);
-        if (chk.ok) sha = (await chk.json()).sha;
-        const put = await ghPut(body.path, body.content, `cert: ${body.path}`, sha);
-        if (!put.ok) return json({ error: 'GitHub: ' + (await put.text()).slice(0, 200) }, 502);
+        try {
+          await ghPutBlob(body.path, body.content, `cert: ${body.path}`);
+        } catch (e) {
+          return json({ error: 'GitHub: ' + String(e && e.message || e) }, 502);
+        }
         return json({ ok: true });
       }
 
@@ -123,10 +178,9 @@ export default {
       if (action === 'get') {
         const p = url.searchParams.get('path') || '';
         if (!pathOk(p)) return json({ error: 'Ruta no permitida' }, 400);
-        const r = await ghGet(p);
-        if (!r.ok) return json({ error: 'No encontrado' }, 404);
-        const d = await r.json();
-        return json({ content: d.content });
+        const content = await ghGetContent(p);
+        if (!content) return json({ error: 'No encontrado' }, 404);
+        return json({ content });
       }
 
       return json({ error: 'Acción no reconocida' }, 400);
