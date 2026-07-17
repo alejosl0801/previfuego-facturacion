@@ -691,18 +691,6 @@
 
     <div id="certFotoStatus" style="font-size:12.5px;font-weight:700;border-radius:6px;padding:8px 10px;margin-bottom:14px"></div>
 
-    <div style="margin-bottom:14px">
-      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Tipo de trabajo</div>
-      <div style="display:flex;gap:8px">
-        <label id="lblMant" style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:border-color 0.15s">
-          <input type="radio" name="certTipoServ" value="mantenimiento" style="width:auto;accent-color:#9e1212" onchange="certTipoChange()" /> 🔧 Mantenimiento
-        </label>
-        <label id="lblRec" style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:border-color 0.15s">
-          <input type="radio" name="certTipoServ" value="recarga" style="width:auto;accent-color:#9e1212" onchange="certTipoChange()" /> ⟳ Recarga
-        </label>
-      </div>
-    </div>
-
     <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">🔧 ¿Hay novedades?</div>
     <div class="cert-novedades-toggle">
       <button class="nov-btn" id="novBtnBad" onclick="certSetNovedades(true)">⚠️ Accesorios dañados</button>
@@ -724,7 +712,7 @@
 <script>
 // Se sube en cada cambio publicado, para confirmar visualmente que un dispositivo
 // ya tomó la última actualización (Configuración → parte de abajo del encabezado).
-const APP_VERSION = '1.5';
+const APP_VERSION = '1.6';
 
 // ─── UTILIDADES ────────────────────────────────────────────────────────────────
 function esc(s) {
@@ -1749,9 +1737,6 @@ function abrirCertModal(codigo) {
   certModalCodigo = codigo;
   certHayNovedades = false; certAccsSelected = new Set();
   document.getElementById('certModalTitle').textContent = codigo + ' — ' + (local.nombre || '');
-  // Tipo de servicio por defecto: mantenimiento
-  document.querySelectorAll('input[name="certTipoServ"]').forEach(r => { r.checked = (r.value === 'mantenimiento'); });
-  certAplicarTipoUI();
   // Reset novedades
   document.getElementById('novBtnBad').className = 'nov-btn';
   document.getElementById('novBtnOk').className  = 'nov-btn active-ok';
@@ -1772,10 +1757,6 @@ function abrirCertModal(codigo) {
   }
 
   if (draft) {
-    if (draft.tipoServ) {
-      document.querySelectorAll('input[name="certTipoServ"]').forEach(r => { r.checked = (r.value === draft.tipoServ); });
-      certTipoChange();
-    }
     if (typeof draft.hayNovedades === 'boolean') certSetNovedades(draft.hayNovedades);
     if (Array.isArray(draft.accs)) certAccsSelected = new Set(draft.accs);
   }
@@ -1787,18 +1768,6 @@ function abrirCertModal(codigo) {
 function cerrarCertModal() {
   document.getElementById('certModal').style.display = 'none';
   certModalCodigo = null; certFotos = {}; certAccsSelected = new Set();
-}
-
-function certAplicarTipoUI() {
-  const v = document.querySelector('input[name="certTipoServ"]:checked')?.value;
-  document.getElementById('lblMant').style.borderColor = v === 'mantenimiento' ? '#9e1212' : '#ddd';
-  document.getElementById('lblRec').style.borderColor  = v === 'recarga'       ? '#9e1212' : '#ddd';
-  return v;
-}
-
-function certTipoChange() {
-  const v = certAplicarTipoUI();
-  certGuardarDraft(certModalCodigo, { tipoServ: v });
 }
 
 // Adjunta una foto de un local directamente desde el panel de Emitir Certificado
@@ -1921,9 +1890,6 @@ async function generarCertLocal() {
     var anio   = String(now.getFullYear());
     var mesNum = String(now.getMonth() + 1).padStart(2, '0');
 
-    const tipoServSel = document.querySelector('input[name="certTipoServ"]:checked')?.value || 'mantenimiento';
-    const tipoLabel   = tipoServSel === 'recarga' ? 'RECARGA' : 'MANT';
-
     // Accesorios del catálogo seleccionados
     const ACCS_SEL = certHayNovedades
       ? [...certAccsSelected].map(i => ({ desc: ACCESSORIES[i].desc }))
@@ -1936,11 +1902,12 @@ async function generarCertLocal() {
       exts: (local.extintores || []).map(e=>({tipo:e.tipo,cap:e.cap})),
       FB64,
       ACCS: ACCS_SEL,
-      certNum: local.codigo+'-'+tipoLabel+' EXTINTORES-'+anio,
+      // El código del certificado siempre lleva "MANT": mantenimiento vs. recarga
+      // es una distinción interna de facturación, no algo que el técnico elija.
+      certNum: local.codigo+'-MANT EXTINTORES-'+anio,
       MA:  mesNum+'/'+anio,
       MAS: mesNum+'/'+(parseInt(anio)+1),
       anio,
-      tipoServ: tipoServSel,
     });
   } catch (e) {
     pdfOverlayHide();
