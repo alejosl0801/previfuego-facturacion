@@ -712,7 +712,7 @@
 <script>
 // Se sube en cada cambio publicado, para confirmar visualmente que un dispositivo
 // ya tomó la última actualización (Configuración → parte de abajo del encabezado).
-const APP_VERSION = '1.9';
+const APP_VERSION = '2.0';
 
 // ─── UTILIDADES ────────────────────────────────────────────────────────────────
 function esc(s) {
@@ -1996,23 +1996,32 @@ async function subirCertGitHub(localCode, anio, doc) {
 // (se guarda con el mes calendario en que el técnico lo generó, no el mes de
 // servicio del local), así que se prueba primero el mes del local y luego el
 // resto de meses del año actual hasta encontrarlo.
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// La API de "Contents" de GitHub puede tardar unos segundos en reflejar un
+// commit recién hecho vía la Git Data API (la que usa el Worker para subir
+// certificados). Por eso se reintenta unas veces antes de decir "no existe".
 async function descargarCertLocal(codigo) {
   const anio = anioActualKey();
   const local = libretaLocales.find(x => x.codigo === codigo);
   const mesesProbar = local && local.mes
     ? [local.mes, ...MESES_ES.filter(m => m !== local.mes)]
     : MESES_ES.slice();
-  for (const mes of mesesProbar) {
-    const path = `certificados/${mes}-${anio}/CERT-${codigo}-${anio}.pdf`;
-    try {
-      const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
-        headers: ghReadHeaders()
-      });
-      if (!r.ok) continue;
-      const d = await r.json();
-      await descargarCertArchivo(path, d.name);
-      return;
-    } catch (e) { /* seguir probando el siguiente mes */ }
+
+  for (let intento = 1; intento <= 3; intento++) {
+    for (const mes of mesesProbar) {
+      const path = `certificados/${mes}-${anio}/CERT-${codigo}-${anio}.pdf`;
+      try {
+        const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+          headers: ghReadHeaders()
+        });
+        if (!r.ok) continue;
+        const d = await r.json();
+        await descargarCertArchivo(path, d.name);
+        return;
+      } catch (e) { /* seguir probando el siguiente mes */ }
+    }
+    if (intento < 3) await sleep(2000);
   }
   alert(`No se encontró un certificado guardado de ${codigo} para ${anio}.`);
 }
