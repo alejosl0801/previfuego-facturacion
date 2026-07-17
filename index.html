@@ -712,7 +712,7 @@
 <script>
 // Se sube en cada cambio publicado, para confirmar visualmente que un dispositivo
 // ya tomó la última actualización (Configuración → parte de abajo del encabezado).
-const APP_VERSION = '1.7';
+const APP_VERSION = '1.8';
 
 // ─── UTILIDADES ────────────────────────────────────────────────────────────────
 function esc(s) {
@@ -1469,7 +1469,7 @@ async function fetchLogo() {
 
 async function hacerPDF(opts) {
   const { localNom, puntNom, localCode, exts, FB64, ACCS, certNum, MA, MAS, anio } = opts;
-  if (!window.jspdf || !window.jspdf.jsPDF) { alert('jsPDF no cargado'); return; }
+  if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('No se pudo cargar la librería del PDF (revisa tu conexión e intenta de nuevo).');
   const { jsPDF } = window.jspdf;
   const LOGO_B64 = await fetchLogo();
 
