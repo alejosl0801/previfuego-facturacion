@@ -49,6 +49,29 @@ export default {
     });
 
     try {
+      // ── DIAGNÓSTICO: probar que el token puede escribir (GET ?action=selftest) ──
+      // Solo para depurar: escribe/borra un archivo de prueba y devuelve el
+      // error real de GitHub si algo falla (token sin permiso, repo mal
+      // escrito, secret no configurado, etc.)
+      if (action === 'selftest') {
+        if (!env.GH_TOKEN) return json({ ok: false, paso: 'secret', error: 'GH_TOKEN no está configurado en el Worker' });
+        const testPath = 'certificados/_selftest.txt';
+        const put = await ghPut(testPath, btoa('selftest ' + new Date().toISOString()), 'selftest: prueba de escritura');
+        const putBody = await put.text();
+        if (!put.ok) return json({ ok: false, paso: 'escritura', status: put.status, error: putBody.slice(0, 500) });
+        // Limpieza: borrar el archivo de prueba
+        let sha = null;
+        const chk = await ghGet(testPath);
+        if (chk.ok) sha = (await chk.json()).sha;
+        if (sha) {
+          await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${testPath}`, {
+            method: 'DELETE', headers: { ...auth, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: 'selftest: limpieza', sha, branch: GH_BRANCH }),
+          });
+        }
+        return json({ ok: true, mensaje: 'El Worker puede leer y escribir en el repo correctamente.' });
+      }
+
       // ── LOCALES: leer la lista (GET ?action=locales) ──────────────────────
       // Sin token, sin login: cualquier celular la llama al abrir la app.
       if (action === 'locales' && request.method === 'GET') {
