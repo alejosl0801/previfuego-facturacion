@@ -1219,7 +1219,13 @@ function renderEmitList() {
 
     let acciones = '';
     let fotoPills = '';
-    if (!v) {
+    const pendienteSync = !v && tieneCertPendiente(l.codigo);
+    if (pendienteSync) {
+      // Ya se generó el certificado pero todavía no se confirma la subida a
+      // GitHub (sin señal, Worker caído, etc.). Se reintenta solo en segundo
+      // plano — se ocultan los botones para no generar un duplicado mientras tanto.
+      acciones = `<span style="font-size:11px;font-weight:700;color:#b7950b;background:#fef9e7;border:1px solid #f9e79f;border-radius:20px;padding:4px 10px">⏳ Sincronizando…</span>`;
+    } else if (!v) {
       // El admin nunca emite certificados — solo los técnicos.
       if (!esAdmin) {
         acciones = `<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#9e1212;color:white" onclick="abrirCertModal('${esc(l.codigo)}')">📜 Certificado</button>`;
@@ -1237,8 +1243,8 @@ function renderEmitList() {
       // El admin revisa/descarga lo que ya generó el técnico, y puede
       // reiniciar un local a pendiente si el certificado fue una prueba/error.
       acciones = `
-        <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#2874a6;color:white" onclick="descargarCertLocal('${esc(l.codigo)}')">⬇️ Ver certificado</button>
-        <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#888;color:white" onclick="marcarPendiente('${esc(l.codigo)}')">↩ Marcar pendiente</button>`;
+      <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#2874a6;color:white" onclick="descargarCertLocal('${esc(l.codigo)}')">⬇️ Ver certificado</button>
+      <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#888;color:white" onclick="marcarPendiente('${esc(l.codigo)}')">↩ Marcar pendiente</button>`;
     }
 
     return `
@@ -1873,7 +1879,100 @@ function pdfOverlayHide() {
   if (ov) ov.style.display = 'none';
 }
 
-async function generarCertLocal() {
+// ── COLA DE CERTIFICADOS PENDIENTES DE SUBIR ────────────────────────────────
+  // Si la subida a GitHub falla (sin señal, Worker caído, etc.), el certificado
+  // generado NO se pierde ni se marca "visitado" a la fuerza: queda guardado
+  // aquí y se reintenta solo — al recuperar conexión, al volver a abrir la app,
+  // o cada minuto mientras haya pendientes. Así nunca se le dice al técnico
+  // "listo" antes de que el PDF esté de verdad respaldado en la nube.
+  const CERT_PENDIENTES_KEY = 'certPendientesSubir';
+  
+  function certPendientesCargar() {
+    try {
+      const l = JSON.parse(localStorage.getItem(CERT_PENDIENTES_KEY) || '[]');
+      return Array.isArray(l) ? l : [];
+    } catch(e) { return []; }
+  }
+  
+  function certPendientesGuardar(lista) {
+    try { localStorage.setItem(CERT_PENDIENTES_KEY, JSON.stringify(lista)); } catch(e) {}
+  }
+  
+  function certPendienteAgregar(item) {
+    const lista = certPendientesCargar().filter(x => x.codigo !== item.codigo || x.anio !== item.anio);
+    lista.push(item);
+    certPendientesGuardar(lista);
+  }
+  
+  function certPendienteQuitar(codigo, anio) {
+    certPendientesGuardar(certPendientesCargar().filter(x => x.codigo !== codigo || x.anio !== anio));
+  }
+  
+  function tieneCertPendiente(codigo) {
+    const y = anioActualKey();
+    return certPendientesCargar().some(x => x.codigo === codigo && x.anio === y);
+  }
+  
+  // Un solo intento de subida al Worker. Devuelve true/false, nunca lanza.
+  async function subirCertGitHubIntento(path, content) {
+    try {
+      const r = await fetch(CERT_WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: path, content: content }),
+      });
+  return r.ok;
+    } catch (e) {
+      console.warn('subirCertGitHub intento:', e);
+      return false;
+    }
+  }
+  
+  // Reintenta la subida unas veces (con espera creciente) antes de rendirse.
+  // Solo un true confirmado significa "el PDF ya está en GitHub de verdad".
+  async function subirCertConReintentos(path, content, intentos) {
+    intentos = intentos || 3;
+    for (let i = 1; i <= intentos; i++) {
+      const ok = await subirCertGitHubIntento(path, content);
+      if (ok) return true;
+      if (i < intentos) await sleep(1200 * i);
+    }
+    return false;
+  }
+  
+  // Reintenta en segundo plano todos los certificados que quedaron pendientes
+  // de confirmar. Solo entonces se marca "visitado" y se borra el borrador de
+  // fotos — nunca antes. Se llama al abrir la app, al recuperar conexión, y
+  // cada minuto mientras queden pendientes.
+  let _flushingCertPendientes = false;
+  async function flushCertPendientes() {
+    if (_flushingCertPendientes) return;
+    const lista = certPendientesCargar();
+    if (!lista.length) return;
+      _flushingCertPendientes = true;
+    try {
+      const restantes = [];
+      for (const item of lista) {
+        const ok = await subirCertConReintentos(item.path, item.content, 2);
+        if (ok) {
+          marcarVisitado(item.codigo);
+          certBorrarDraft(item.codigo);
+          if (item.email) {
+  const nombreArchivo = 'CERT-' + item.codigo + '-' + item.anio + '.pdf';
+            enviarCertCorreo(item.content, nombreArchivo, item.email, item.nombre || item.codigo).catch(function(){});
+          }
+  } else {
+          restantes.push(item);
+        }
+      }
+      certPendientesGuardar(restantes);
+      renderEmitList();
+  } finally {
+      _flushingCertPendientes = false;
+    }
+  }
+  
+  async function generarCertLocal() {
   if (!certModalCodigo) return;
   const local = getLocalLibreta(certModalCodigo);
   if (!local) return;
@@ -1915,33 +2014,52 @@ async function generarCertLocal() {
     return;
   }
 
-  // Histórico local + marcar como visitado este año
-  registrarCertEmitido(local);
-  marcarVisitado(local.codigo);
-  renderEmitList();
-  certBorrarDraft(local.codigo);
-
   // Base64 del PDF (para respaldo y correo)
   let pdfB64 = null;
   try { if (doc) pdfB64 = doc.output('datauristring').split(',')[1]; } catch(e) {}
 
-  // Respaldo en GitHub
+  // Respaldo en GitHub: el local NO se marca "visitado" hasta confirmar que
+  // el PDF realmente quedó guardado. Si la subida falla, el certificado se
+  // guarda en cola local y se reintenta solo — el técnico nunca ve un "listo"
+  // falso, y no tiene que repetir fotos ni la visita.
   document.getElementById('pdfOverlayTxt').textContent = 'Respaldando en la nube…';
-  try { if (doc) await subirCertGitHub(local.codigo, anio, doc); } catch(e) { console.warn('subirCert:', e); }
+  const mesSubida = MESES_ES[now.getMonth()];
+  const pathCert = `certificados/${mesSubida}-${anio}/CERT-${local.codigo}-${anio}.pdf`;
+  let subioOk = false;
+  if (pdfB64) {
+    try { subioOk = await subirCertConReintentos(pathCert, pdfB64, 3); }
+    catch(e) { console.warn('subirCert:', e); subioOk = false; }
+  }
 
-  // Éxito animado y cierre
+  registrarCertEmitido(local);
+  if (subioOk) {
+    marcarVisitado(local.codigo);
+    certBorrarDraft(local.codigo);
+    certPendienteQuitar(local.codigo, anio);
+  } else if (pdfB64) {
+    certPendienteAgregar({ codigo: local.codigo, anio: anio, path: pathCert, content: pdfB64, ts: Date.now(), email: local.email, nombre: local.nombre });
+  }
+  renderEmitList();
+
+  // Éxito animado y cierre (o aviso de "quedó pendiente de sincronizar")
   const esAdminNow = currentProfile === 'admin';
-  pdfOverlaySuccess(esAdminNow
-    ? '¡Certificado de ' + local.codigo + ' generado!'
-    : '¡Gracias! Tu certificado fue generado y enviado.');
-  setTimeout(pdfOverlayHide, 1400);
+  if (subioOk) {
+    pdfOverlaySuccess(esAdminNow
+                      ? '¡Certificado de ' + local.codigo + ' generado!'
+                      : '¡Gracias! Tu certificado fue generado y enviado.');
+  } else {
+    pdfOverlaySuccess('⏳ Certificado generado — se subirá solo cuando haya conexión');
+  }
+  setTimeout(pdfOverlayHide, subioOk ? 1400 : 2600);
 
   cerrarCertModal();
   goToSection('emitir');
 
   const st = document.getElementById('emitStatus');
   if (st) {
-    if (esAdminNow) {
+    if (!subioOk) {
+      st.innerHTML = `<div class="status-bar status-warn">⏳ El certificado de <strong>${esc(local.codigo)}</strong> se generó, pero no se pudo confirmar la subida a la nube (sin conexión o el servidor no respondió). Quedó guardado y se reintentará solo — no repitas la visita ni las fotos.</div>`;
+    } else if (esAdminNow) {
       st.innerHTML = `<div class="status-bar status-ok">✅ Certificado de <strong>${esc(local.codigo)}</strong> generado y respaldado en la nube.</div>`;
       // Enlace manual siempre visible: en iOS el navegador puede bloquear la pestaña
       // automática, así que este es el modo garantizado de abrir el PDF.
@@ -1956,40 +2074,24 @@ async function generarCertLocal() {
     }
   }
 
-  // Envío por correo (no rompe el flujo si falla o no está configurado)
-  if (pdfB64) {
+  // Envío por correo: solo si ya se confirmó la subida (si quedó pendiente,
+  // el correo se manda junto con la sincronización automática).
+  if (pdfB64 && subioOk) {
     const nombreArchivo = 'CERT-' + local.codigo + '-' + anio + '.pdf';
     const res = await enviarCertCorreo(pdfB64, nombreArchivo, local.email, local.nombre);
     if (st) {
       const cls = res.ok ? 'status-ok' : 'status-warn';
       st.innerHTML += `<div class="status-bar ${cls}">${res.ok ? '✉️ ' : '⚠️ '}${esc(res.msg)}</div>`;
     }
+  } else if (pdfB64 && !subioOk) {
+    if (st) st.innerHTML += `<div class="status-bar status-warn">✉️ El correo se enviará junto con la sincronización automática.</div>`;
   }
 }
 
-// Worker de Cloudflare: guarda el GitHub token del lado del servidor, así que
-// cualquier dispositivo (técnico incluido, sin token propio) puede respaldar
-// certificados. Ver worker/worker-certificados.js.
-const CERT_WORKER_URL = 'https://previfuego-cert.alejosl0801.workers.dev';
-
-// Sube el PDF del certificado: certificados/[MES]-[ANIO]/CERT-[CODIGO]-[ANIO].pdf
-async function subirCertGitHub(localCode, anio, doc) {
-  const now = new Date();
-  const mes = MESES_ES[now.getMonth()];
-  const path = `certificados/${mes}-${anio}/CERT-${localCode}-${anio}.pdf`;
-  // jsPDF → base64 (sin el prefijo data:)
-  const content = doc.output('datauristring').split(',')[1];
-  try {
-    const r = await fetch(CERT_WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path, content }),
-    });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-  } catch (e) {
-    console.warn('subirCertGitHub:', e);
-  }
-}
+  // Worker de Cloudflare: guarda el GitHub token del lado del servidor, así que
+  // cualquier dispositivo (técnico incluido, sin token propio) puede respaldar
+  // certificados. Ver worker/worker-certificados.js.
+  const CERT_WORKER_URL = 'https://previfuego-cert.alejosl0801.workers.dev';
 
 // Busca y descarga el certificado ya emitido de un local (solo admin, desde la
 // lista de Emitir Certificado). No sabemos en qué carpeta de mes quedó subido
@@ -2122,9 +2224,19 @@ function init() {
   // Carga pública y automática: cualquier celular, sin token, siempre actualizada.
   cargarLocalesPublico();
 
+  // Reintentar en segundo plano cualquier certificado que haya quedado
+  // pendiente de subir (por ejemplo, si se cerró la app sin señal).
+  flushCertPendientes();
+
   // Mostrar selector de perfil al inicio
   mostrarSelectorPerfil();
 }
+
+  // Reintenta automáticamente los certificados pendientes al recuperar conexión,
+  // y cada minuto mientras queden pendientes (por si "online" no se dispara
+  // en algunos navegadores móviles).
+  window.addEventListener('online', flushCertPendientes);
+  setInterval(function(){ if (certPendientesCargar().length) flushCertPendientes(); }, 60000);
 
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape' && e.key !== 'Esc') return;
