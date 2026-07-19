@@ -5,11 +5,12 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+  <meta name="app-version" content="2.0">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
 (function(){
-  var V = '20260708001';
+  var V = document.querySelector('meta[name="app-version"]').content;
   function go(){
     var cur = (location.search.match(/[?&]v=([^&]*)/) || [])[1];
     if (cur !== V) location.replace(location.pathname + '?v=' + V);
@@ -242,8 +243,7 @@
   body.dark td { border-color: #2d2d2d; }
   body.dark tr:hover td { background: #262a30; }
   body.dark .section-title { color: #ff7b6b; }
-  body.dark code { background: #2d323a !important; color: #d6d6d6; }
-
+  
   /* ── Fotos de certificado: se adjuntan desde la lista, no dentro del modal ── */
   .foto-pills { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 2px; }
   .foto-pill {
@@ -518,7 +518,7 @@
             <button class="btn btn-info" onclick="goToSection('locales')">＋ Nuevo local</button>
           </div>
         </div>
-        <input type="text" id="emitSearch" class="search-box" placeholder="🔍 Buscar por código o nombre…" oninput="renderEmitList()" style="margin-bottom:6px" />
+        <input type="text" id="emitSearch" class="search-box" autocomplete="off" placeholder="🔍 Buscar por código o nombre…" oninput="renderEmitList()" style="margin-bottom:6px" />
         <div id="emitStats" style="font-size:12px;color:#666;font-weight:600;margin-bottom:10px"></div>
         <div id="emitStatus"></div>
         <div id="emitListContainer"></div>
@@ -645,12 +645,13 @@
       </div>
       <div class="card-body" id="certArchivo-body">
         <p style="font-size:13px;color:#555;margin-bottom:12px">
-          Revisa o descarga los PDF ya generados. Requiere el GitHub Token configurado arriba.
+          Revisa o descarga los PDF ya generados (vía el Worker — no requiere token).
         </p>
         <div class="form-row" style="align-items:flex-end">
           <div class="form-group">
             <label>Mes</label>
             <select id="archivoMesSel" onchange="renderArchivoCertificados()">
+              <option value="">— Todos los meses —</option>option>
               <option value="ENERO">Enero</option>
               <option value="FEBRERO">Febrero</option>
               <option value="MARZO">Marzo</option>
@@ -667,7 +668,7 @@
           </div>
           <div class="form-group">
             <label>Año</label>
-            <input id="archivoAnio" type="number" style="width:100px" />
+            <input id="archivoAnio" type="number" min="2020" max="2100" style="width:100px" />
           </div>
           <div class="form-group" style="flex:0 0 auto">
             <button class="btn btn-sm btn-info" onclick="renderArchivoCertificados()">🔍 Buscar</button>
@@ -712,7 +713,7 @@
 <script>
 // Se sube en cada cambio publicado, para confirmar visualmente que un dispositivo
 // ya tomó la última actualización (Configuración → parte de abajo del encabezado).
-const APP_VERSION = '2.0';
+const APP_VERSION = document.querySelector('meta[name="app-version"]').content;
 
 // ─── UTILIDADES ────────────────────────────────────────────────────────────────
 function esc(s) {
@@ -903,41 +904,14 @@ function actualizarIconoDark() {
 const GH_REPO = 'alejosl0801/previfuego-facturacion';
 const GH_BRANCH = 'main';
 
-// El repo es público: leer no requiere token (solo escribir sí). Si hay un token
-// configurado se manda igual, para aprovechar el límite de peticiones más alto.
-function ghReadHeaders() {
-  const h = { Accept: 'application/vnd.github+json' };
-  const token = getGhToken();
-  if (token) h.Authorization = `token ${token}`;
-  return h;
-}
-
-// Sube (crea o actualiza) un archivo al repo. content = base64 sin prefijo data:.
-async function ghPutFile(path, base64Content, message) {
-  const token = getGhToken();
-  if (!token) return false;
-  let sha = null;
-  const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
-    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
-  });
-  if (check.ok) { const d = await check.json(); sha = d.sha; }
-  const body = { message, content: base64Content, branch: GH_BRANCH };
-  if (sha) body.sha = sha;
-  const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
-    method: 'PUT',
-    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  return r.ok;
-}
 
 // ─── LIBRETA DE LOCALES ───────────────────────────────────────────────────────
 // Fuente única de verdad: datos/locales_iniciales.json, público en el sitio.
 // LECTURA: cualquier celular (técnico o admin) la carga automáticamente al
 // abrir la app, sin token, sin configuración — la primera vez y siempre.
-// ESCRITURA: solo el admin puede guardar cambios (agregar/editar un local),
-// y para eso sí necesita su GitHub Token, porque GitHub exige autenticación
-// para cualquier escritura — no hay forma de evitarlo del lado de guardar.
+// ESCRITURA: solo el admin guarda cambios (agregar/editar/borrar un local),
+  // vía el Worker de Cloudflare — no requiere ningún token personal, el
+  // mismo Worker que respalda los certificados.
 let libretaLocales = [];
 const LOCALES_FILE = 'datos/locales_iniciales.json';
 
@@ -971,14 +945,26 @@ function saveLibreta() {
   }
 }
 
-// Solo admin: guarda la libreta completa de vuelta al archivo público
-// (requiere token porque GitHub exige autenticación para escribir).
-async function guardarLocalesGitHub() {
-  try {
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(libretaLocales, null, 2))));
-    await ghPutFile(LOCALES_FILE, content, 'locales: actualización ' + new Date().toISOString());
-  } catch(e) { console.warn('guardarLocalesGitHub:', e); }
+function saveLibreta() {
+  try { localStorage.setItem('libretaLocales', JSON.stringify(libretaLocales)); } catch(e) {}
+  // Siempre por el Worker (autenticado del lado del servidor): cualquier
+  // admin puede guardar cambios sin necesitar su propio token de GitHub.
+  clearTimeout(saveLibreta._t);
+  saveLibreta._t = setTimeout(guardarLocalesGitHub, 2000);
 }
+
+  // Guarda la libreta completa de vuelta al archivo público, vía el Worker
+  // (no requiere token personal — cualquier admin puede guardar cambios).
+  async function guardarLocalesGitHub() {
+    try {
+      const r = await fetch(`${CERT_WORKER_URL}?action=locales`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locales: libretaLocales }),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+    } catch(e) { console.warn('guardarLocalesGitHub:', e); }
+  }
 
 function getLocalLibreta(codigo) {
   return libretaLocales.find(l => l.codigo === codigo);
@@ -1359,7 +1345,7 @@ let certAccsSelected = new Set();  // indices into ACCESSORIES
 // ─── BORRADOR DE CERTIFICADO (sobrevive cierres del navegador) ─────────────
 // El técnico adjunta fotos ya tomadas desde la galería, pero puede hacerlo en varias
 // veces, así que cada paso se guarda de inmediato para no perder nada si la app se cierra.
-const CERT_DRAFT_MAX_EDAD_MS = 48 * 60 * 60 * 1000; // ignorar borradores de más de 2 días
+const CERT_DRAFT_MAX_EDAD_MS = 14 * 24 * 60 * 60 * 1000; // ignorar borradores de más de 14 días
 
 function certDraftKey(codigo) { return 'certDraft_' + codigo; }
 
@@ -2094,99 +2080,104 @@ function pdfOverlayHide() {
   const CERT_WORKER_URL = 'https://previfuego-cert.alejosl0801.workers.dev';
 
 // Busca y descarga el certificado ya emitido de un local (solo admin, desde la
-// lista de Emitir Certificado). No sabemos en qué carpeta de mes quedó subido
-// (se guarda con el mes calendario en que el técnico lo generó, no el mes de
-// servicio del local), así que se prueba primero el mes del local y luego el
-// resto de meses del año actual hasta encontrarlo.
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  // lista de Emitir Certificado). No sabemos en qué carpeta de mes quedó subido
+  // (se guarda con el mes calendario en que el técnico lo generó, no el mes de
+  // servicio del local), así que se prueba primero el mes del local y luego el
+  // resto de meses del año actual hasta encontrarlo.
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-// La API de "Contents" de GitHub puede tardar unos segundos en reflejar un
-// commit recién hecho vía la Git Data API (la que usa el Worker para subir
-// certificados). Por eso se reintenta unas veces antes de decir "no existe".
-async function descargarCertLocal(codigo) {
-  const anio = anioActualKey();
-  const local = libretaLocales.find(x => x.codigo === codigo);
-  const mesesProbar = local && local.mes
+  // Todas las lecturas de certificados van por el Worker (autenticado del lado
+  // del servidor): evita el límite de 60 peticiones/hora sin token de la API
+  // pública de GitHub, y no requiere que el admin configure un token personal.
+  // La API de "Contents" puede tardar unos segundos en reflejar un commit recién
+  // hecho vía la Git Data API (la que usa el Worker para subir certificados).
+  // Por eso se reintenta unas veces antes de decir "no existe".
+  async function descargarCertLocal(codigo) {
+    const anio = anioActualKey();
+    const local = libretaLocales.find(x => x.codigo === codigo);
+    const mesesProbar = local && local.mes
     ? [local.mes, ...MESES_ES.filter(m => m !== local.mes)]
-    : MESES_ES.slice();
+      : MESES_ES.slice();
 
-  for (let intento = 1; intento <= 3; intento++) {
-    for (const mes of mesesProbar) {
-      const path = `certificados/${mes}-${anio}/CERT-${codigo}-${anio}.pdf`;
-      try {
-        const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
-          headers: ghReadHeaders()
-        });
-        if (!r.ok) continue;
-        const d = await r.json();
-        await descargarCertArchivo(path, d.name);
-        return;
-      } catch (e) { /* seguir probando el siguiente mes */ }
+    for (let intento = 1; intento <= 3; intento++) {
+      for (const mes of mesesProbar) {
+        const path = `certificados/${mes}-${anio}/CERT-${codigo}-${anio}.pdf`;
+        try {
+          const content = await ghGetFileContentB64(path);
+          await descargarBlobPDF(content, `CERT-${codigo}-${anio}.pdf`);
+          return;
+        } catch (e) { /* seguir probando el siguiente mes */ }
     }
-    if (intento < 3) await sleep(2000);
+                        if (intento < 3) await sleep(2000);
+    }
+    alert(`No se encontró un certificado guardado de ${codigo} para ${anio}.`);
   }
-  alert(`No se encontró un certificado guardado de ${codigo} para ${anio}.`);
-}
 
-// ─── ARCHIVO DE CERTIFICADOS (solo admin) ─────────────────────────────────────
-// Los PDF se guardan en el repo pero no se publican en el sitio (excluidos del
-// despliegue de GitHub Pages). El acceso es solo desde aquí, vía la API de GitHub.
-async function renderArchivoCertificados() {
-  const cont = document.getElementById('archivoCertList');
-  if (!cont) return;
-  const mes = document.getElementById('archivoMesSel')?.value;
-  const anio = document.getElementById('archivoAnio')?.value;
-  if (!mes || !anio) { cont.innerHTML = ''; return; }
-  const dir = `certificados/${mes}-${anio}`;
-  cont.innerHTML = '<p style="color:#999;font-size:13px">⏳ Buscando...</p>';
-  try {
-    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${dir}?ref=${GH_BRANCH}`, {
-      headers: ghReadHeaders()
-    });
-    if (!r.ok) { cont.innerHTML = '<p style="color:#999;font-size:13px">Sin certificados guardados para ese mes.</p>'; return; }
-    const files = await r.json();
-    const pdfs = (Array.isArray(files) ? files : []).filter(f => f.name.endsWith('.pdf'));
-    if (!pdfs.length) { cont.innerHTML = '<p style="color:#999;font-size:13px">Sin certificados guardados para ese mes.</p>'; return; }
-    cont.innerHTML = pdfs.map(f => `
+  // ─── ARCHIVO DE CERTIFICADOS (solo admin) ─────────────────────────────────────
+  // Los PDF se guardan en el repo pero no se publican en el sitio (excluidos del
+  // despliegue de GitHub Pages). El acceso es solo desde aquí, vía el Worker.
+  async function renderArchivoCertificados() {
+    const cont = document.getElementById('archivoCertList');
+    if (!cont) return;
+    const mesSel = document.getElementById('archivoMesSel')?.value;
+    const anio = document.getElementById('archivoAnio')?.value;
+    if (!anio) { cont.innerHTML = ''; return; }
+    const meses = mesSel ? [mesSel] : MESES_ES.slice();
+    cont.innerHTML = '<p style="color:#999;font-size:13px">⏳ Buscando...</p>';
+    try {
+      const listas = await Promise.all(meses.map(async (m) => {
+  const dir = `certificados/${m}-${anio}`;
+        try {
+          const r = await fetch(`${CERT_WORKER_URL}?action=list&dir=${encodeURIComponent(dir)}`);
+          if (!r.ok) return [];
+          const d = await r.json();
+          return (d.files || []).map(f => ({ name: f.name, path: f.path, mes: m }));
+        } catch (e) { return []; }
+      }));
+      const pdfs = listas.flat().sort((a, b) => a.name.localeCompare(b.name));
+      if (!pdfs.length) { cont.innerHTML = '<p style="color:#999;font-size:13px">Sin certificados guardados para ese periodo.</p>'; return; }
+      cont.innerHTML = pdfs.map(f => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid #eee;border-radius:6px;margin-top:8px">
-        <span style="font-size:13px">📜 ${esc(f.name)}</span>
-        <a href="#" onclick="descargarCertArchivo('${esc(f.path)}','${esc(f.name)}');return false;" class="btn btn-sm btn-info" style="font-size:12px">⬇️ Descargar</a>
+      <span style="font-size:13px">📜 ${esc(f.name)} ${!mesSel ? `<span class="mes-pill">${esc(f.mes)}</span>` : ''}</span>
+      <a href="#" onclick="descargarCertArchivo('${esc(f.path)}','${esc(f.name)}');return false;" class="btn btn-sm btn-info" style="font-size:12px">⬇️ Descargar</a>
       </div>`).join('');
-  } catch (e) {
-    cont.innerHTML = `<p style="color:#c0392b;font-size:13px">Error: ${esc(e.message)}</p>`;
+    } catch (e) {
+      cont.innerHTML = `<p style="color:#c0392b;font-size:13px">Error: ${esc(e.message)}</p>`;
+    }
   }
-}
 
-// Lee el base64 de un archivo del repo. Para archivos > ~1MB (certificados
-// con fotos), la Contents API no incluye "content" — hay que pedirlo aparte
-// vía la Git Data API usando el sha que sí viene siempre.
-async function ghGetFileContentB64(path) {
-  const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
-    headers: ghReadHeaders()
-  });
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  const d = await r.json();
-  if (d.content) return d.content;
-  if (!d.sha) throw new Error('Sin contenido ni sha');
-  const blobR = await fetch(`https://api.github.com/repos/${GH_REPO}/git/blobs/${d.sha}`, { headers: ghReadHeaders() });
-  if (!blobR.ok) throw new Error('HTTP ' + blobR.status);
-  return (await blobR.json()).content;
-}
-
-// Descarga un PDF del archivo de certificados (repo público: no requiere token)
-async function descargarCertArchivo(path, filename) {
-  try {
-    const content = await ghGetFileContentB64(path);
-    const blob = await (await fetch(`data:application/pdf;base64,${content.replace(/\n/g, '')}`)).blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-  } catch (e) {
-    alert('No se pudo descargar: ' + e.message);
+  // Lee el base64 de un certificado vía el Worker: autenticado del lado del
+  // servidor (sin límite de peticiones del navegador ni token personal), y sin
+  // el problema de archivos > ~1MB de la Contents API directa de GitHub.
+  async function ghGetFileContentB64(path) {
+    const r = await fetch(`${CERT_WORKER_URL}?action=get&path=${encodeURIComponent(path)}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    if (!d.content) throw new Error(d.error || 'No encontrado');
+    return d.content;
   }
-}
+
+  function descargarBlobPDF(base64Content, filename) {
+    return fetch(`data:application/pdf;base64,${base64Content.replace(/\n/g, '')}`)
+    .then(r => r.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    });
+  }
+
+  // Descarga un PDF del archivo de certificados, vía el Worker.
+  async function descargarCertArchivo(path, filename) {
+    try {
+      const content = await ghGetFileContentB64(path);
+      await descargarBlobPDF(content, filename);
+    } catch (e) {
+      alert('No se pudo descargar: ' + e.message);
+    }
+  }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init() {
@@ -2229,7 +2220,7 @@ function init() {
   flushCertPendientes();
 
   // Mostrar selector de perfil al inicio
-  mostrarSelectorPerfil();
+  if (!localStorage.getItem('perfil')) mostrarSelectorPerfil();
 }
 
   // Reintenta automáticamente los certificados pendientes al recuperar conexión,
