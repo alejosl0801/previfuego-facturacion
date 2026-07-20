@@ -5404,5 +5404,13 @@
         "cap": "10 LBS"
       }
     ]
+  },
+  {
+    "codigo": "ZZPRUEBA",
+    "nombre": "Prueba temporal",
+    "direccion": "",
+    "email": "",
+    "mes": "",
+    "extintores": []
   }
 ]
