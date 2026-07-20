@@ -2218,6 +2218,7 @@ function init() {
   // Reintentar en segundo plano cualquier certificado que haya quedado
   // pendiente de subir (por ejemplo, si se cerró la app sin señal).
   flushCertPendientes();
+  iniciarChequeoDeVersion();
 
   // Mostrar selector de perfil al inicio
   if (!localStorage.getItem('perfil')) mostrarSelectorPerfil();
@@ -2233,6 +2234,21 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape' && e.key !== 'Esc') return;
   if (document.getElementById('certModal').style.display !== 'none') cerrarCertModal();
 });
+
+  // Autoactualización silenciosa: cada 45s revisa si hay una versión nueva
+  // publicada (comparando la meta app-version del servidor, sin caché), y si
+  // la hay, recarga sola. Así ninguna pestaña/celular queda pegado en una
+  // versión vieja para siempre — nadie tiene que borrar caché a mano.
+  function iniciarChequeoDeVersion() {
+    setInterval(async () => {
+      try {
+        const r = await fetch(location.pathname + '?checkver=' + Date.now(), { cache: 'no-store' });
+        const html = await r.text();
+        const m = html.match(/<meta name="app-version" content="([^"]+)">/);
+        if (m && m[1] && m[1] !== APP_VERSION) location.reload();
+      } catch (e) { /* sin conexión: se reintenta en el próximo ciclo */ }
+    }, 45000);
+  }
 init();
 </script>
 </body>
