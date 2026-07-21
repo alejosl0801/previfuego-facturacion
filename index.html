@@ -2235,7 +2235,7 @@ function init() {
   // dibujar la lista (ej. "Ver certificado") la deja vacia sin que nadie haya
   // borrado nada. Se limpia siempre al iniciar.
   const buscadorEl = document.getElementById('emitSearch');
-  if (buscadorEl) buscadorEl.value = '';
+        if (buscadorEl) { buscadorEl.value = ''; buscadorEl.setAttribute('name', 'q_' + Math.random().toString(36).slice(2)); }
   renderEmitList();
 
   const archivoAnioEl = document.getElementById('archivoAnio');
