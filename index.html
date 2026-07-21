@@ -518,7 +518,7 @@
             <button class="btn btn-info" onclick="goToSection('locales')">＋ Nuevo local</button>
           </div>
         </div>
-        <input type="text" id="emitSearch" class="search-box" autocomplete="off" placeholder="🔍 Buscar por código o nombre…" oninput="renderEmitList()" style="margin-bottom:6px" />
+                <input type="text" id="emitSearch" class="search-box" autocomplete="off" placeholder="🔍 Buscar por código o nombre…" oninput="emitSearchValorReal=this.value;renderEmitList()" style="margin-bottom:6px" />
         <div id="emitStats" style="font-size:12px;color:#666;font-weight:600;margin-bottom:10px"></div>
         <div id="emitStatus"></div>
         <div id="emitListContainer"></div>
@@ -1146,7 +1146,13 @@ function marcarPendiente(codigo) {
 }
 
 // ─── EMISIÓN (lista organizada por mes de servicio) ───────────────────────────
-function renderEmitList() {
+// Ultimo valor que el USUARIO escribio de verdad en el buscador (via evento
+  // input). Chrome a veces rellena este campo solo, sin foco ni tecleo real,
+  // con un valor guardado de una sesion anterior (aunque autocomplete="off").
+  // Si el valor del campo no coincide con esto, alguien mas lo cambio -> se
+  // revierte antes de filtrar, para que un clic cualquiera no vacie la lista.
+  let emitSearchValorReal = '';
+  function renderEmitList() {
   const cont = document.getElementById('emitListContainer');
   const statsEl = document.getElementById('emitStats');
   if (!cont) return;
@@ -1158,7 +1164,9 @@ function renderEmitList() {
   }
 
   const mesSel = document.getElementById('emitMesSel')?.value || '';
-  const q = (document.getElementById('emitSearch')?.value || '').toUpperCase().trim();
+    const buscadorEl2 = document.getElementById('emitSearch');
+      if (buscadorEl2 && buscadorEl2.value !== emitSearchValorReal) buscadorEl2.value = emitSearchValorReal;
+      const q = (document.getElementById('emitSearch')?.value || '').toUpperCase().trim();
 
   let locales = libretaLocales.slice();
   if (mesSel) locales = locales.filter(l => (l.mes || '') === mesSel);
