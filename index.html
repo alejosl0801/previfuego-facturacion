@@ -518,7 +518,7 @@
             <button class="btn btn-info" onclick="goToSection('locales')">＋ Nuevo local</button>
           </div>
         </div>
-                <input type="text" id="emitSearch" class="search-box" autocomplete="off" placeholder="🔍 Buscar por código o nombre…" oninput="emitSearchValorReal=this.value;renderEmitList()" style="margin-bottom:6px" />
+                        <input type="text" id="emitSearch" class="search-box" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" placeholder="🔍 Buscar local (código o texto)…" oninput="emitSearchValorReal=this.value;renderEmitList()" style="margin-bottom:6px" />
         <div id="emitStats" style="font-size:12px;color:#666;font-weight:600;margin-bottom:10px"></div>
         <div id="emitStatus"></div>
         <div id="emitListContainer"></div>
