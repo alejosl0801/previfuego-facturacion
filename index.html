@@ -2109,26 +2109,33 @@ async function subirCertGitHubIntento(path, content) {
   // La API de "Contents" puede tardar unos segundos en reflejar un commit recién
   // hecho vía la Git Data API (la que usa el Worker para subir certificados).
   // Por eso se reintenta unas veces antes de decir "no existe".
-  async function descargarCertLocal(codigo) {
-    const anio = anioActualKey();
-    const local = libretaLocales.find(x => x.codigo === codigo);
-    const mesesProbar = local && local.mes
-    ? [local.mes, ...MESES_ES.filter(m => m !== local.mes)]
-      : MESES_ES.slice();
-
-    for (let intento = 1; intento <= 3; intento++) {
+async function descargarCertLocal(codigo) {
+      const anioActual = parseInt(anioActualKey(), 10);
+  const anios = [String(anioActual), String(anioActual - 1)];
+  const local = libretaLocales.find(x => x.codigo === codigo);
+  const mesesProbar = local && local.mes
+  ? [local.mes, ...MESES_ES.filter(m => m !== local.mes)]
+    : MESES_ES.slice();
+  const diagnostico = [];
+  async function intentarTodo() {
+    for (const anio of anios) {
       for (const mes of mesesProbar) {
         const path = `certificados/${mes}-${anio}/CERT-${codigo}-${anio}.pdf`;
         try {
           const content = await ghGetFileContentB64(path);
           await descargarBlobPDF(content, `CERT-${codigo}-${anio}.pdf`);
-          return;
-        } catch (e) { /* seguir probando el siguiente mes */ }
+          return true;
+        } catch (e) { diagnostico.push(`${mes}-${anio}: ${e && e.message || e}`); }
+      }
     }
-                        if (intento < 3) await sleep(2000);
-    }
-    alert(`No se encontró un certificado guardado de ${codigo} para ${anio}.`);
+    return false;
   }
+  if (await intentarTodo()) return;
+  await sleep(2500);
+  diagnostico.length = 0;
+  if (await intentarTodo()) return;
+  alert(`No se encontró un certificado guardado de ${codigo}.\n\nSe buscó en ${anios.join(' y ')}, todos los meses.\nDetalle técnico: ${diagnostico[0] || 'sin respuesta del servidor'}`);
+}
 
   // ─── ARCHIVO DE CERTIFICADOS (solo admin) ─────────────────────────────────────
   // Los PDF se guardan en el repo pero no se publican en el sitio (excluidos del
