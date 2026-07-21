@@ -2222,6 +2222,12 @@ function init() {
 
   const selMes = document.getElementById('emitMesSel');
   if (selMes) selMes.value = MESES_ES[new Date().getMonth()];
+// Chrome puede restaurar el texto de este campo entre sesiones (autocomplete="off"
+  // no lo evita). Si queda un filtro viejo aqui, cualquier accion que vuelva a
+  // dibujar la lista (ej. "Ver certificado") la deja vacia sin que nadie haya
+  // borrado nada. Se limpia siempre al iniciar.
+  const buscadorEl = document.getElementById('emitSearch');
+  if (buscadorEl) buscadorEl.value = '';
   renderEmitList();
 
   const archivoAnioEl = document.getElementById('archivoAnio');
