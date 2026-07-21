@@ -1134,6 +1134,42 @@ function marcarVisitado(codigo) {
   saveVisitaStatus();
 }
 
+  // Sincroniza "visitado" con lo que de verdad hay en GitHub. El estado
+  // visitado se guarda en localStorage, que es POR DISPOSITIVO: un celular
+  // que genera un certificado no actualiza lo que ve otra PC/celular hasta
+  // que se consulta el respaldo real en la nube. Se corre una vez al abrir
+  // la app (ver init) y actualiza la lista si encuentra algo nuevo.
+  async function sincronizarVisitadosDesdeGitHub() {
+      const anio = anioActualKey();
+      let cambio = false;
+      try {
+            const listas = await Promise.all(MESES_ES.map(async (mes) => {
+                    try {
+                              const dir = 'certificados/' + mes + '-' + anio;
+                              const r = await fetch(CERT_WORKER_URL + '?action=list&dir=' + encodeURIComponent(dir));
+                              if (!r.ok) return [];
+                              const d = await r.json();
+                              return (d.files || []).map(f => f.name);
+                    } catch (e) { return []; }
+            }));
+            const prefijo = 'CERT-';
+                     const sufijo = '-' + anio + '.pdf';
+            for (const nombre of listas.flat()) {
+                    if (!nombre.startsWith(prefijo) || !nombre.endsWith(sufijo)) continue;
+                    const codigo = nombre.slice(prefijo.length, nombre.length - sufijo.length);
+                    if (!visitaStatus[anio]) visitaStatus[anio] = {};
+                    if (visitaStatus[anio][codigo] !== 'visitado') {
+                              visitaStatus[anio][codigo] = 'visitado';
+                              cambio = true;
+                    }
+            }
+      } catch (e) { /* sin conexion: se queda con lo que ya habia en local */ }
+      if (cambio) {
+            saveVisitaStatus();
+      renderEmitList();
+      }
+  }
+
 // Reinicio manual: SOLO el admin puede hacerlo (para corregir certificados de
 // prueba o marcados por error). El PDF ya subido a GitHub no se borra.
 function marcarPendiente(codigo) {
@@ -2225,6 +2261,7 @@ function init() {
   loadLibreta();
   loadCertsEmitidos();
   loadVisitaStatus();
+    sincronizarVisitadosDesdeGitHub();
   renderLibreta();
   renderCertsEmitidos();
 
