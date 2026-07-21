@@ -1350,14 +1350,15 @@ const CERT_DRAFT_MAX_EDAD_MS = 14 * 24 * 60 * 60 * 1000; // ignorar borradores d
 function certDraftKey(codigo) { return 'certDraft_' + codigo; }
 
 function certGuardarDraft(codigo, patch) {
-  if (!codigo) return;
+  if (!codigo) return true;
   const key = certDraftKey(codigo);
   let draft = {};
   try { draft = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) { draft = {}; }
   Object.assign(draft, patch, { ts: Date.now() });
-  try { localStorage.setItem(key, JSON.stringify(draft)); }
-  catch(e) { console.warn('certGuardarDraft:', e); }
+  try { localStorage.setItem(key, JSON.stringify(draft)); return true; }
+  catch(e) { console.warn('certGuardarDraft:', e); return false; }
 }
+  
 
 function certCargarDraft(codigo) {
   try {
@@ -1377,7 +1378,7 @@ function certBorrarDraft(codigo) {
 function certGuardarFotoDraft(codigo, tipo, b64) {
   const draft = certCargarDraft(codigo) || {};
   const fotos = { ...(draft.fotos || {}), [tipo]: b64 };
-  certGuardarDraft(codigo, { fotos });
+return certGuardarDraft(codigo, { fotos });
 }
 
 function certFotosEstado(codigo) {
@@ -1779,9 +1780,10 @@ function certFotoListAbrir(codigo, tipo) {
         input.value = '';
         return;
       }
-      certComprimirImagen(file).then(b64 => {
-        certGuardarFotoDraft(codigo, tipo, b64);
-        renderEmitList();
+certComprimirImagen(file).then(b64 => {
+  const ok = certGuardarFotoDraft(codigo, tipo, b64);
+  if (!ok) alert('No se pudo guardar la foto: el almacenamiento del celular está lleno. Borra fotos o certificados viejos del navegador e intenta de nuevo.');
+  renderEmitList();
       }).catch(err => {
         alert('No se pudo procesar la foto: ' + (err && err.message || err));
       }).finally(() => { input.value = ''; });
@@ -1880,14 +1882,15 @@ function pdfOverlayHide() {
     } catch(e) { return []; }
   }
   
-  function certPendientesGuardar(lista) {
-    try { localStorage.setItem(CERT_PENDIENTES_KEY, JSON.stringify(lista)); } catch(e) {}
-  }
+function certPendientesGuardar(lista) {
+  try { localStorage.setItem(CERT_PENDIENTES_KEY, JSON.stringify(lista)); return true; }
+  catch(e) { console.warn('certPendientesGuardar:', e); return false; }
+}
   
   function certPendienteAgregar(item) {
     const lista = certPendientesCargar().filter(x => x.codigo !== item.codigo || x.anio !== item.anio);
     lista.push(item);
-    certPendientesGuardar(lista);
+    return certPendientesGuardar(lista);
   }
   
   function certPendienteQuitar(codigo, anio) {
@@ -1900,19 +1903,23 @@ function pdfOverlayHide() {
   }
   
   // Un solo intento de subida al Worker. Devuelve true/false, nunca lanza.
-  async function subirCertGitHubIntento(path, content) {
-    try {
-      const r = await fetch(CERT_WORKER_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: path, content: content }),
-      });
-  return r.ok;
-    } catch (e) {
-      console.warn('subirCertGitHub intento:', e);
-      return false;
-    }
+async function subirCertGitHubIntento(path, content) {
+  try {
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), 20000);
+    const r = await fetch(CERT_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: path, content: content }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timeoutId);
+    return r.ok;
+  } catch (e) {
+    console.warn('subirCertGitHub intento:', e);
+    return false;
   }
+}
   
   // Reintenta la subida unas veces (con espera creciente) antes de rendirse.
   // Solo un true confirmado significa "el PDF ya está en GitHub de verdad".
@@ -1962,6 +1969,15 @@ function pdfOverlayHide() {
   if (!certModalCodigo) return;
   const local = getLocalLibreta(certModalCodigo);
   if (!local) return;
+
+    // Las fotos son obligatorias antes de generar: evita certificados
+    // incompletos por olvido o por descartar el aviso sin adjuntarlas.
+    const tiposReq = [['antes','Antes'], ...(tieneCilindroGrande(local.extintores) ? [['cilindro','Cilindro']] : []), ['despues','Después']];
+    const faltantes = tiposReq.filter(([k]) => !certFotos[k]).map(([,lbl]) => lbl);
+    if (faltantes.length) {
+      alert('Faltan fotos: ' + faltantes.join(', ') + '. Adjúntalas desde la lista antes de generar el certificado.');
+      return;
+    }
 
   pdfOverlayShow('Generando certificado…');
   let doc = null;
@@ -2023,7 +2039,8 @@ function pdfOverlayHide() {
     certBorrarDraft(local.codigo);
     certPendienteQuitar(local.codigo, anio);
   } else if (pdfB64) {
-    certPendienteAgregar({ codigo: local.codigo, anio: anio, path: pathCert, content: pdfB64, ts: Date.now(), email: local.email, nombre: local.nombre });
+    const guardadoOk = certPendienteAgregar({ codigo: local.codigo, anio: anio, path: pathCert, content: pdfB64, ts: Date.now(), email: local.email, nombre: local.nombre });
+    if (!guardadoOk) alert('El certificado se generó pero no hay espacio de almacenamiento para guardarlo mientras se sube. Borra fotos o certificados viejos y vuelve a generarlo.');
   }
   renderEmitList();
 
