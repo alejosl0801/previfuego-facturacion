@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="2.0">
+  <meta name="app-version" content="2.1">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -2225,7 +2225,12 @@ async function descargarCertLocal(codigo) {
     return d.content;
   }
 
+  // En iPhone/iPad, Safari ignora el atributo "download" en blobs y en vez
+  // de guardar el archivo abre el PDF en su propio visor — no es un error,
+  // así funciona Safari. Se avisa antes para que no parezca que no sirvió.
   function descargarBlobPDF(base64Content, filename) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) alert('El certificado se va a abrir en el visor de PDF de Safari (así funciona en iPhone). Para guardarlo en el celular: toca el ícono de compartir (⬆️) abajo y elige "Guardar en Archivos".');
     return fetch(`data:application/pdf;base64,${base64Content.replace(/\n/g, '')}`)
     .then(r => r.blob())
     .then(blob => {
