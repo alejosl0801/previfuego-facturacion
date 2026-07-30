@@ -48,7 +48,10 @@ def carpetas_a_revisar():
 
 
 def get_json(url):
-    with urllib.request.urlopen(url, timeout=20) as r:
+    # Cloudflare bloquea con 403 el User-Agent por defecto de urllib
+    # ("Python-urllib/x.y") — hay que mandar uno propio.
+    req = urllib.request.Request(url, headers={'User-Agent': 'previfuego-sync/1.0'})
+    with urllib.request.urlopen(req, timeout=20) as r:
         return json.loads(r.read().decode('utf-8'))
 
 
