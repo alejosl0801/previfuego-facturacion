@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="2.2">
+  <meta name="app-version" content="2.3">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -260,8 +260,6 @@
   .acc-row.sel { background: #fef0ee; }
   .acc-row input[type=checkbox] { width: 15px; height: 15px; accent-color: #9e1212; flex-shrink: 0; }
   .acc-row-desc { flex: 1; font-size: 13px; color: #333; }
-  .acc-row-price { font-size: 12px; font-weight: 700; color: #27ae60; white-space: nowrap; }
-  .acc-total-bar { padding: 10px 14px; font-size: 13px; font-weight: 700; color: #9e1212; text-align: right; background: #fafafa; border-top: 2px solid #eee; }
   .cert-novedades-toggle { display: flex; gap: 6px; margin-bottom: 12px; }
   .nov-btn { flex: 1; padding: 9px; border: 1.5px solid #ddd; border-radius: 6px; background: white; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; transition: all 0.15s; }
   .nov-btn.active-bad { border-color: #c0392b; background: #fdecea; color: #c0392b; }
@@ -699,7 +697,6 @@
     </div>
     <div id="accCatalogWrap" style="display:none">
       <div class="acc-catalog" id="accCatalog"></div>
-      <div class="acc-total-bar" id="accTotal">Total accesorios: $0.00</div>
     </div>
 
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
@@ -1727,7 +1724,7 @@ async function hacerPDF(opts) {
       y2 += 4;
       dR(); doc.setLineWidth(0.5); doc.line(ML,y2,ML+CW,y2); y2 += 5;
       doc.setFont('helvetica','bold'); doc.setFontSize(7.5); tR();
-      doc.text('ACCESORIOS UTILIZADOS:', ML+5, y2+3); y2 += 8;
+      doc.text('ACCESORIOS/REPUESTOS REEMPLAZADOS:', ML+5, y2+3); y2 += 8;
       fN(); doc.rect(ML,y2-3.5,CW,7.5,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(9); tW();
       doc.text('DESCRIPCIÓN DEL ACCESORIO', ML+4, y2+0.8);
@@ -1736,7 +1733,7 @@ async function hacerPDF(opts) {
         if (i%2===0) doc.setFillColor(255,255,255); else fBG();
         doc.rect(ML,y2-3.5,CW,7,'F');
         doc.setFont('helvetica','normal'); doc.setFontSize(9); tN();
-        doc.text('• '+(acc.desc||acc), ML+4, y2+0.5);
+        doc.text('• '+String(acc.desc||acc).toUpperCase(), ML+4, y2+0.5);
         y2 += 7;
       });
       y2 += 4;
@@ -1866,21 +1863,13 @@ function renderAccCatalog() {
     <div class="acc-row ${certAccsSelected.has(a.i)?'sel':''}" onclick="certToggleAcc(${a.i})">
       <input type="checkbox" ${certAccsSelected.has(a.i)?'checked':''} onclick="event.stopPropagation();certToggleAcc(${a.i})" />
       <span class="acc-row-desc">${a.desc}</span>
-      <span class="acc-row-price">$${a.precio.toFixed(2)}</span>
     </div>`).join('');
-  updateAccTotal();
 }
 
 function certToggleAcc(i) {
   if (certAccsSelected.has(i)) certAccsSelected.delete(i); else certAccsSelected.add(i);
   renderAccCatalog();
   certGuardarDraft(certModalCodigo, { accs: [...certAccsSelected] });
-}
-
-function updateAccTotal() {
-  const total = [...certAccsSelected].reduce((s,i) => s + (ACCESSORIES[i]?.precio || 0), 0);
-  const el = document.getElementById('accTotal');
-  if (el) el.textContent = `Total accesorios: $${total.toFixed(2)}`;
 }
 
 // Overlay de progreso durante la generación (spinner → check animado)
