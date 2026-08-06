@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="2.6">
+  <meta name="app-version" content="2.7">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -1192,23 +1192,39 @@ function marcarVisitado(codigo) {
       const anio = anioActualKey();
       let cambio = false;
       try {
+            let todoOk = true;
             const listas = await Promise.all(MESES_ES.map(async (mes) => {
                     try {
                               const dir = 'certificados/' + mes + '-' + anio;
                               const r = await fetch(CERT_WORKER_URL + '?action=list&dir=' + encodeURIComponent(dir));
-                              if (!r.ok) return [];
+                              if (!r.ok) { todoOk = false; return []; }
                               const d = await r.json();
                               return (d.files || []).map(f => f.name);
-                    } catch (e) { return []; }
+                    } catch (e) { todoOk = false; return []; }
             }));
             const sufijo = ' - MANTT DE EXTINTORES - ' + anio + '.pdf';
+            const codigosEnGitHub = new Set();
             for (const nombre of listas.flat()) {
                     if (!nombre.endsWith(sufijo)) continue;
-                    const codigo = nombre.slice(0, nombre.length - sufijo.length);
-                    if (!visitaStatus[anio]) visitaStatus[anio] = {};
+                    codigosEnGitHub.add(nombre.slice(0, nombre.length - sufijo.length));
+            }
+            if (!visitaStatus[anio]) visitaStatus[anio] = {};
+            for (const codigo of codigosEnGitHub) {
                     if (visitaStatus[anio][codigo] !== 'visitado') {
                               visitaStatus[anio][codigo] = 'visitado';
                               cambio = true;
+                    }
+            }
+            // Solo se "desmarca" si TODOS los meses se pudieron consultar bien —
+            // así un fallo de red puntual nunca hace que una visita real
+            // desaparezca por error. Si el certificado ya no existe en GitHub
+            // (ej. se borró o se reinició la libreta), se vuelve a pendiente.
+            if (todoOk) {
+                    for (const codigo of Object.keys(visitaStatus[anio])) {
+                              if (visitaStatus[anio][codigo] === 'visitado' && !codigosEnGitHub.has(codigo)) {
+                                        delete visitaStatus[anio][codigo];
+                                        cambio = true;
+                              }
                     }
             }
       } catch (e) { /* sin conexion: se queda con lo que ya habia en local */ }
