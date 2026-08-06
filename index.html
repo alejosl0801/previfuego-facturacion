@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="2.4">
+  <meta name="app-version" content="2.5">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -209,7 +209,8 @@
     position: fixed; inset: 0; width: 100%; height: 100%; background: rgba(20,20,20,0.85);
     z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px;
   }
-  .psel-title { color: white; font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+  .psel-title { color: white; font-size: 20px; font-weight: 800; margin-bottom: 4px; text-align: center; }
+  .psel-msg { color: rgba(255,255,255,0.85); font-size: 14px; font-weight: 500; text-align: center; max-width: 320px; padding: 0 20px; margin-top: -8px; }
   .psel-cards { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; padding: 0 16px; }
   .psel-card {
     background: white; border-radius: 12px; padding: 24px 30px; width: 200px; text-align: center;
@@ -446,12 +447,9 @@
 
 <!-- SELECTOR DE PERFIL -->
 <div id="profileSelector" style="display:none">
-  <div class="psel-title">🔴 PREVIFUEGO — ¿Quién eres?</div>
+  <div class="psel-title">🔴 PREVIFUEGO<br>¡BIENVENIDO RAUL!</div>
+  <div class="psel-msg">💪 Gracias por tu trabajo todos los días — cada extintor que revisas protege vidas. ¡Éxitos en tu jornada!</div>
   <div class="psel-cards">
-    <div class="psel-card" onclick="elegirPerfil('admin')">
-      <div class="psel-icon">👤</div>
-      <div class="psel-role">Administración</div>
-    </div>
     <div class="psel-card" onclick="elegirPerfil('tecnico')">
       <div class="psel-icon">👷</div>
       <div class="psel-role">Técnico de Campo</div>
@@ -459,10 +457,32 @@
   </div>
 </div>
 
+<!-- Acceso a Configuración (solo el gear, sin selector de perfil visible) -->
+<div id="cfgGearModal" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);z-index:2100;align-items:center;justify-content:center;" onclick="if(event.target===this)cerrarConfigGear()">
+  <div style="background:white;border-radius:12px;padding:22px;max-width:320px;width:88%;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="color:#9e1212;font-size:14px;margin:0;font-weight:800">⚙️ Acceder Configuración</h3>
+      <button onclick="cerrarConfigGear()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;line-height:1;padding:0 4px">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Inserte clave</label>
+      <input type="password" id="cfgGearClave" autocomplete="off" placeholder="Clave" onkeydown="if(event.key==='Enter')validarConfigGear()" />
+    </div>
+    <div id="cfgGearError" style="display:none;color:#c0392b;font-size:12px;font-weight:600;margin-top:6px">Clave incorrecta.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button style="background:#bbb;color:white;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer" onclick="cerrarConfigGear()">Cancelar</button>
+      <button class="btn-generar" style="color:white;border:none;border-radius:6px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer" onclick="validarConfigGear()">Ingresar</button>
+    </div>
+  </div>
+</div>
+
 <header>
-  <div class="hdr-left">
-    <div class="logo">🔴 PREVIFUEGO</div>
-    <div class="subtitle">Certificados de Extintores <span id="appVersion" class="app-version"></span></div>
+  <div class="hdr-left" style="flex-direction:row;align-items:center;gap:10px">
+    <button class="icon-btn" id="cfgGearBtn" onclick="abrirConfigGear()" title="Configuración" style="flex-shrink:0">⚙️</button>
+    <div>
+      <div class="logo">🔴 PREVIFUEGO</div>
+      <div class="subtitle">Certificados de Extintores <span id="appVersion" class="app-version"></span></div>
+    </div>
   </div>
   <nav class="nav-tabs">
     <button class="nav-tab active" data-sec="emitir" onclick="goToSection('emitir')">📜 Emitir Certificado</button>
@@ -470,7 +490,7 @@
     <button class="nav-tab admin-only" data-sec="config" onclick="goToSection('config')">⚙️ Configuración</button>
   </nav>
   <div class="hdr-right">
-    <div id="perfilIndicator" class="perfil-indicator" onclick="mostrarSelectorPerfil()" title="Cambiar perfil">👤 Admin</div>
+    <div id="perfilIndicator" class="perfil-indicator admin-only" onclick="mostrarSelectorPerfil()" title="Cambiar perfil">👤 Admin</div>
     <button class="icon-btn" id="darkBtn" onclick="toggleDark()" title="Modo oscuro">🌙</button>
   </div>
 </header>
@@ -845,7 +865,9 @@ function goToSection(name) {
 }
 
 // ─── PERFILES (admin / técnico) ────────────────────────────────────────────────
-let currentProfile = localStorage.getItem('perfil') || 'admin';
+// El perfil admin ya NO se elige desde este selector — solo se entra con el
+// engranaje ⚙️ y la clave (ver abrirConfigGear/validarConfigGear más abajo).
+let currentProfile = localStorage.getItem('perfil') || 'tecnico';
 
 function elegirPerfil(p) {
   document.getElementById('profileSelector').style.display = 'none';
@@ -854,6 +876,32 @@ function elegirPerfil(p) {
 
 function mostrarSelectorPerfil() {
   document.getElementById('profileSelector').style.display = 'flex';
+}
+
+// ─── ACCESO A CONFIGURACIÓN (admin, protegido con clave) ───────────────────────
+const CONFIG_GEAR_CLAVE = 'Alejo123';
+
+function abrirConfigGear() {
+  const clave = document.getElementById('cfgGearClave');
+  const err = document.getElementById('cfgGearError');
+  clave.value = '';
+  err.style.display = 'none';
+  document.getElementById('cfgGearModal').style.display = 'flex';
+  setTimeout(() => clave.focus(), 50);
+}
+
+function cerrarConfigGear() {
+  document.getElementById('cfgGearModal').style.display = 'none';
+}
+
+function validarConfigGear() {
+  const clave = document.getElementById('cfgGearClave').value;
+  if (clave === CONFIG_GEAR_CLAVE) {
+    cerrarConfigGear();
+    setPerfil('admin');
+  } else {
+    document.getElementById('cfgGearError').style.display = '';
+  }
 }
 
 function setPerfil(p) {
