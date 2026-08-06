@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="2.7">
+  <meta name="app-version" content="2.8">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -2344,6 +2344,12 @@ function init() {
   const archivoMesEl = document.getElementById('archivoMesSel');
   if (archivoMesEl) archivoMesEl.value = MESES_ES[new Date().getMonth()];
 
+  // Cada vez que se abre la app se arranca como técnico y se pide elegir
+  // perfil de nuevo (pantalla de bienvenida) — el admin ya no queda "guardado"
+  // entre sesiones, tiene que volver a entrar con el engranaje y la clave.
+  currentProfile = 'tecnico';
+  localStorage.setItem('perfil', 'tecnico');
+
   // Preparar vista interna con el perfil guardado sin mostrar aún
   const isAdmin = currentProfile === 'admin';
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
@@ -2359,8 +2365,8 @@ function init() {
   flushCertPendientes();
   iniciarChequeoDeVersion();
 
-  // Mostrar selector de perfil al inicio
-  if (!localStorage.getItem('perfil')) mostrarSelectorPerfil();
+  // Mostrar la pantalla de bienvenida siempre al iniciar, no solo la primera vez.
+  mostrarSelectorPerfil();
 }
 
   // Reintenta automáticamente los certificados pendientes al recuperar conexión,
