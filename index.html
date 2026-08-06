@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="2.5">
+  <meta name="app-version" content="2.6">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -2362,15 +2362,24 @@ document.addEventListener('keydown', e => {
   // publicada (comparando la meta app-version del servidor, sin caché), y si
   // la hay, recarga sola. Así ninguna pestaña/celular queda pegado en una
   // versión vieja para siempre — nadie tiene que borrar caché a mano.
+  async function chequearVersionAhora() {
+    try {
+      const r = await fetch(location.pathname + '?checkver=' + Date.now(), { cache: 'no-store' });
+      const html = await r.text();
+      const m = html.match(/<meta name="app-version" content="([^"]+)">/);
+      if (m && m[1] && m[1] !== APP_VERSION) location.reload();
+    } catch (e) { /* sin conexión: se reintenta en el próximo ciclo/al volver a la pestaña */ }
+  }
+
   function iniciarChequeoDeVersion() {
-    setInterval(async () => {
-      try {
-        const r = await fetch(location.pathname + '?checkver=' + Date.now(), { cache: 'no-store' });
-        const html = await r.text();
-        const m = html.match(/<meta name="app-version" content="([^"]+)">/);
-        if (m && m[1] && m[1] !== APP_VERSION) location.reload();
-      } catch (e) { /* sin conexión: se reintenta en el próximo ciclo */ }
-    }, 45000);
+    setInterval(chequearVersionAhora, 45000);
+    // Además del ciclo de 45s: revisa apenas la pestaña/app vuelve a primer
+    // plano (ej. el celular estaba en segundo plano) para no depender de
+    // esperar el intervalo completo.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') chequearVersionAhora();
+    });
+    window.addEventListener('focus', chequearVersionAhora);
   }
 init();
 </script>
