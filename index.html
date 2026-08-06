@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="2.3">
+  <meta name="app-version" content="2.4">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -721,6 +721,10 @@ function esc(s) {
 
 const MESES_ES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
+// Nombre de archivo del certificado: mismo patrón que los certificados
+// históricos manuales (ej. "DI01-MANTT DE EXTINTORES - 2026.pdf").
+function nombreCertPDF(codigo, anio) { return `${codigo} - MANTT DE EXTINTORES - ${anio}.pdf`; }
+
 // Un "cilindro grande" es un extintor de CO2 de verdad grande (50/75 LBS), no
 // cualquier extintor de CO2 chico (5/10/20 LBS, que va como uno más en las
 // fotos de antes/después). Solo los locales con uno de estos necesitan la
@@ -1149,11 +1153,10 @@ function marcarVisitado(codigo) {
                               return (d.files || []).map(f => f.name);
                     } catch (e) { return []; }
             }));
-            const prefijo = 'CERT-';
-                     const sufijo = '-' + anio + '.pdf';
+            const sufijo = ' - MANTT DE EXTINTORES - ' + anio + '.pdf';
             for (const nombre of listas.flat()) {
-                    if (!nombre.startsWith(prefijo) || !nombre.endsWith(sufijo)) continue;
-                    const codigo = nombre.slice(prefijo.length, nombre.length - sufijo.length);
+                    if (!nombre.endsWith(sufijo)) continue;
+                    const codigo = nombre.slice(0, nombre.length - sufijo.length);
                     if (!visitaStatus[anio]) visitaStatus[anio] = {};
                     if (visitaStatus[anio][codigo] !== 'visitado') {
                               visitaStatus[anio][codigo] = 'visitado';
@@ -1683,14 +1686,19 @@ async function hacerPDF(opts) {
     doc.addPage(); fondoBase(); piePagina();
     let y2 = 18;
 
-    const evTit = 'EVIDENCIA FOTOGRÁFICA — '+(localNom||'').toUpperCase().substring(0,30);
+    // Trunca en un espacio (nunca a media palabra) y solo si de verdad no cabe.
+    const nomEv = (localNom||'').toUpperCase();
+    const nomEvCorto = nomEv.length <= 60 ? nomEv : nomEv.slice(0, nomEv.lastIndexOf(' ', 60) > 0 ? nomEv.lastIndexOf(' ', 60) : 60) + '…';
+    const evTit = 'EVIDENCIA FOTOGRÁFICA — '+nomEvCorto;
     fR(); doc.rect(ML,y2-4,CW,8,'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(10); tW();
     doc.text(evTit, ML+3, y2+0.5);
     y2 += 10;
 
     if (fotoKeys.length>0) {
-      const lblMap = {antes:'ANTES',despues:'DESPUÉS',cilindro:'CILINDRO CO₂'};
+      // "CO₂" (con subíndice) no lo soporta la fuente helvetica estándar de
+      // jsPDF y sale como un carácter roto — se usa "CO2" en texto plano.
+      const lblMap = {antes:'ANTES',despues:'DESPUÉS',cilindro:'CILINDRO CO2'};
       const fotos  = fotoKeys.map(k=>({b64:FB64[k],lbl:lblMap[k]}));
       if (fotos.length===1) {
         const fw=100,fh=75, fx=ML+(CW-fw)/2;
@@ -1741,7 +1749,7 @@ async function hacerPDF(opts) {
     bloqueAutorizacion(y2);
   }
 
-  const pdfName = 'CERT-'+localCode+'-'+anio+'.pdf';
+  const pdfName = nombreCertPDF(localCode, anio);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const esAdmin = currentProfile === 'admin';
   let blobUrl = null;
@@ -1982,7 +1990,7 @@ async function subirCertGitHubIntento(path, content) {
           marcarVisitado(item.codigo);
           certBorrarDraft(item.codigo);
           if (item.email) {
-  const nombreArchivo = 'CERT-' + item.codigo + '-' + item.anio + '.pdf';
+  const nombreArchivo = nombreCertPDF(item.codigo, item.anio);
             enviarCertCorreo(item.content, nombreArchivo, item.email, item.nombre || item.codigo).catch(function(){});
           }
   } else {
@@ -2057,7 +2065,7 @@ async function subirCertGitHubIntento(path, content) {
   // falso, y no tiene que repetir fotos ni la visita.
   document.getElementById('pdfOverlayTxt').textContent = 'Respaldando en la nube…';
   const mesSubida = MESES_ES[now.getMonth()];
-  const pathCert = `certificados/${mesSubida}-${anio}/CERT-${local.codigo}-${anio}.pdf`;
+  const pathCert = `certificados/${mesSubida}-${anio}/${nombreCertPDF(local.codigo, anio)}`;
   let subioOk = false;
   if (pdfB64) {
     try { subioOk = await subirCertConReintentos(pathCert, pdfB64, 3); }
@@ -2111,7 +2119,7 @@ async function subirCertGitHubIntento(path, content) {
   // Envío por correo: solo si ya se confirmó la subida (si quedó pendiente,
   // el correo se manda junto con la sincronización automática).
   if (pdfB64 && subioOk) {
-    const nombreArchivo = 'CERT-' + local.codigo + '-' + anio + '.pdf';
+    const nombreArchivo = nombreCertPDF(local.codigo, anio);
     const res = await enviarCertCorreo(pdfB64, nombreArchivo, local.email, local.nombre);
     if (st) {
       const cls = res.ok ? 'status-ok' : 'status-warn';
@@ -2151,10 +2159,10 @@ async function descargarCertLocal(codigo) {
   async function intentarTodo() {
     for (const anio of anios) {
       for (const mes of mesesProbar) {
-        const path = `certificados/${mes}-${anio}/CERT-${codigo}-${anio}.pdf`;
+        const path = `certificados/${mes}-${anio}/${nombreCertPDF(codigo, anio)}`;
         try {
           const content = await ghGetFileContentB64(path);
-          await descargarBlobPDF(content, `CERT-${codigo}-${anio}.pdf`);
+          await descargarBlobPDF(content, nombreCertPDF(codigo, anio));
           return true;
         } catch (e) { diagnostico.push(`${mes}-${anio}: ${e && e.message || e}`); }
       }
