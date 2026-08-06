@@ -2257,7 +2257,7 @@
   },
   {
     "codigo": "CN034",
-    "nombre": "CINNABON - RIO CENTRO SUR CINNABON TO GO",
+    "nombre": "CINNABON - RIO CENTRO SUR TO GO",
     "direccion": "RIO CENTRO SUR CINNABON TO GO",
     "email": "cn34@baskin-cinnabon.com.ec",
     "mes": "JUNIO",
@@ -2682,7 +2682,7 @@
   },
   {
     "codigo": "DI001",
-    "nombre": "DOLCE INCONTRO - DOLCE INCONTRO MALL DEL SOL",
+    "nombre": "DOLCE INCONTRO - MALL DEL SOL",
     "direccion": "Joaquin Orrantia y Juan Tanca Marengo Centro Comercial Mall del Sol",
     "email": "dolcei01@dolceincontro.com.ec",
     "mes": "JULIO",
@@ -2703,7 +2703,7 @@
   },
   {
     "codigo": "DI002",
-    "nombre": "DOLCE INCONTRO - DOLCE INCONTRO CEIBOS",
+    "nombre": "DOLCE INCONTRO - CEIBOS",
     "direccion": "Km 6½ via a la Costa y ave el Bombero Centro Comercial Rio Centro Ceibos",
     "email": "dolcei02@dolceincontro.com.ec",
     "mes": "JULIO",
@@ -2720,7 +2720,7 @@
   },
   {
     "codigo": "DI003",
-    "nombre": "DOLCE INCONTRO - DOLCE INCONTRO SAMBORONDON",
+    "nombre": "DOLCE INCONTRO - SAMBORONDON",
     "direccion": "Rio Centro Puntilla",
     "email": "dolcei03@dolceincontro.com.ec",
     "mes": "JULIO",
@@ -2795,7 +2795,7 @@
   },
   {
     "codigo": "J006",
-    "nombre": "CAJUN - CAJUN PUNTILLA",
+    "nombre": "CAJUN - PUNTILLA",
     "direccion": "Puntilla",
     "email": "cjnc06@cajun.com.ec",
     "mes": "JULIO",
@@ -2816,7 +2816,7 @@
   },
   {
     "codigo": "J020",
-    "nombre": "CAJUN - CAJUN PENINSULA",
+    "nombre": "CAJUN - PENINSULA",
     "direccion": "Barrio San Francisco Av. Principal Sin Nombre Paseo Shopping",
     "email": "cjnc20@cajun.com.ec",
     "mes": "JULIO",
@@ -2862,7 +2862,7 @@
   },
   {
     "codigo": "J029",
-    "nombre": "CAJUN - CAJUN MALL DEL NORTE",
+    "nombre": "CAJUN - MALL DEL NORTE",
     "direccion": "CAJUN MALL DEL NORTE",
     "email": "cjnc29@cajun.com.ec",
     "mes": "JULIO",
@@ -3418,7 +3418,7 @@
   },
   {
     "codigo": "DI004",
-    "nombre": "DOLCE INCONTRO - DOLCE INCONTRO URDESA",
+    "nombre": "DOLCE INCONTRO - URDESA",
     "direccion": "Guayacanes 307 y calle tercera Urdesa",
     "email": "dolcei04@dolceincontro.com.ec",
     "mes": "AGOSTO",
@@ -3542,7 +3542,7 @@
   },
   {
     "codigo": "J005",
-    "nombre": "CAJUN - CAJUN CEIBOS",
+    "nombre": "CAJUN - CEIBOS",
     "direccion": "Riocentro Ceibos",
     "email": "cjnc05@cajun.com.ec",
     "mes": "AGOSTO",
