@@ -44,8 +44,10 @@ export default {
     const action = url.searchParams.get('action');
     const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { ...cors, 'Content-Type': 'application/json' } });
 
-    // Solo se permite operar dentro de certificados/*.pdf
-    const pathOk = p => typeof p === 'string' && /^certificados\/[\w.\-\/]+\.pdf$/.test(p) && !p.includes('..');
+    // Solo se permite operar dentro de certificados/*.pdf (se permite espacio
+    // porque el nombre del archivo sigue el patrón "CODIGO - MANTT DE
+    // EXTINTORES - AÑO.pdf", igual que los certificados históricos manuales).
+    const pathOk = p => typeof p === 'string' && /^certificados\/[\w. \-\/]+\.pdf$/.test(p) && !p.includes('..');
 
     const ghGet = (path) => fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, { headers: auth });
     const ghPut = (path, contentB64, message, sha) => fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
