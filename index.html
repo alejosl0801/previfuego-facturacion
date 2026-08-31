@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="2.8">
+  <meta name="app-version" content="2.9">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -448,7 +448,7 @@
 <!-- SELECTOR DE PERFIL -->
 <div id="profileSelector" style="display:none">
   <div class="psel-title">🔴 PREVIFUEGO<br>¡BIENVENIDO RAUL!</div>
-  <div class="psel-msg">💪 Gracias por tu trabajo todos los días — cada extintor que revisas protege vidas. ¡Éxitos en tu jornada!</div>
+  <div class="psel-msg" id="pselMensaje"></div>
   <div class="psel-cards">
     <div class="psel-card" onclick="elegirPerfil('tecnico')">
       <div class="psel-icon">👷</div>
@@ -874,7 +874,72 @@ function elegirPerfil(p) {
   setPerfil(p);
 }
 
+// 50 mensajes de aliento para la pantalla de bienvenida — se muestra uno
+// distinto en cada apertura de la app (nunca se repite dos veces seguidas).
+const MENSAJES_BIENVENIDA = [
+  '💪 Gracias por tu trabajo todos los días — cada extintor que revisas protege vidas.',
+  '🔥 Tu trabajo evita tragedias antes de que pasen. ¡Gracias por tu compromiso!',
+  '🧯 Cada revisión que haces es una vida que se protege sin que nadie lo note. ¡Gran trabajo!',
+  '👷 Eres la primera línea de defensa contra el fuego. ¡Sigue así!',
+  '⭐ Tu dedicación mantiene seguros a cientos de locales. ¡Éxitos en tu jornada!',
+  '🙌 Lo que haces importa, aunque no siempre te lo digan. ¡Gracias por tu esfuerzo!',
+  '🚒 Gracias a técnicos como tú, muchos incendios nunca llegan a empezar.',
+  '🛡️ Cada extintor en buen estado es gracias a tu trabajo. ¡Sigue adelante!',
+  '☀️ Que tengas una jornada segura y productiva. ¡Vamos con todo!',
+  '🔧 Tu atención al detalle salva vidas. ¡Excelente trabajo, siempre!',
+  '💯 Cada visita cuenta. Gracias por hacer bien tu trabajo, siempre.',
+  '🏆 Los mejores técnicos son los que revisan como si fuera su propia casa. ¡Ese eres tú!',
+  '✅ Un extintor revisado a tiempo puede salvar una vida. Gracias por estar ahí.',
+  '🔥 Prevenir es tu superpoder. ¡Gracias por usarlo todos los días!',
+  '🙏 Tu trabajo silencioso hace una gran diferencia. ¡Gracias, de verdad!',
+  '💪 Hoy también vas a proteger locales y personas. ¡Vamos con energía!',
+  '🌟 Cada certificado que emites es un compromiso cumplido con la seguridad.',
+  '🧯 Nadie piensa en el extintor hasta que lo necesita — gracias por que siempre esté listo.',
+  '🚀 Que este día te rinda y vuelvas a casa con la satisfacción del deber cumplido.',
+  '🛠️ Tu experiencia y cuidado marcan la diferencia. ¡Gracias por tu profesionalismo!',
+  '❤️ El trabajo que haces protege a familias enteras, aunque no las conozcas.',
+  '🔥 Cada cilindro que revisas es una amenaza menos. ¡Buen trabajo!',
+  '👏 Gracias por tomarte en serio algo tan importante como la seguridad contra incendios.',
+  '🌅 Un nuevo día, más locales seguros gracias a ti. ¡Éxitos!',
+  '🧡 Tu esfuerzo diario no pasa desapercibido. ¡Gracias por todo lo que haces!',
+  '🔩 Cada tuerca ajustada, cada precinto revisado, hace la diferencia. ¡Sigue así!',
+  '🛎️ Hoy alguien va a estar más seguro gracias a tu visita. ¡Gracias!',
+  '📋 Haz tu trabajo con el mismo cuidado de siempre — se nota, y se agradece.',
+  '🔥 Cada extintor recargado es un pequeño escudo más en la ciudad. ¡Gracias!',
+  '💼 Tu profesionalismo representa a Previfuego en cada visita. ¡Excelente trabajo!',
+  '🌤️ Que el día te trate bien y tú sigas cuidando a los demás como siempre.',
+  '🧯 Gracias por no dejar pasar ningún detalle. Eso es lo que nos hace confiables.',
+  '💥 Prevenir un incendio empieza con gente como tú. ¡Gracias por tu labor!',
+  '🎯 Cada visita bien hecha es un objetivo cumplido. ¡Vamos por más!',
+  '🙌 Eres parte fundamental del equipo que mantiene seguros a nuestros clientes.',
+  '🔥 Sin técnicos comprometidos como tú, la seguridad contra incendios no existiría.',
+  '🌟 Gracias por representar tan bien el trabajo de Previfuego en cada local.',
+  '🧰 Tu trabajo de hoy puede ser la diferencia mañana. ¡Gracias por hacerlo bien!',
+  '💪 Ánimo con la jornada — cada visita que completas es un logro real.',
+  '🏅 Los detalles que cuidas hoy pueden salvar vidas después. ¡Gran trabajo!',
+  '🔥 Que cada extintor que revises hoy quede listo para lo que sea. ¡Gracias!',
+  '👍 Tu compromiso con la seguridad no pasa desapercibido. ¡Sigue así!',
+  '🌈 Un buen día empieza con ganas de hacer bien las cosas — como tú siempre haces.',
+  '🧯 Cada certificado que emites es un "aquí estamos seguros". ¡Gracias por eso!',
+  '🚦 La seguridad de muchos locales depende de tu buen ojo. ¡Confiamos en ti!',
+  '💚 Gracias por cuidar de la seguridad de otros, muchas veces sin que lo sepan.',
+  '🔥 Hoy también vas a hacer que un lugar sea más seguro. ¡A darle con todo!',
+  '🎉 Cada visita que terminas bien es una razón más para estar orgulloso.',
+  '🧯 Tu trabajo protege lo que más importa: la vida de las personas. ¡Gracias!',
+  '💪 ¡Vamos Raul! Otra jornada para seguir haciendo la diferencia.',
+];
+
 function mostrarSelectorPerfil() {
+  const el = document.getElementById('pselMensaje');
+  if (el) {
+    // Evita repetir el mismo mensaje dos veces seguidas.
+    let idx;
+    const anterior = localStorage.getItem('ultimoMensajeIdx');
+    do { idx = Math.floor(Math.random() * MENSAJES_BIENVENIDA.length); }
+    while (MENSAJES_BIENVENIDA.length > 1 && String(idx) === anterior);
+    localStorage.setItem('ultimoMensajeIdx', String(idx));
+    el.textContent = MENSAJES_BIENVENIDA[idx];
+  }
   document.getElementById('profileSelector').style.display = 'flex';
 }
 
@@ -1904,6 +1969,50 @@ certComprimirImagen(file).then(b64 => {
   input.value = ''; input.click();
 }
 
+// Nota de entrega: foto de la nota firmada/sellada que se pide después de
+// emitir el certificado. Se sube por el mismo Worker, pero a respaldos/
+// (no a certificados/), para guardarse aparte en RESPALDOS por mes.
+function notaEntregaListAbrir(codigo, anio, mes) {
+  const id = '_ne_' + codigo;
+  let input = document.getElementById(id);
+  if (!input) {
+    input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*';
+    input.id = id;
+    input.style.display = 'none';
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        alert('Solo se permiten archivos de imagen (JPG, PNG).');
+        input.value = '';
+        return;
+      }
+      subirNotaEntrega(codigo, anio, mes, file);
+      input.value = '';
+    });
+    document.body.appendChild(input);
+  }
+  input.value = ''; input.click();
+}
+
+async function subirNotaEntrega(codigo, anio, mes, file) {
+  const btn = document.getElementById('neBtn_' + codigo);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Subiendo nota de entrega…'; }
+  try {
+    const b64 = await certComprimirImagen(file);
+    const path = `respaldos/${mes}-${anio}/${codigo} - NOTA DE ENTREGA - ${anio}.jpg`;
+    const ok = await subirCertConReintentos(path, b64, 3);
+    if (ok) {
+      if (btn) { btn.textContent = '✅ Nota de entrega subida'; }
+    } else {
+      if (btn) { btn.disabled = false; btn.textContent = '⚠️ No se pudo subir — toca para reintentar'; }
+    }
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = '⚠️ Error al procesar la foto — toca para reintentar'; }
+  }
+}
+
 function certSetNovedades(hayNov) {
   certHayNovedades = hayNov;
   document.getElementById('novBtnBad').className = 'nov-btn' + (hayNov  ? ' active-bad' : '');
@@ -2177,6 +2286,15 @@ async function subirCertGitHubIntento(path, content) {
     } else {
       // El técnico no ve el PDF en ningún momento: solo la confirmación.
       st.innerHTML = `<div class="status-bar status-ok">✅ ¡Gracias! Tu certificado de <strong>${esc(local.codigo)}</strong> fue generado y enviado.</div>`;
+    }
+
+    // Nota de entrega (foto firmada y sellada): se pide después del
+    // certificado, no antes — es un respaldo aparte, no bloquea la emisión.
+    if (subioOk) {
+      st.innerHTML += `<div class="status-bar status-info">
+        <button id="neBtn_${esc(local.codigo)}" class="btn btn-sm btn-info" style="cursor:pointer"
+          onclick="notaEntregaListAbrir('${esc(local.codigo)}','${anio}','${mesSubida}')">📋 Subir nota de entrega</button>
+      </div>`;
     }
   }
 
