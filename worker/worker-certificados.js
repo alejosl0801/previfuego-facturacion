@@ -44,10 +44,11 @@ export default {
     const action = url.searchParams.get('action');
     const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { ...cors, 'Content-Type': 'application/json' } });
 
-    // Solo se permite operar dentro de certificados/*.pdf (se permite espacio
-    // porque el nombre del archivo sigue el patrón "CODIGO - MANTT DE
-    // EXTINTORES - AÑO.pdf", igual que los certificados históricos manuales).
-    const pathOk = p => typeof p === 'string' && /^certificados\/[\w. \-\/]+\.pdf$/.test(p) && !p.includes('..');
+    // Solo se permite operar dentro de certificados/*.pdf o respaldos/*.jpg
+    // (notas de entrega) — se permite espacio porque el nombre del archivo
+    // sigue el patrón "CODIGO - MANTT DE EXTINTORES - AÑO.pdf" / "CODIGO -
+    // NOTA DE ENTREGA - AÑO.jpg", igual que los certificados históricos manuales.
+    const pathOk = p => typeof p === 'string' && /^(certificados|respaldos)\/[\w. \-\/]+\.(pdf|jpe?g|png)$/.test(p) && !p.includes('..');
 
     const ghGet = (path) => fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, { headers: auth });
     const ghPut = (path, contentB64, message, sha) => fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
@@ -166,14 +167,15 @@ export default {
         return json({ ok: true });
       }
 
-      // ── CERTIFICADOS: listar carpeta (GET ?action=list&dir=certificados/MES-ANIO) ──
+      // ── CERTIFICADOS / RESPALDOS: listar carpeta ──────────────────────────
+      // GET ?action=list&dir=certificados/MES-ANIO o dir=respaldos/MES-ANIO
       if (action === 'list') {
         const dir = url.searchParams.get('dir') || '';
-        if (!/^certificados\/[\w.\-]+$/.test(dir)) return json({ error: 'Carpeta no permitida' }, 400);
+        if (!/^(certificados|respaldos)\/[\w.\-]+$/.test(dir)) return json({ error: 'Carpeta no permitida' }, 400);
         const r = await ghGet(dir);
         if (!r.ok) return json({ files: [] });
         const files = await r.json();
-        return json({ files: (Array.isArray(files) ? files : []).filter(f => f.name.endsWith('.pdf')).map(f => ({ name: f.name, path: f.path })) });
+        return json({ files: (Array.isArray(files) ? files : []).filter(f => /\.(pdf|jpe?g|png)$/i.test(f.name)).map(f => ({ name: f.name, path: f.path })) });
       }
 
       // ── CERTIFICADOS: descargar uno (GET ?action=get&path=...) → base64 ───
