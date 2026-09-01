@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="2.9">
+  <meta name="app-version" content="3.0">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -745,6 +745,19 @@ const MESES_ES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOS
 // históricos manuales (ej. "DI01-MANTT DE EXTINTORES - 2026.pdf").
 function nombreCertPDF(codigo, anio) { return `${codigo} - MANTT DE EXTINTORES - ${anio}.pdf`; }
 
+// Nombre de archivo de la nota de entrega (misma carpeta respaldos/MES-AÑO).
+function nombreNotaEntrega(codigo, anio) { return `${codigo} - NOTA DE ENTREGA - ${anio}.jpg`; }
+
+// La nota de entrega solo es obligatoria para certificados generados desde
+// septiembre de 2026 en adelante — en agosto (y antes) es irrelevante, así
+// que ese mes se sigue marcando "visitado" solo con el certificado.
+function requiereNotaEntrega(mes, anio) {
+  const a = parseInt(anio, 10);
+  if (a > 2026) return true;
+  if (a < 2026) return false;
+  return MESES_ES.indexOf(mes) >= MESES_ES.indexOf('SEPTIEMBRE');
+}
+
 // Un "cilindro grande" es un extintor de CO2 de verdad grande (50/75 LBS), no
 // cualquier extintor de CO2 chico (5/10/20 LBS, que va como uno más en las
 // fotos de antes/después). Solo los locales con uno de estos necesitan la
@@ -1258,23 +1271,34 @@ function marcarVisitado(codigo) {
       let cambio = false;
       try {
             let todoOk = true;
-            const listas = await Promise.all(MESES_ES.map(async (mes) => {
+            const sufCert = ' - MANTT DE EXTINTORES - ' + anio + '.pdf';
+            const sufNota = ' - NOTA DE ENTREGA - ' + anio + '.jpg';
+            // Por mes: qué códigos tienen certificado y cuáles tienen nota de
+            // entrega — la nota solo se exige desde septiembre (ver
+            // requiereNotaEntrega); antes de eso, el certificado solo ya cuenta.
+            const codigosListos = new Set();
+            await Promise.all(MESES_ES.map(async (mes) => {
+                    let archivosCert = [], archivosNota = [];
                     try {
                               const dir = 'certificados/' + mes + '-' + anio;
                               const r = await fetch(CERT_WORKER_URL + '?action=list&dir=' + encodeURIComponent(dir));
-                              if (!r.ok) { todoOk = false; return []; }
-                              const d = await r.json();
-                              return (d.files || []).map(f => f.name);
-                    } catch (e) { todoOk = false; return []; }
+                              if (!r.ok) { todoOk = false; } else { archivosCert = (await r.json()).files || []; }
+                    } catch (e) { todoOk = false; }
+                    if (requiereNotaEntrega(mes, anio)) {
+                              try {
+                                        const dirN = 'respaldos/' + mes + '-' + anio;
+                                        const rn = await fetch(CERT_WORKER_URL + '?action=list&dir=' + encodeURIComponent(dirN));
+                                        if (rn.ok) archivosNota = (await rn.json()).files || [];
+                              } catch (e) { /* sin nota aún: no cuenta como listo */ }
+                    }
+                    const codsCert = new Set(archivosCert.filter(f => f.name.endsWith(sufCert)).map(f => f.name.slice(0, f.name.length - sufCert.length)));
+                    const codsNota = new Set(archivosNota.filter(f => f.name.endsWith(sufNota)).map(f => f.name.slice(0, f.name.length - sufNota.length)));
+                    for (const codigo of codsCert) {
+                              if (!requiereNotaEntrega(mes, anio) || codsNota.has(codigo)) codigosListos.add(codigo);
+                    }
             }));
-            const sufijo = ' - MANTT DE EXTINTORES - ' + anio + '.pdf';
-            const codigosEnGitHub = new Set();
-            for (const nombre of listas.flat()) {
-                    if (!nombre.endsWith(sufijo)) continue;
-                    codigosEnGitHub.add(nombre.slice(0, nombre.length - sufijo.length));
-            }
             if (!visitaStatus[anio]) visitaStatus[anio] = {};
-            for (const codigo of codigosEnGitHub) {
+            for (const codigo of codigosListos) {
                     if (visitaStatus[anio][codigo] !== 'visitado') {
                               visitaStatus[anio][codigo] = 'visitado';
                               cambio = true;
@@ -1282,11 +1306,11 @@ function marcarVisitado(codigo) {
             }
             // Solo se "desmarca" si TODOS los meses se pudieron consultar bien —
             // así un fallo de red puntual nunca hace que una visita real
-            // desaparezca por error. Si el certificado ya no existe en GitHub
-            // (ej. se borró o se reinició la libreta), se vuelve a pendiente.
+            // desaparezca por error. Si el certificado (o la nota, cuando
+            // aplica) ya no existen en GitHub, se vuelve a pendiente.
             if (todoOk) {
                     for (const codigo of Object.keys(visitaStatus[anio])) {
-                              if (visitaStatus[anio][codigo] === 'visitado' && !codigosEnGitHub.has(codigo)) {
+                              if (visitaStatus[anio][codigo] === 'visitado' && !codigosListos.has(codigo)) {
                                         delete visitaStatus[anio][codigo];
                                         cambio = true;
                               }
@@ -2001,10 +2025,15 @@ async function subirNotaEntrega(codigo, anio, mes, file) {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Subiendo nota de entrega…'; }
   try {
     const b64 = await certComprimirImagen(file);
-    const path = `respaldos/${mes}-${anio}/${codigo} - NOTA DE ENTREGA - ${anio}.jpg`;
+    const path = `respaldos/${mes}-${anio}/${nombreNotaEntrega(codigo, anio)}`;
     const ok = await subirCertConReintentos(path, b64, 3);
     if (ok) {
       if (btn) { btn.textContent = '✅ Nota de entrega subida'; }
+      // Con el certificado y la nota, ya se puede marcar visitado de verdad.
+      marcarVisitado(codigo);
+      renderEmitList();
+      const cont = btn ? btn.closest('.status-bar') : null;
+      if (cont) cont.insertAdjacentHTML('beforeend', '<div style="margin-top:6px;font-weight:700">✅ Local marcado como visitado.</div>');
     } else {
       if (btn) { btn.disabled = false; btn.textContent = '⚠️ No se pudo subir — toca para reintentar'; }
     }
@@ -2239,6 +2268,10 @@ async function subirCertGitHubIntento(path, content) {
   document.getElementById('pdfOverlayTxt').textContent = 'Respaldando en la nube…';
   const mesSubida = MESES_ES[now.getMonth()];
   const pathCert = `certificados/${mesSubida}-${anio}/${nombreCertPDF(local.codigo, anio)}`;
+  // Desde septiembre-2026, el local no se marca "visitado" solo con el
+  // certificado — también hace falta la nota de entrega (ver más abajo).
+  // En agosto (y antes) el certificado solo ya es suficiente, como siempre.
+  const necesitaNota = requiereNotaEntrega(mesSubida, anio);
   let subioOk = false;
   if (pdfB64) {
     try { subioOk = await subirCertConReintentos(pathCert, pdfB64, 3); }
@@ -2247,7 +2280,7 @@ async function subirCertGitHubIntento(path, content) {
 
   registrarCertEmitido(local);
   if (subioOk) {
-    marcarVisitado(local.codigo);
+    if (!necesitaNota) marcarVisitado(local.codigo);
     certBorrarDraft(local.codigo);
     certPendienteQuitar(local.codigo, anio);
   } else if (pdfB64) {
@@ -2275,7 +2308,7 @@ async function subirCertGitHubIntento(path, content) {
     if (!subioOk) {
       st.innerHTML = `<div class="status-bar status-warn">⏳ El certificado de <strong>${esc(local.codigo)}</strong> se generó, pero no se pudo confirmar la subida a la nube (sin conexión o el servidor no respondió). Quedó guardado y se reintentará solo — no repitas la visita ni las fotos.</div>`;
     } else if (esAdminNow) {
-      st.innerHTML = `<div class="status-bar status-ok">✅ Certificado de <strong>${esc(local.codigo)}</strong> generado y respaldado en la nube.</div>`;
+      st.innerHTML = `<div class="status-bar status-ok">✅ Certificado de <strong>${esc(local.codigo)}</strong> generado y respaldado en la nube.${necesitaNota ? ' Falta la nota de entrega para marcarlo como visitado.' : ''}</div>`;
       // Enlace manual siempre visible: en iOS el navegador puede bloquear la pestaña
       // automática, así que este es el modo garantizado de abrir el PDF.
       if (doc && doc._certBlobUrl) {
@@ -2285,15 +2318,17 @@ async function subirCertGitHubIntento(path, content) {
       }
     } else {
       // El técnico no ve el PDF en ningún momento: solo la confirmación.
-      st.innerHTML = `<div class="status-bar status-ok">✅ ¡Gracias! Tu certificado de <strong>${esc(local.codigo)}</strong> fue generado y enviado.</div>`;
+      st.innerHTML = `<div class="status-bar status-ok">✅ ¡Gracias! Tu certificado de <strong>${esc(local.codigo)}</strong> fue generado y enviado.${necesitaNota ? ' Todavía falta un paso.' : ''}</div>`;
     }
 
-    // Nota de entrega (foto firmada y sellada): se pide después del
-    // certificado, no antes — es un respaldo aparte, no bloquea la emisión.
-    if (subioOk) {
-      st.innerHTML += `<div class="status-bar status-info">
-        <button id="neBtn_${esc(local.codigo)}" class="btn btn-sm btn-info" style="cursor:pointer"
-          onclick="notaEntregaListAbrir('${esc(local.codigo)}','${anio}','${mesSubida}')">📋 Subir nota de entrega</button>
+    // Nota de entrega (foto firmada y sellada): desde septiembre es
+    // obligatoria — el local sigue en pendientes hasta que también se suba.
+    // En agosto no aplica, no se muestra.
+    if (subioOk && necesitaNota) {
+      st.innerHTML += `<div class="status-bar status-warn">
+        ⚠️ Falta un paso: adjunta la foto de la nota de entrega firmada y sellada para marcar este local como visitado.<br>
+        <button id="neBtn_${esc(local.codigo)}" class="btn btn-sm btn-info" style="cursor:pointer;margin-top:8px"
+          onclick="notaEntregaListAbrir('${esc(local.codigo)}','${anio}','${mesSubida}')">📋 Adjuntar foto de nota de entrega</button>
       </div>`;
     }
   }
