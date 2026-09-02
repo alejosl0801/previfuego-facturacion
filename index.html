@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="3.1">
+  <meta name="app-version" content="3.2">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -1033,14 +1033,15 @@ const GH_BRANCH = 'main';
 
 
 // ─── LIBRETA DE LOCALES ───────────────────────────────────────────────────────
-// Fuente única de verdad: datos/locales_iniciales.json, público en el sitio.
+// Fuente única de verdad: datos/libreta_locales.json, vía el Worker de
+// Cloudflare (?action=locales) — el mismo archivo donde se guardan los
+// cambios del admin, así que lectura y escritura siempre coinciden.
 // LECTURA: cualquier celular (técnico o admin) la carga automáticamente al
 // abrir la app, sin token, sin configuración — la primera vez y siempre.
 // ESCRITURA: solo el admin guarda cambios (agregar/editar/borrar un local),
-  // vía el Worker de Cloudflare — no requiere ningún token personal, el
+  // vía el mismo Worker — no requiere ningún token personal, el
   // mismo Worker que respalda los certificados.
 let libretaLocales = [];
-const LOCALES_FILE = 'datos/locales_iniciales.json';
 
 function loadLibreta() {
   // Cache local para pintar al instante; siempre se refresca con cargarLocalesPublico().
@@ -1052,12 +1053,12 @@ function loadLibreta() {
 // Carga pública, sin token — funciona en cualquier dispositivo, siempre.
 async function cargarLocalesPublico() {
   try {
-    const r = await fetch(`${LOCALES_FILE}?t=${Date.now()}`);
+    const r = await fetch(`${CERT_WORKER_URL}?action=locales&t=${Date.now()}`);
     if (!r.ok) return;
     const json = await r.json();
-    if (Array.isArray(json) && json.length) {
-      libretaLocales = json;
-      try { localStorage.setItem('libretaLocales', JSON.stringify(json)); } catch(e) {}
+    if (Array.isArray(json.locales) && json.locales.length) {
+      libretaLocales = json.locales;
+      try { localStorage.setItem('libretaLocales', JSON.stringify(json.locales)); } catch(e) {}
       renderLibreta();
       renderEmitList();
     }
