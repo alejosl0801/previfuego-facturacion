@@ -3788,6 +3788,10 @@
         "cap": "5 LBS"
       },
       {
+        "tipo": "CO2",
+        "cap": "5 LBS"
+      },
+      {
         "tipo": "PQS",
         "cap": "10 LBS"
       }
