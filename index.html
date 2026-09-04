@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="3.2">
+  <meta name="app-version" content="3.3">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -2553,13 +2553,19 @@ document.addEventListener('keydown', e => {
 
   function iniciarChequeoDeVersion() {
     setInterval(chequearVersionAhora, 45000);
+    // Los locales (mes, extintores, correo) se guardan en GitHub sin publicar
+    // una versión nueva de la app -- un admin puede corregirlos en cualquier
+    // momento -- así que además del código, refresca también esos datos cada
+    // 45s, para que ningún celular con la pestaña abierta desde antes genere
+    // un certificado con datos de local ya viejos.
+    setInterval(cargarLocalesPublico, 45000);
     // Además del ciclo de 45s: revisa apenas la pestaña/app vuelve a primer
     // plano (ej. el celular estaba en segundo plano) para no depender de
     // esperar el intervalo completo.
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') chequearVersionAhora();
+      if (document.visibilityState === 'visible') { chequearVersionAhora(); cargarLocalesPublico(); }
     });
-    window.addEventListener('focus', chequearVersionAhora);
+    window.addEventListener('focus', () => { chequearVersionAhora(); cargarLocalesPublico(); });
   }
 init();
 </script>
