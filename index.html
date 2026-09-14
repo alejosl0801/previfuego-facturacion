@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="3.4">
+  <meta name="app-version" content="3.5">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -2559,13 +2559,20 @@ document.addEventListener('keydown', e => {
     // 45s, para que ningún celular con la pestaña abierta desde antes genere
     // un certificado con datos de local ya viejos.
     setInterval(cargarLocalesPublico, 45000);
+    // Lo mismo pasa con "visitado": depende de qué certificados/notas hay en
+    // GitHub AHORA (sincronizarVisitadosDesdeGitHub), y esa regla puede
+    // cambiar sin publicar versión nueva (ej. mover el mes desde el que se
+    // exige nota de entrega) -- antes solo se revisaba una vez al abrir la
+    // app, así que una pestaña ya abierta se quedaba pegada mostrando un
+    // local como pendiente aunque ya estuviera listo.
+    setInterval(sincronizarVisitadosDesdeGitHub, 45000);
     // Además del ciclo de 45s: revisa apenas la pestaña/app vuelve a primer
     // plano (ej. el celular estaba en segundo plano) para no depender de
     // esperar el intervalo completo.
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') { chequearVersionAhora(); cargarLocalesPublico(); }
+      if (document.visibilityState === 'visible') { chequearVersionAhora(); cargarLocalesPublico(); sincronizarVisitadosDesdeGitHub(); }
     });
-    window.addEventListener('focus', () => { chequearVersionAhora(); cargarLocalesPublico(); });
+    window.addEventListener('focus', () => { chequearVersionAhora(); cargarLocalesPublico(); sincronizarVisitadosDesdeGitHub(); });
   }
 init();
 </script>
