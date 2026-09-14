@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="3.3">
+  <meta name="app-version" content="3.4">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -749,13 +749,13 @@ function nombreCertPDF(codigo, anio) { return `${codigo} - MANTT DE EXTINTORES -
 function nombreNotaEntrega(codigo, anio) { return `${codigo} - NOTA DE ENTREGA - ${anio}.jpg`; }
 
 // La nota de entrega solo es obligatoria para certificados generados desde
-// septiembre de 2026 en adelante — en agosto (y antes) es irrelevante, así
-// que ese mes se sigue marcando "visitado" solo con el certificado.
+// octubre de 2026 en adelante — antes de eso es irrelevante, así que esos
+// meses se siguen marcando "visitado" solo con el certificado.
 function requiereNotaEntrega(mes, anio) {
   const a = parseInt(anio, 10);
   if (a > 2026) return true;
   if (a < 2026) return false;
-  return MESES_ES.indexOf(mes) >= MESES_ES.indexOf('SEPTIEMBRE');
+  return MESES_ES.indexOf(mes) >= MESES_ES.indexOf('OCTUBRE');
 }
 
 // Un "cilindro grande" es un extintor de CO2 de verdad grande (50/75 LBS), no
@@ -1275,7 +1275,7 @@ function marcarVisitado(codigo) {
             const sufCert = ' - MANTT DE EXTINTORES - ' + anio + '.pdf';
             const sufNota = ' - NOTA DE ENTREGA - ' + anio + '.jpg';
             // Por mes: qué códigos tienen certificado y cuáles tienen nota de
-            // entrega — la nota solo se exige desde septiembre (ver
+            // entrega — la nota solo se exige desde octubre (ver
             // requiereNotaEntrega); antes de eso, el certificado solo ya cuenta.
             const codigosListos = new Set();
             await Promise.all(MESES_ES.map(async (mes) => {
@@ -2273,9 +2273,9 @@ async function subirCertGitHubIntento(path, content) {
   // ya en septiembre se sigue guardando en agosto.
   const mesSubida = (local.mes && MESES_ES.includes(local.mes)) ? local.mes : MESES_ES[now.getMonth()];
   const pathCert = `certificados/${mesSubida}-${anio}/${nombreCertPDF(local.codigo, anio)}`;
-  // Desde septiembre-2026, el local no se marca "visitado" solo con el
+  // Desde octubre-2026, el local no se marca "visitado" solo con el
   // certificado — también hace falta la nota de entrega (ver más abajo).
-  // En agosto (y antes) el certificado solo ya es suficiente, como siempre.
+  // Antes de octubre el certificado solo ya es suficiente, como siempre.
   const necesitaNota = requiereNotaEntrega(mesSubida, anio);
   let subioOk = false;
   if (pdfB64) {
@@ -2326,9 +2326,9 @@ async function subirCertGitHubIntento(path, content) {
       st.innerHTML = `<div class="status-bar status-ok">✅ ¡Gracias! Tu certificado de <strong>${esc(local.codigo)}</strong> fue generado y enviado.${necesitaNota ? ' Todavía falta un paso.' : ''}</div>`;
     }
 
-    // Nota de entrega (foto firmada y sellada): desde septiembre es
+    // Nota de entrega (foto firmada y sellada): desde octubre es
     // obligatoria — el local sigue en pendientes hasta que también se suba.
-    // En agosto no aplica, no se muestra.
+    // Antes de octubre no aplica, no se muestra.
     if (subioOk && necesitaNota) {
       st.innerHTML += `<div class="status-bar status-warn">
         ⚠️ Falta un paso: adjunta la foto de la nota de entrega firmada y sellada para marcar este local como visitado.<br>
