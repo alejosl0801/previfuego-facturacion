@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="3.5">
+  <meta name="app-version" content="3.6">
 <script>
 // Mata cualquier Service Worker/caché vieja registrada por versiones anteriores
 // de la app, y fuerza una recarga desde red (evita quedarse pegado en un modelo viejo).
@@ -38,7 +38,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Previfuego – Certificados de Extintores</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root {
     --rojo: #c0392b;
@@ -622,28 +621,6 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header"><h2>✉️ Envío por correo (EmailJS)</h2></div>
-      <div class="card-body">
-        <p style="font-size:13px;color:#555;margin-bottom:12px">
-          Crea una cuenta gratuita en <strong>emailjs.com</strong>, añade un servicio de correo y una plantilla,
-          y copia aquí los tres identificadores. El PDF del certificado se enviará como adjunto.
-        </p>
-        <div class="form-row">
-          <div class="form-group"><label>Service ID</label><input id="emailjsService" placeholder="service_xxx" autocomplete="off" oninput="saveEmailjsCfg()" /></div>
-          <div class="form-group"><label>Template ID</label><input id="emailjsTemplate" placeholder="template_xxx" autocomplete="off" oninput="saveEmailjsCfg()" /></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group" style="flex:2"><label>Public Key</label><input id="emailjsPublicKey" placeholder="XXXXXXXXXXXXXX" autocomplete="off" oninput="saveEmailjsCfg()" /></div>
-        </div>
-        <span id="emailjsStatus" style="font-size:12px;color:#27ae60"></span>
-        <p style="font-size:12px;color:#888;margin-top:10px">
-          En tu plantilla de EmailJS: usa <code>{{to_email}}</code> como destinatario (puede traer varios correos
-          separados por coma), <code>{{local_nombre}}</code> en el cuerpo, y un adjunto con la variable
-          <code>{{pdf_base64}}</code> y nombre <code>{{file_name}}</code>.
-        </p>
-      </div>
-    </div>
 
     <div class="card">
       <div class="card-header"><h2>📋 Correos de operaciones (siempre incluidos)</h2></div>
@@ -794,51 +771,6 @@ function saveConfig() {
 
 function getGhToken() {
   return localStorage.getItem('ghToken') || (document.getElementById('ghToken') ? document.getElementById('ghToken').value.trim() : '');
-}
-
-// ─── CONFIG (EmailJS) ──────────────────────────────────────────────────────────
-function loadEmailjsCfg() {
-  const s = document.getElementById('emailjsService');
-  const t = document.getElementById('emailjsTemplate');
-  const p = document.getElementById('emailjsPublicKey');
-  if (s) s.value = localStorage.getItem('emailjsService') || '';
-  if (t) t.value = localStorage.getItem('emailjsTemplate') || '';
-  if (p) p.value = localStorage.getItem('emailjsPublicKey') || '';
-}
-
-function saveEmailjsCfg() {
-  const set = (id, key) => {
-    const v = (document.getElementById(id).value || '').trim();
-    if (v) localStorage.setItem(key, v); else localStorage.removeItem(key);
-  };
-  set('emailjsService', 'emailjsService');
-  set('emailjsTemplate', 'emailjsTemplate');
-  set('emailjsPublicKey', 'emailjsPublicKey');
-  const el = document.getElementById('emailjsStatus');
-  if (el) {
-    el.textContent = '✅ Guardado en este navegador';
-    clearTimeout(saveEmailjsCfg._t);
-    saveEmailjsCfg._t = setTimeout(() => el.textContent = '', 3000);
-  }
-}
-
-// ─── CORREOS FIJOS DE OPERACIONES ─────────────────────────────────────────────
-// Grabados en el sistema — reciben TODOS los certificados, de cualquier local.
-// Confirmados por el cliente; no requieren configuración alguna.
-const OPS_EMAILS = [
-  'velia.sanchez@kfc.com.ec',
-  'sandra.guanuna@kfc.com.ec',
-  'salome.mosquera@kfc.com.ec',
-];
-
-function getDestinatariosCorreo(emailLocal) {
-  const set = new Set();
-  // El correo del local puede traer varios separados por coma o punto y coma
-  // (ej. Sports Bar usa dos). Se dividen y se suman los fijos de operaciones.
-  const delLocal = String(emailLocal || '').split(/[,;]+/);
-  [...delLocal, ...OPS_EMAILS]
-    .forEach(e => { const v = (e || '').trim(); if (v) set.add(v); });
-  return [...set];
 }
 
 async function testGhConnection() {
@@ -1506,34 +1438,6 @@ function renderCertsEmitidos() {
   }).join('');
 }
 
-// ─── ENVÍO POR CORREO (EmailJS) ───────────────────────────────────────────────
-// El template de EmailJS debe configurarse con un adjunto cuyo contenido use la
-// variable {{pdf_base64}} (nombre {{file_name}}), el destinatario {{to_email}}
-// (puede traer varios correos separados por coma) y {{local_nombre}} en el
-// cuerpo. Si no está configurado, no rompe el flujo.
-async function enviarCertCorreo(pdfBase64, nombreArchivo, emailLocal, nombreLocal) {
-  const service = localStorage.getItem('emailjsService') || '';
-  const template = localStorage.getItem('emailjsTemplate') || '';
-  const pk = localStorage.getItem('emailjsPublicKey') || '';
-  if (!service || !template || !pk) return { ok: false, msg: 'EmailJS no está configurado (ve a ⚙️ Configuración).' };
-  const destinatarios = getDestinatariosCorreo(emailLocal);
-  if (!destinatarios.length) return { ok: false, msg: 'No hay correos configurados (ni el del local, ni los de operaciones).' };
-  if (!window.emailjs) return { ok: false, msg: 'Librería EmailJS no cargada.' };
-  const emailDestino = destinatarios.join(', ');
-  try {
-    emailjs.init({ publicKey: pk });
-    await emailjs.send(service, template, {
-      to_email: emailDestino,
-      local_nombre: nombreLocal,
-      file_name: nombreArchivo,
-      pdf_base64: pdfBase64
-    });
-    return { ok: true, msg: 'Correo enviado a ' + emailDestino };
-  } catch (e) {
-    return { ok: false, msg: 'Error al enviar el correo: ' + ((e && (e.text || e.message)) || e) };
-  }
-}
-
 // ─── CERTIFICADOS PDF ─────────────────────────────────────────────────────────
 let certModalCodigo = null;
 let certFotos = {};       // { antes: base64jpeg, despues: base64jpeg, cilindro: base64jpeg }
@@ -2192,10 +2096,6 @@ async function subirCertGitHubIntento(path, content) {
         if (ok) {
           marcarVisitado(item.codigo);
           certBorrarDraft(item.codigo);
-          if (item.email) {
-  const nombreArchivo = nombreCertPDF(item.codigo, item.anio);
-            enviarCertCorreo(item.content, nombreArchivo, item.email, item.nombre || item.codigo).catch(function(){});
-          }
   } else {
           restantes.push(item);
         }
@@ -2338,17 +2238,11 @@ async function subirCertGitHubIntento(path, content) {
     }
   }
 
-  // Envío por correo: solo si ya se confirmó la subida (si quedó pendiente,
-  // el correo se manda junto con la sincronización automática).
-  if (pdfB64 && subioOk) {
-    const nombreArchivo = nombreCertPDF(local.codigo, anio);
-    const res = await enviarCertCorreo(pdfB64, nombreArchivo, local.email, local.nombre);
-    if (st) {
-      const cls = res.ok ? 'status-ok' : 'status-warn';
-      st.innerHTML += `<div class="status-bar ${cls}">${res.ok ? '✉️ ' : '⚠️ '}${esc(res.msg)}</div>`;
-    }
-  } else if (pdfB64 && !subioOk) {
-    if (st) st.innerHTML += `<div class="status-bar status-warn">✉️ El correo se enviará junto con la sincronización automática.</div>`;
+  // El envío del correo al local NO lo hace la app -- lo hace el script que
+  // corre cada hora en la PC del usuario, cuando detecta el certificado ya
+  // subido a GitHub (ver sync_certificados_local.py).
+  if (pdfB64 && st) {
+    st.innerHTML += `<div class="status-bar status-info">✉️ El correo se enviará solo en la próxima sincronización automática (cada hora).</div>`;
   }
 }
 
@@ -2475,7 +2369,6 @@ function init() {
   if (verEl) verEl.textContent = 'v' + APP_VERSION;
 
   loadConfig();
-  loadEmailjsCfg();
 
   try { if (localStorage.getItem('darkMode') === '1') document.body.classList.add('dark'); } catch(e) {}
   actualizarIconoDark();
